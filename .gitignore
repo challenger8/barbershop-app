@@ -1,0 +1,77 @@
+# Binaries and executables
+*.exe
+*.dll
+*.so
+*.dylib
+barbershop-app
+# cmd/server/server
+# cmd/seed/seed
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+docker-compose.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# SSL/TLS certificates
+ssl/
+*.pem
+*.key
+*.crt
+
+# Uploads and temporary files
+uploads/
+tmp/
+temp/
+*.tmp
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Go specific
+vendor/
+*.out
+
+# Docker volumes
+postgres-data/
+redis-data/
+
+# Test coverage
+*.coverage
+coverage.html
+coverage.out
+
+# Build artifacts
+dist/
+build/
+*.tar.gz
+*.zip
