@@ -23,9 +23,9 @@ func NewBarberService(barberRepo *repository.BarberRepository) *BarberService {
 	}
 }
 
-// GetAllBarbers retrieves all barbers with filters
+// GetAllBarbers retrieves all barbers with filters - now using enhanced search
 func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.BarberFilters) ([]models.Barber, error) {
-	barbers, err := s.barberRepo.FindAll(ctx, filters)
+	barbers, err := s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get barbers: %w", err)
 	}
@@ -214,10 +214,10 @@ func (s *BarberService) GetBarberStatistics(ctx context.Context, id int) (*repos
 	return stats, nil
 }
 
-// SearchBarbers searches barbers by various criteria
+// SearchBarbers searches barbers by various criteria - now using enhanced search
 func (s *BarberService) SearchBarbers(ctx context.Context, query string, filters repository.BarberFilters) ([]models.Barber, error) {
 	filters.Search = query
-	return s.barberRepo.FindAll(ctx, filters)
+	return s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
 }
 
 // GetNearbyBarbers retrieves barbers near a location
@@ -229,7 +229,7 @@ func (s *BarberService) GetNearbyBarbers(ctx context.Context, lat, lng float64, 
 		Limit:  50,
 	}
 
-	barbers, err := s.barberRepo.FindAll(ctx, filters)
+	barbers, err := s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
 	if err != nil {
 		return nil, err
 	}

@@ -4,10 +4,11 @@ import "time"
 
 // Barber represents a barber's business profile
 type Barber struct {
-	ID     int    `json:"id" db:"id"`
-	UserID int    `json:"user_id" db:"user_id"` // Links to User table
-	UUID   string `json:"uuid" db:"uuid"`
-
+	ID        int     `json:"id" db:"id"`
+	UserID    int     `json:"user_id" db:"user_id"` // Links to User table
+	UUID      string  `json:"uuid" db:"uuid"`
+	UserName  *string `json:"user_name" db:"user_name"`
+	UserEmail *string `json:"user_email" db:"user_email"`
 	// Business information
 	ShopName                   string  `json:"shop_name" db:"shop_name"`
 	BusinessName               *string `json:"business_name" db:"business_name"`

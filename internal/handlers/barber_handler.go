@@ -401,6 +401,7 @@ func (h *BarberHandler) SearchBarbers(c *gin.Context) {
 	query := c.Query("q")
 	filters := repository.BarberFilters{
 		City:   c.Query("city"),
+		Name:   c.Query("user_name"),
 		State:  c.Query("state"),
 		Status: "active",
 		Limit:  50,

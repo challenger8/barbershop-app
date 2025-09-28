@@ -44,6 +44,9 @@ func main() {
 	// Setup actual routes instead of placeholder routes
 	SetupRoutes(router, dbManager.DB)
 
+	// Debug: Print all registered routes
+	printRoutes(router)
+
 	// Create server manager using configuration
 	serverManager := config.NewServerManager(cfg.Server, router)
 
@@ -86,4 +89,14 @@ func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.
 	router.GET("/health", config.CreateHealthCheckHandler(dbManager))
 
 	return router
+}
+
+// printRoutes prints all registered routes for debugging
+func printRoutes(router *gin.Engine) {
+	log.Println("📋 Registered routes:")
+	routes := router.Routes()
+	for _, route := range routes {
+		log.Printf("  %s %s", route.Method, route.Path)
+	}
+	log.Printf("Total routes registered: %d\n", len(routes))
 }
