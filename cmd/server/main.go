@@ -41,6 +41,9 @@ func main() {
 	// Initialize Gin router with configuration
 	router := setupRouter(cfg, dbManager)
 
+	// Setup actual routes instead of placeholder routes
+	SetupRoutes(router, dbManager.DB)
+
 	// Create server manager using configuration
 	serverManager := config.NewServerManager(cfg.Server, router)
 
@@ -69,7 +72,7 @@ func main() {
 	log.Println("✅ Server exited gracefully")
 }
 
-// setupRouter configures all routes using configuration
+// setupRouter configures basic middleware and health check
 func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.Engine {
 	// Set Gin mode from configuration
 	gin.SetMode(cfg.Server.GinMode)
@@ -82,35 +85,5 @@ func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.
 	// Health check endpoint using the new health check handler
 	router.GET("/health", config.CreateHealthCheckHandler(dbManager))
 
-	// API v1 routes
-	v1 := router.Group("/api/v1")
-	{
-		// Barber routes (using your existing placeholder handlers for now)
-		barbers := v1.Group("/barbers")
-		{
-			barbers.GET("", placeholderHandler("List Barbers"))
-			barbers.GET("/:id", placeholderHandler("Get Barber"))
-			barbers.POST("", placeholderHandler("Create Barber"))
-			barbers.PUT("/:id", placeholderHandler("Update Barber"))
-			barbers.DELETE("/:id", placeholderHandler("Delete Barber"))
-		}
-
-		// Add more API groups here as you build them
-		// users := v1.Group("/users")
-		// bookings := v1.Group("/bookings")
-		// services := v1.Group("/services")
-	}
-
 	return router
-}
-
-// placeholderHandler returns a placeholder response (keeping your existing implementation)
-func placeholderHandler(action string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"action":  action,
-			"status":  "not_implemented",
-			"message": "This endpoint will be implemented in the next step",
-		})
-	}
 }

@@ -14,6 +14,7 @@ barbershop-app
 .env.development
 .env.staging
 .env.production
+barbershop-api
 docker-compose.env
 
 # IDE and editor files
@@ -21,9 +22,10 @@ docker-compose.env
 .idea/
 *.swp
 *.swo
+*.sh
 *~
 .DS_Store
-
+Makefile
 # Logs
 logs/
 *.log
@@ -76,3 +78,4 @@ dist/
 build/
 *.tar.gz
 *.zip
+setup.sh
