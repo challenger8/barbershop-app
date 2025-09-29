@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	// Load configuration using the new configuration system
+	// Load configuration
 	cfg, err := appConfig.Load()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
@@ -25,7 +25,7 @@ func main() {
 
 	log.Printf("🚀 Starting %s v%s in %s mode", cfg.App.Name, cfg.App.Version, cfg.App.Environment)
 
-	// Initialize database connection using configuration
+	// Initialize database connection
 	dbManager, err := config.NewDatabaseManager(cfg.Database)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -38,16 +38,13 @@ func main() {
 	}
 	log.Println("✅ Database connection established")
 
-	// Initialize Gin router with configuration
+	// Initialize Gin router
 	router := setupRouter(cfg, dbManager)
 
-	// Setup actual routes instead of placeholder routes
+	// Setup routes
 	SetupRoutes(router, dbManager.DB)
 
-	// Debug: Print all registered routes
-	printRoutes(router)
-
-	// Create server manager using configuration
+	// Create server manager
 	serverManager := config.NewServerManager(cfg.Server, router)
 
 	// Start server in goroutine
@@ -77,26 +74,9 @@ func main() {
 
 // setupRouter configures basic middleware and health check
 func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.Engine {
-	// Set Gin mode from configuration
 	gin.SetMode(cfg.Server.GinMode)
-
 	router := gin.Default()
-
-	// Setup middleware using configuration
 	config.SetupMiddleware(router, cfg)
-
-	// Health check endpoint using the new health check handler
 	router.GET("/health", config.CreateHealthCheckHandler(dbManager))
-
 	return router
-}
-
-// printRoutes prints all registered routes for debugging
-func printRoutes(router *gin.Engine) {
-	log.Println("📋 Registered routes:")
-	routes := router.Routes()
-	for _, route := range routes {
-		log.Printf("  %s %s", route.Method, route.Path)
-	}
-	log.Printf("Total routes registered: %d\n", len(routes))
 }
