@@ -1,341 +1,492 @@
-# Complete Barbershop Application File Structure
+# Barbershop API - Complete Project Overview
 
-## 🎯 **Overview**
-This is the complete file structure for your production-ready barbershop application, including all the files created for deployment, middleware, database seeding, and production configuration.
+## 🎯 Project Overview
+
+A production-ready RESTful API for a barbershop booking system built with Go, PostgreSQL, and modern cloud-native technologies. The application provides comprehensive features for barber management, service booking, customer reviews, and business analytics.
+
+## 📊 Technology Stack
+
+- **Language**: Go 1.21+
+- **Web Framework**: Gin
+- **Database**: PostgreSQL with sqlx
+- **Deployment**: Docker, Kubernetes, Cloud Platforms (AWS/Azure/GCP)
+- **Monitoring**: Prometheus, Grafana
+- **Reverse Proxy**: Nginx
+
+## 🏗️ Project Structure
 
 ```
-barbershop-app/
+barbershop-api/
 │
 ├── 📁 cmd/                                    # Application entry points
-│   ├── 📁 server/                             # Main API server
-│   │   ├── 📄 main.go                         # Server entry point (EXISTING)
-│   │   └── 📄 routes.go                       # Route configuration (EXISTING)
-│   └── 📁 seed/                               # Database seeder
-│       └── 📄 main.go                         # Go seed runner
+│   ├── 📁 debug/                             # Debug utilities
+│   │   └── 📄 main.go                        # Debug entry point
+│   ├── 📁 seed/                              # Database seeder
+│   └── 📁 server/                            # Main API server
+│       ├── 📄 main.go                        # Server entry point ✅
+│       └── 📄 routes.go                      # Route configuration ✅
 │
-├── 📁 internal/                               # Internal application code
-│   ├── 📁 config/                             # Internal configuration
-│   │   └── 📄 config.go                       # Configuration management
+├── 📁 internal/                              # Internal application code
+│   ├── 📁 config/                            # Configuration management
+│   │   └── 📄 config.go                      # App configuration ✅
 │   │
-│   ├── 📁 database/                           # Database utilities
-│   │   ├── 📄 connection.go                   # DB connection setup
-│   │   └── 📄 migrations.go                   # Migration utilities
+│   ├── 📁 database/                          # Database utilities
+│   │   └── (To be implemented)
 │   │
-│   ├── 📁 handlers/                           # HTTP handlers (controllers)
-│   │   └── 📄 barber_handler.go               # Barber profile endpoints (EXISTING)
+│   ├── 📁 handlers/                          # HTTP request handlers
+│   │   └── 📄 barber_handler.go              # Barber endpoints ✅
 │   │
-│   ├── 📁 services/                           # Business logic layer
-│   │   └── 📄 barber_service.go               # Barber business operations (EXISTING)
+│   ├── 📁 middleware/                        # HTTP middleware
+│   │   └── (To be implemented)
 │   │
-│   ├── 📁 repository/                         # Data access layer
-│   │   ├── 📄 interfaces.go                  # Repository interfaces
-│   │   ├── 📄 barber_repository.go           # Barber data operations (EXISTING)
-│   │   ├── 📄 service_repository.go          # Service data operations
-│   │   ├── 📄 review_repository.go           # Review data operations
-│   │   ├── 📄 booking_repository.go          # Booking data operations
-│   │   ├── 📄 user_repository.go             # User data operations
-│   │   └── 📄 availability_repository.go     # Availability data operations
+│   ├── 📁 models/                            # Data models
+│   │   ├── 📄 barber.go                      # Barber model ✅
+│   │   ├── 📄 booking.go                     # Booking model ✅
+│   │   ├── 📄 notification.go                # Notification model ✅
+│   │   ├── 📄 review.go                      # Review model ✅
+│   │   ├── 📄 service.go                     # Service models ✅
+│   │   ├── 📄 time_slot.go                   # TimeSlot model ✅
+│   │   └── 📄 user.go                        # User model ✅
 │   │
-│   ├── 📁 middleware/                         # HTTP middleware
-│   │   ├── 📄 auth_middleware.go              # JWT Authentication & Authorization
-│   │   ├── 📄 logging_middleware.go           # Structured Logging & Request Tracking
-│   │   ├── 📄 rate_limit_middleware.go        # Advanced Rate Limiting
-│   │   ├── 📄 cors_middleware.go              # CORS & Security Headers
-│   │   ├── 📄 validation_middleware.go        # Input Validation & Sanitization
-│   │   └── 📄 middleware_setup.go             # Integration & Configuration
+│   ├── 📁 repository/                        # Data access layer
+│   │   └── 📄 barber_repository.go           # Barber data operations ✅
 │   │
-│   ├── 📁 models/                             # Data models (EXISTING FILES)
-│   │   ├── 📄 user.go                         # User model (EXISTING)
-│   │   ├── 📄 barber.go                       # Barber model (EXISTING)
-│   │   ├── 📄 service.go                      # Service models (EXISTING)
-│   │   ├── 📄 booking.go                      # Booking model (EXISTING)
-│   │   ├── 📄 review.go                       # Review model (EXISTING)
-│   │   ├── 📄 time_slot.go                    # TimeSlot model (EXISTING)
-│   │   └── 📄 notification.go                 # Notification model (EXISTING)
+│   ├── 📁 routes/                            # Route definitions
+│   │   └── 📄 routes.go                      # API routes ✅
 │   │
-│   ├── 📁 types/                              # Type definitions
-│   │   ├── 📄 requests.go                     # Request DTOs
-│   │   ├── 📄 responses.go                    # Response DTOs
-│   │   └── 📄 common.go                       # Common types
+│   ├── 📁 services/                          # Business logic layer
+│   │   └── 📄 barber_service.go              # Barber business logic ✅
 │   │
-│   └── 📁 utils/                              # Utility functions
-│       ├── 📄 helpers.go                      # General helper functions
-│       ├── 📄 validation.go                   # Validation utilities
-│       └── 📄 constants.go                    # Application constants
+│   ├── 📁 types/                             # Type definitions
+│   │   └── (To be implemented)
+│   │
+│   └── 📁 utils/                             # Utility functions
+│       └── (To be implemented)
 │
-├── 📁 pkg/                                    # Shared/utility packages
-│   ├── 📁 response/                           # HTTP response utilities
-│   │   └── 📄 response.go                     # JSON response helpers
-│   │
-│   ├── 📁 database/                           # Database utilities
-│   │   ├── 📄 connection.go                   # DB connection setup
-│   │   └── 📄 postgres.go                     # PostgreSQL utilities
-│   │
-│   └── 📁 validation/                         # Input validation
-│       └── 📄 validator.go                    # Request validation
+├── 📁 pkg/                                   # Shared/reusable packages
+│   ├── 📁 database/                          # Database utilities
+│   ├── 📁 response/                          # HTTP response helpers
+│   └── 📁 validation/                        # Input validation
 │
-├── 📁 config/                                 # External configuration
-│   ├── 📄 database.go                         # Database configuration
-│   ├── 📄 server.go                           # Server configuration
-│   └── 📄 environment.go                      # Environment settings
+├── 📁 config/                                # External configuration
+│   ├── 📄 database.go                        # Database config ✅
+│   └── 📄 server.go                          # Server config ✅
 │
-├── 📁 migrations/                             # Database migrations
-│   ├── 📄 001_create_users.sql
-│   ├── 📄 002_create_barbers.sql
-│   ├── 📄 003_create_services.sql
-│   ├── 📄 004_create_bookings.sql
-│   ├── 📄 005_create_reviews.sql
-│   └── 📄 ...
+├── 📁 migrations/                            # Database migrations
+│   └── (SQL migration files)
 │
-├── 📁 scripts/                                # Utility scripts
-│   ├── 📁 seeds/                              # Database seed files
-│   │   └── 📄 database_seeds.sql              # Complete seed data (EXISTING)
-│   │
-│   ├── 📄 seed.sh                             # Seed execution script (EXISTING)
-│   ├── 📄 deploy.sh                           # Production deployment script (EXISTING)
-│   ├── 📄 setup-env.sh                        # Environment setup script
-│   └── 📄 migrate.sh                          # Database migration script
+├── 📁 scripts/                               # Utility scripts
+│   ├── 📁 seeds/                             # Database seed data
+│   │   └── 📄 database_seeds.sql             # Seed data ✅
+│   ├── 📄 deploy.sh                          # Deployment script ✅
+│   └── 📄 seed.sh                            # Seeding script ✅
 │
-├── 📁 deployments/                            # Deployment configurations
-│   ├── 📁 docker/                             # Docker configurations
-│   │   ├── 📄 Dockerfile                      # Production Dockerfile
-│   │   ├── 📄 docker-compose.yml             # Development compose
-│   │   ├── 📄 docker-compose.prod.yml        # Production compose
-│   │   └── 📄 .dockerignore                  # Docker ignore file
-│   │
-│   ├── 📁 kubernetes/                         # Kubernetes manifests
-│   │   ├── 📄 namespace.yaml                 # Kubernetes namespace
-│   │   ├── 📄 configmap.yaml                 # Configuration map
-│   │   ├── 📄 secrets.yaml                   # Secrets template
-│   │   ├── 📄 postgres.yaml                  # PostgreSQL deployment
-│   │   ├── 📄 redis.yaml                     # Redis deployment
-│   │   ├── 📄 barbershop-api.yaml            # API deployment
-│   │   ├── 📄 barbershop-service.yaml        # API service
-│   │   ├── 📄 ingress.yaml                   # Ingress configuration
-│   │   ├── 📄 hpa.yaml                       # Horizontal Pod Autoscaler
-│   │   ├── 📄 pvc.yaml                       # Persistent Volume Claims
-│   │   └── 📄 network-policy.yaml            # Network policies
-│   │
-│   └── 📁 helm/                               # Helm charts
-│       ├── 📄 Chart.yaml                     # Helm chart metadata
-│       ├── 📄 values.yaml                    # Default values
-│       ├── 📄 values-production.yaml         # Production values
-│       └── 📁 templates/                     # Helm templates
-│           ├── 📄 deployment.yaml
-│           ├── 📄 service.yaml
-│           └── 📄 ingress.yaml
+├── 📁 deployments/                           # Deployment configurations
+│   └── (Deployment configs)
 │
-├── 📁 k8s/                                    # Direct Kubernetes manifests
-│   ├── 📄 namespace.yaml                     # Kubernetes namespace (EXISTING)
-│   └── 📄 ...                                # Additional K8s files
+├── 📁 dockers/                               # Docker configurations
+│   └── (Dockerfile and related configs)
 │
-├── 📁 nginx/                                  # Nginx configuration
-│   ├── 📄 nginx.conf                         # Main nginx config (EXISTING)
-│   └── 📁 conf.d/                            # Additional configs
-│       └── 📄 barbershop.conf                # Site-specific config
+├── 📁 k8s/                                   # Kubernetes manifests
+│   └── 📄 namespace.yaml                     # K8s namespace ✅
 │
-├── 📁 aws/                                    # AWS deployment
-│   ├── 📄 task-definition.json               # ECS task definition
-│   ├── 📄 service.json                       # ECS service definition
-│   └── 📄 cluster.json                       # ECS cluster configuration
+├── 📁 nginx/                                 # Nginx configuration
+│   └── 📄 nginx.conf                         # Nginx config ✅
 │
-├── 📁 gcp/                                    # Google Cloud deployment
-│   ├── 📄 service.yaml                       # Cloud Run service
-│   ├── 📄 cloudbuild.yaml                    # Cloud Build configuration
-│   └── 📄 app.yaml                           # App Engine configuration
+├── 📁 helm/                                  # Helm charts
+│   └── (Helm configurations)
 │
-├── 📁 azure/                                  # Azure deployment
-│   ├── 📄 container-group.yaml               # Container instances
-│   └── 📄 webapp.json                        # Web App configuration
+├── 📁 terraform/                             # Infrastructure as Code
+│   └── (Terraform configurations)
 │
-├── 📁 terraform/                              # Infrastructure as Code
-│   ├── 📄 main.tf                            # Main Terraform configuration
-│   ├── 📄 variables.tf                       # Terraform variables
-│   ├── 📄 outputs.tf                         # Terraform outputs
-│   └── 📄 terraform.tfvars.example           # Example variables
+├── 📁 monitoring/                            # Monitoring configurations
+│   └── (Prometheus/Grafana configs)
 │
-├── 📁 monitoring/                             # Monitoring configuration
-│   ├── 📄 prometheus.yml                     # Prometheus config
-│   ├── 📄 alert-rules.yml                    # Alerting rules
-│   └── 📁 grafana/                           # Grafana dashboards
-│       ├── 📁 dashboards/
-│       │   ├── 📄 api-dashboard.json
-│       │   └── 📄 business-dashboard.json
-│       └── 📁 datasources/
-│           └── 📄 prometheus.yml
+├── 📁 aws/                                   # AWS deployment files
+│   └── (AWS-specific configurations)
 │
-├── 📁 .github/                                # GitHub Actions
-│   └── 📁 workflows/                         # CI/CD workflows
-│       ├── 📄 ci.yml                         # Continuous Integration
-│       ├── 📄 deploy.yml                     # Deployment workflow
-│       ├── 📄 security.yml                   # Security scanning
-│       └── 📄 release.yml                    # Release automation
+├── 📁 azure/                                 # Azure deployment files
+│   └── (Azure-specific configurations)
 │
-├── 📁 docs/                                   # Documentation
-│   ├── 📁 api/                               # API documentation
-│   │   ├── 📄 barber_endpoints.md            # Barber API docs
-│   │   └── 📄 openapi.yaml                   # OpenAPI specification
-│   │
-│   ├── 📁 deployment/                        # Deployment guides
-│   │   ├── 📄 docker-compose.md              # Docker Compose guide
-│   │   ├── 📄 kubernetes.md                  # Kubernetes guide
-│   │   ├── 📄 aws.md                         # AWS deployment guide
-│   │   └── 📄 production-checklist.md        # Production checklist
-│   │
-│   └── 📁 database/                          # Database documentation
-│       ├── 📄 schema.md                      # Database schema docs
-│       └── 📄 relationships.md               # Entity relationships
+├── 📁 gcp/                                   # GCP deployment files
+│   └── (GCP-specific configurations)
 │
-├── 📁 tests/                                  # Test files
-│   ├── 📁 handlers/                          # Handler tests
-│   │   └── 📄 barber_handler_test.go
-│   │
-│   ├── 📁 services/                          # Service tests
-│   │   └── 📄 barber_service_test.go
-│   │
-│   ├── 📁 repository/                        # Repository tests
-│   │   └── 📄 barber_repository_test.go
-│   │
-│   ├── 📁 middleware/                        # Middleware tests
-│   │   ├── 📄 auth_middleware_test.go
-│   │   ├── 📄 validation_middleware_test.go
-│   │   └── 📄 rate_limit_middleware_test.go
-│   │
+├── 📁 tests/                                 # Test files
 │   └── 📁 integration/                       # Integration tests
-│       ├── 📄 barber_api_test.go
-│       └── 📄 deployment_test.go             # Deployment tests
+│       ├── 📄 server_test.go                 # Server tests ✅
+│       └── 📄 setup_test.go                  # Test setup ✅
 │
-├── 📁 ssl/                                    # SSL certificates
-│   ├── 📄 fullchain.pem                      # SSL certificate
-│   ├── 📄 privkey.pem                        # Private key
-│   └── 📄 chain.pem                          # Certificate chain
+├── 📁 docs/                                  # Documentation
+│   └── (API documentation)
 │
-├── 📁 static/                                 # Static files
-│   ├── 📁 images/                            # Static images
-│   ├── 📁 css/                               # Stylesheets
-│   └── 📁 js/                                # JavaScript files
+├── 📁 logs/                                  # Application logs
+│   └── (Log files)
 │
-├── 📁 uploads/                                # File uploads
-│   ├── 📁 barbers/                           # Barber photos
-│   ├── 📁 reviews/                           # Review images
-│   └── 📁 temp/                              # Temporary files
+├── 📁 backups/                               # Database backups
+│   └── (Backup files)
 │
-├── 📁 logs/                                   # Application logs
-│   ├── 📄 app.log                            # Application logs
-│   ├── 📄 access.log                         # Access logs
-│   └── 📄 error.log                          # Error logs
+├── 📁 ssl/                                   # SSL certificates
+│   └── (SSL certificate files)
 │
-├── 📁 backups/                                # Database backups
-│   ├── 📄 daily/                             # Daily backups
-│   ├── 📄 weekly/                            # Weekly backups
-│   └── 📄 manual/                            # Manual backups
+├── 📁 static/                                # Static files
+│   └── (Static assets)
 │
-├── 📄 .env.example                           # Environment template
-├── 📄 .env.development                       # Development config
-├── 📄 .env.staging                           # Staging config
-├── 📄 .env.production                        # Production config
-├── 📄 docker-compose.env                     # Docker Compose env
+├── 📁 uploads/                               # File uploads
+│   └── (Uploaded files)
 │
-├── 📄 .gitignore                             # Git ignore file
-├── 📄 .dockerignore                          # Docker ignore file
-├── 📄 go.mod                                 # Go module file (EXISTING)
-├── 📄 go.sum                                 # Go module checksums (EXISTING)
-├── 📄 Makefile                               # Build automation (EXISTING)
-├── 📄 heroku.yml                             # Heroku configuration
-├── 📄 test-db-connection.sh                  # Database connection test (EXISTING)
-├── 📄 overview.md                            # Project overview (EXISTING)
-├── 📄 SECURITY.md                            # Security guidelines
-└── 📄 README.md                              # Project documentation (EXISTING)
+├── 📄 .env                                   # Environment variables
+├── 📄 go.mod                                 # Go module file ✅
+├── 📄 go.sum                                 # Go module checksums ✅
+├── 📄 Makefile                               # Build automation ✅
+├── 📄 setup.sh                               # Project setup script ✅
+├── 📄 run-dev.sh                             # Development runner ✅
+├── 📄 test-api.sh                            # API testing script ✅
+├── 📄 test-db-connection.sh                  # DB connection test ✅
+├── 📄 overview.md                            # This file ✅
+└── 📄 README.md                              # Project documentation ✅
 ```
 
-## 📊 **File Status Summary**
+## 📋 Current Implementation Status
 
-### **✅ EXISTING FILES (Currently in your project)**
-- `cmd/server/main.go` - Server entry point
-- `cmd/server/routes.go` - Route configuration
-- `internal/handlers/barber_handler.go` - Barber profile endpoints
-- `internal/services/barber_service.go` - Barber business operations
-- `internal/repository/barber_repository.go` - Barber data operations
-- `internal/models/` - All model files (7 files)
-- `scripts/seeds/database_seeds.sql` - Database seed data
-- `scripts/seed.sh` - Seed execution script
-- `scripts/deploy.sh` - Deployment script
-- `nginx/nginx.conf` - Nginx configuration
-- `k8s/namespace.yaml` - Kubernetes namespace
-- `go.mod` and `go.sum` - Go modules
-- `Makefile` - Build automation
-- `test-db-connection.sh` - DB connection test
-- `overview.md` - Project overview
-- `README.md` - Project documentation
+### ✅ Completed Components
 
-### **🔨 TO BE CREATED (Recommended next steps)**
+#### Core Application
+- **Server Setup**: Main server with Gin framework
+- **Database Connection**: PostgreSQL with connection pooling
+- **Configuration Management**: Environment-based config
+- **Route Setup**: RESTful API routes structure
 
-#### **🏗️ Core Infrastructure Files**
-1. `internal/config/config.go` - Configuration management
-2. `internal/database/connection.go` - Database utilities
-3. `internal/types/` - Request/Response DTOs
-4. `internal/utils/` - Utility functions
-5. `pkg/response/response.go` - HTTP response helpers
-6. `pkg/database/` - Database utilities
-7. `config/` - External configuration files
+#### Barber Module (Fully Implemented)
+- **Models**: Complete barber data model
+- **Repository**: Database operations with advanced search
+- **Service Layer**: Business logic implementation
+- **Handlers**: RESTful endpoints
+- **Features**:
+  - Create, Read, Update, Delete barbers
+  - Advanced search with filters
+  - Enhanced JSONB search
+  - Statistics and analytics
+  - Status management
 
-#### **🛡️ Middleware System (6 files)**
-8. `internal/middleware/auth_middleware.go` - JWT authentication
-9. `internal/middleware/logging_middleware.go` - Request logging
-10. `internal/middleware/rate_limit_middleware.go` - Rate limiting
-11. `internal/middleware/cors_middleware.go` - CORS handling
-12. `internal/middleware/validation_middleware.go` - Input validation
-13. `internal/middleware/middleware_setup.go` - Middleware setup
+#### Data Models
+- User model (authentication ready)
+- Barber model (complete)
+- Service and BarberService models
+- Booking model (with payment tracking)
+- Review model (with ratings)
+- TimeSlot model (availability)
+- Notification model
 
-#### **🗄️ Additional Repositories (5 files)**
-14. `internal/repository/interfaces.go` - Repository interfaces
-15. `internal/repository/user_repository.go` - User operations
-16. `internal/repository/booking_repository.go` - Booking operations
-17. `internal/repository/review_repository.go` - Review operations
-18. `internal/repository/service_repository.go` - Service operations
+#### Infrastructure
+- Database seeding scripts
+- Deployment automation
+- Nginx configuration
+- Kubernetes namespace setup
+- Integration tests setup
 
-#### **🚀 Deployment & Configuration**
-19. `deployments/docker/Dockerfile` - Production Docker image
-20. `deployments/docker/docker-compose.prod.yml` - Production compose
-21. `deployments/kubernetes/` - Complete K8s manifests
-22. `migrations/` - Database migration files
-23. Environment configuration files (`.env.*`)
+### 🔨 To Be Implemented
 
-## 🎯 **Key Features of Current Structure**
+#### Additional Modules
+1. **User Management**
+   - User repository
+   - User service
+   - Authentication handlers
+   - JWT middleware
 
-### **📁 Organized Directory Layout**
-- **`cmd/`** - Application entry points separated by purpose
-- **`internal/`** - Private application code with clear separation of concerns
-- **`pkg/`** - Reusable packages that could be imported by other projects
-- **`deployments/`** - All deployment configurations in one place
-- **`scripts/`** - Utility scripts for common operations
+2. **Service Management**
+   - Service repository
+   - Service CRUD operations
+   - Service-barber association
 
-### **🔧 Clean Architecture**
-- **Handlers** - HTTP request/response handling
-- **Services** - Business logic layer
-- **Repository** - Data access layer
-- **Models** - Data structures
-- **Middleware** - Cross-cutting concerns
+3. **Booking System**
+   - Booking repository
+   - Booking service
+   - Time slot management
+   - Payment integration
 
-### **🚀 Deployment Ready**
-- **Docker** support with multi-stage builds
-- **Kubernetes** manifests for cloud deployment
-- **Cloud provider** specific configurations
-- **CI/CD** pipeline configurations
+4. **Review System**
+   - Review repository
+   - Review service
+   - Rating calculations
 
-### **📊 Production Features**
-- **Monitoring** with Prometheus and Grafana
-- **Security** with middleware and authentication
-- **Logging** with structured logging
-- **Database** migrations and seeding
+5. **Notification System**
+   - Notification repository
+   - Notification service
+   - Email/SMS integration
 
-## 🔄 **Next Steps Priority**
+#### Middleware
+- Authentication middleware
+- Authorization middleware
+- Rate limiting
+- Request logging
+- Input validation
+- CORS configuration
+- Error handling
 
-1. **Create missing core files** (config, utils, types)
-2. **Implement middleware system** for security and logging
-3. **Add remaining repositories** for complete data access
-4. **Set up deployment configurations** for your target environment
-5. **Create environment configuration files**
-6. **Implement comprehensive testing**
+#### Utilities
+- Response helpers
+- Validation utilities
+- Common constants
+- Helper functions
 
-Your barbershop application has a solid foundation with the core barber functionality implemented. The structure follows Go best practices and is ready for scaling to a full production application! 🎉
+#### Deployment
+- Complete Docker configuration
+- Docker Compose files
+- Kubernetes manifests
+- Helm charts
+- Cloud deployment configs
+- CI/CD pipelines
+
+#### Monitoring
+- Prometheus metrics
+- Grafana dashboards
+- Health checks
+- Alert rules
+
+## 🚀 Getting Started
+
+### Prerequisites
+```bash
+- Go 1.21 or higher
+- PostgreSQL 14 or higher
+- Docker (optional)
+- Make
+```
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd barbershop-api
+```
+
+2. **Setup environment**
+```bash
+./setup.sh
+```
+
+3. **Configure environment variables**
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+4. **Run database migrations**
+```bash
+make migrate
+```
+
+5. **Seed database (optional)**
+```bash
+./scripts/seed.sh
+```
+
+6. **Run development server**
+```bash
+./run-dev.sh
+# or
+make run
+```
+
+## 🔑 API Endpoints
+
+### Barber Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/barbers` | List all barbers with filters |
+| GET | `/api/v1/barbers/search` | Search barbers |
+| GET | `/api/v1/barbers/:id` | Get barber by ID |
+| GET | `/api/v1/barbers/uuid/:uuid` | Get barber by UUID |
+| POST | `/api/v1/barbers` | Create new barber |
+| PUT | `/api/v1/barbers/:id` | Update barber |
+| DELETE | `/api/v1/barbers/:id` | Delete barber |
+| PATCH | `/api/v1/barbers/:id/status` | Update barber status |
+| GET | `/api/v1/barbers/:id/statistics` | Get barber statistics |
+
+### Query Parameters (Barbers List)
+
+- `status`: Filter by status (pending, active, inactive, etc.)
+- `city`: Filter by city
+- `state`: Filter by state
+- `min_rating`: Minimum rating
+- `search`: Search term (name, description, specialties)
+- `sort_by`: Sort field (rating, total_bookings, shop_name)
+- `limit`: Results per page (default: 20)
+- `offset`: Pagination offset
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+make test
+```
+
+### Test API
+```bash
+./test-api.sh
+```
+
+### Test Database Connection
+```bash
+./test-db-connection.sh
+```
+
+## 🏗️ Architecture
+
+### Clean Architecture Layers
+
+1. **Handlers (Presentation Layer)**
+   - HTTP request/response handling
+   - Input validation
+   - Response formatting
+
+2. **Services (Business Logic Layer)**
+   - Business rules
+   - Data transformation
+   - Service orchestration
+
+3. **Repository (Data Access Layer)**
+   - Database operations
+   - Query building
+   - Data mapping
+
+4. **Models (Domain Layer)**
+   - Entity definitions
+   - Business entities
+   - Data structures
+
+### Design Patterns
+
+- **Repository Pattern**: Data access abstraction
+- **Dependency Injection**: Loose coupling
+- **Clean Architecture**: Separation of concerns
+- **RESTful API**: Standard HTTP methods
+
+## 🔒 Security Features
+
+- Environment-based configuration
+- Database connection pooling
+- SQL injection prevention (parameterized queries)
+- CORS configuration
+- Security headers via Nginx
+- Ready for JWT authentication
+
+## 📊 Database Schema
+
+### Main Tables
+
+1. **users**: User accounts (customers, barbers, admins)
+2. **barbers**: Barber business profiles
+3. **services**: Service catalog
+4. **barber_services**: Barber-specific service offerings
+5. **service_categories**: Service categorization
+6. **bookings**: Appointment bookings
+7. **reviews**: Customer reviews and ratings
+8. **time_slots**: Available appointment slots
+9. **notifications**: System notifications
+
+### Key Relationships
+
+- User → Barber (1:1)
+- Barber → BarberService (1:N)
+- Service → BarberService (1:N)
+- Booking → Barber (N:1)
+- Booking → Review (1:1)
+- Barber → Review (1:N)
+
+## 🚀 Deployment Options
+
+### Docker
+```bash
+docker build -t barbershop-api .
+docker run -p 8080:8080 barbershop-api
+```
+
+### Kubernetes
+```bash
+kubectl apply -f k8s/
+```
+
+### Cloud Platforms
+- **AWS**: ECS/EKS configurations
+- **Azure**: Container Instances/AKS
+- **GCP**: Cloud Run/GKE
+
+## 📈 Performance Considerations
+
+- Database connection pooling
+- Indexed database columns
+- Efficient query patterns
+- JSONB for flexible data
+- Pagination support
+- Caching ready (Redis)
+
+## 🔄 Development Workflow
+
+1. **Feature Development**
+   - Create feature branch
+   - Implement changes
+   - Write tests
+   - Update documentation
+
+2. **Testing**
+   - Run unit tests
+   - Run integration tests
+   - Manual API testing
+
+3. **Deployment**
+   - Merge to main
+   - Run deployment script
+   - Monitor logs
+
+## 📝 Next Development Steps
+
+### Priority 1: Core Features
+1. Implement user authentication (JWT)
+2. Add remaining repositories (user, booking, review)
+3. Implement booking system
+4. Add review functionality
+
+### Priority 2: Infrastructure
+1. Complete middleware implementation
+2. Add comprehensive error handling
+3. Implement request validation
+4. Add API documentation (Swagger)
+
+### Priority 3: Deployment
+1. Complete Docker configuration
+2. Set up CI/CD pipeline
+3. Configure monitoring
+4. Production deployment
+
+### Priority 4: Advanced Features
+1. Payment integration
+2. Real-time notifications
+3. Analytics dashboard
+4. Mobile API optimization
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
+
+## 📄 License
+
+[Your License Here]
+
+## 📞 Support
+
+For questions or issues, please [create an issue](link-to-issues) or contact the development team.
+
+---
+
+**Project Status**: Active Development 🚧
+
+**Last Updated**: 2025
+
+**Version**: 1.0.0

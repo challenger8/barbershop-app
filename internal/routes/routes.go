@@ -3,6 +3,7 @@ package routes
 
 import (
 	"barber-booking-system/internal/handlers"
+	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // Setup configures all application routes
-func Setup(router *gin.Engine, db *sqlx.DB) {
+func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string) { // ✅ Add jwtSecret parameter
 	// Initialize repositories
 	barberRepo := repository.NewBarberRepository(db)
 
@@ -27,15 +28,22 @@ func Setup(router *gin.Engine, db *sqlx.DB) {
 		// Barber routes
 		barbers := v1.Group("/barbers")
 		{
+			// Public routes (no auth required)
 			barbers.GET("", barberHandler.GetAllBarbers)
 			barbers.GET("/search", barberHandler.SearchBarbers)
 			barbers.GET("/:id", barberHandler.GetBarber)
 			barbers.GET("/uuid/:uuid", barberHandler.GetBarberByUUID)
-			barbers.POST("", barberHandler.CreateBarber)
-			barbers.PUT("/:id", barberHandler.UpdateBarber)
-			barbers.DELETE("/:id", barberHandler.DeleteBarber)
-			barbers.PATCH("/:id/status", barberHandler.UpdateBarberStatus)
 			barbers.GET("/:id/statistics", barberHandler.GetBarberStatistics)
+		}
+
+		// Protected barber routes (auth required)
+		barbersProtected := v1.Group("/barbers")
+		barbersProtected.Use(middleware.RequireAuth(jwtSecret)) // ✅ Add auth
+		{
+			barbersProtected.POST("", barberHandler.CreateBarber)
+			barbersProtected.PUT("/:id", barberHandler.UpdateBarber)
+			barbersProtected.DELETE("/:id", barberHandler.DeleteBarber)
+			barbersProtected.PATCH("/:id/status", barberHandler.UpdateBarberStatus)
 		}
 	}
 }

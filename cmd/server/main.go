@@ -2,6 +2,8 @@
 package main
 
 import (
+	"barber-booking-system/config"
+	appConfig "barber-booking-system/internal/config"
 	"context"
 	"log"
 	"net/http"
@@ -9,9 +11,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"barber-booking-system/config"
-	appConfig "barber-booking-system/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,10 +39,10 @@ func main() {
 
 	// Initialize Gin router
 	router := setupRouter(cfg, dbManager)
+	setupMiddleware(router, cfg)
 
 	// Setup routes
-	SetupRoutes(router, dbManager.DB)
-
+	SetupRoutes(router, dbManager.DB, cfg)
 	// Create server manager
 	serverManager := config.NewServerManager(cfg.Server, router)
 
@@ -75,8 +74,7 @@ func main() {
 // setupRouter configures basic middleware and health check
 func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.Engine {
 	gin.SetMode(cfg.Server.GinMode)
-	router := gin.Default()
-	config.SetupMiddleware(router, cfg)
+	router := gin.New()
 	router.GET("/health", config.CreateHealthCheckHandler(dbManager))
 	return router
 }

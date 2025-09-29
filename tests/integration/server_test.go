@@ -49,7 +49,7 @@ func TestAllRoutesRegistered(t *testing.T) {
 	defer dbManager.Close()
 
 	router := gin.New()
-	routes.Setup(router, dbManager.DB)
+	routes.Setup(router, dbManager.DB, cfg.JWT.Secret)
 
 	allRoutes := router.Routes()
 
