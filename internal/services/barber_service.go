@@ -6,6 +6,7 @@ import (
 	"barber-booking-system/internal/repository"
 	"context"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/google/uuid"
@@ -283,17 +284,21 @@ func (s *BarberService) validateCreateRequest(req CreateBarberRequest) error {
 
 // calculateDistance calculates distance between two points (Haversine formula)
 func calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
-	const earthRadius = 6371 // km
+	const earthRadius = 6371.0 // km
 
-	dLat := (lat2 - lat1) * (3.14159265359 / 180)
-	dLng := (lng2 - lng1) * (3.14159265359 / 180)
+	dLat := toRadians(lat2 - lat1)
+	dLng := toRadians(lng2 - lng1)
 
-	a := 0.5 - 0.5*((1-2*0.5*dLat*dLat)/(1+dLat*dLat)) +
-		0.5*((1-2*0.5*lat1*lat1)/(1+lat1*lat1))*
-			0.5*((1-2*0.5*lat2*lat2)/(1+lat2*lat2))*
-			0.5*((1-2*0.5*dLng*dLng)/(1+dLng*dLng))
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(toRadians(lat1))*math.Cos(toRadians(lat2))*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
 
-	return earthRadius * 2 * 0.5 * a
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return earthRadius * c
+}
+
+func toRadians(deg float64) float64 {
+	return deg * math.Pi / 180
 }
 
 // Request/Response DTOs

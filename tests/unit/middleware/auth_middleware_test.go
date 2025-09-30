@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testSecretKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjMsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInVzZXJfdHlwZSI6ImN1c3RvbWVyIiwiZXhwIjoxNzU5MjQwNzAwLCJuYmYiOjE3NTkxNTQzMDAsImlhdCI6MTc1OTE1NDMwMH0.kHd-nNJQD8JiZEa7zuSOCagz5_uCK08CcNcfTeOeg2w"
+const testSecretKey = "test-secret-key-min-32-chars-long-for-hs256-algorithm"
 
 func TestGenerateToken(t *testing.T) {
 	token, err := middleware.GenerateToken(123, "test@example.com", "customer", testSecretKey, 24*time.Hour)

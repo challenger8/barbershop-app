@@ -40,6 +40,7 @@ type rateLimiter struct {
 	mu      sync.RWMutex
 	clients map[string]*client
 	config  RateLimitConfig
+	stopCh  chan struct{} // Add this
 }
 
 // client represents a client's rate limit state
@@ -101,9 +102,17 @@ func (rl *rateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		rl.cleanup()
+	for {
+		select {
+		case <-ticker.C:
+			rl.cleanup()
+		case <-rl.stopCh:
+			return
+		}
 	}
+}
+func (rl *rateLimiter) Stop() {
+	close(rl.stopCh)
 }
 
 // cleanup removes stale clients

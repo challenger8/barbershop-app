@@ -316,6 +316,21 @@ func (c *Config) IsProduction() bool {
 	return c.App.Environment == "production"
 }
 
+// IsStaging returns true if running in staging environment
+func (c *Config) IsStaging() bool {
+	return c.App.Environment == "staging"
+}
+
+// IsTest returns true if running in test environment
+func (c *Config) IsTest() bool {
+	return c.App.Environment == "test"
+}
+
+// IsProductionLike returns true if production or staging
+func (c *Config) IsProductionLike() bool {
+	return c.IsProduction() || c.IsStaging()
+}
+
 // GetServerAddress returns the full server address
 func (c *Config) GetServerAddress() string {
 	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
