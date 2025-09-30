@@ -3,6 +3,7 @@ package main
 
 import (
 	"barber-booking-system/config"
+	"barber-booking-system/internal/cache"
 	appConfig "barber-booking-system/internal/config"
 	"barber-booking-system/internal/middleware"
 	"context"
@@ -51,17 +52,31 @@ func main() {
 		log.Printf("📊 Database: %s (%d tables)", dbInfo.DatabaseName, dbInfo.TableCount)
 	}
 
+	// Initialize Redis connection (optional)
+	var redisClient *cache.RedisClient
+	var cacheService *cache.CacheService
+
+	redisClient, err = cache.NewRedisClient(cfg.Redis)
+	if err != nil {
+		log.Printf("⚠️  Warning: Redis connection failed: %v. Continuing without cache.", err)
+		redisClient = nil
+	} else {
+		defer redisClient.Close()
+		log.Println("✅ Redis connection established")
+		cacheService = cache.NewCacheService(redisClient)
+	}
+
 	// Initialize Gin router
 	router := setupRouter(cfg, dbManager)
 
 	// Setup request limits BEFORE other middleware
 	setupRequestLimits(router, cfg)
 
-	// Setup all middleware
-	setupMiddleware(router, cfg)
+	// Setup all middleware (including Redis rate limiting if available)
+	setupMiddlewareWithRedis(router, cfg, redisClient)
 
-	// Setup routes
-	SetupRoutes(router, dbManager.DB, cfg)
+	// Setup routes (pass cache service)
+	SetupRoutes(router, dbManager.DB, cfg, cacheService)
 
 	// Create server manager
 	serverManager := config.NewServerManager(cfg.Server, router)
@@ -71,6 +86,11 @@ func main() {
 		log.Printf("🚀 Server starting on %s", serverManager.GetFullAddress())
 		log.Printf("📝 Environment: %s", cfg.App.Environment)
 		log.Printf("🔧 Gin mode: %s", cfg.Server.GinMode)
+		if redisClient != nil {
+			log.Printf("🔴 Redis: Enabled (caching & rate limiting)")
+		} else {
+			log.Printf("⚪ Redis: Disabled (in-memory rate limiting)")
+		}
 		if err := serverManager.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("❌ Failed to start server: %v", err)
 		}
@@ -104,14 +124,69 @@ func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.
 // setupRequestLimits configures request body size limits
 func setupRequestLimits(router *gin.Engine, cfg *appConfig.Config) {
 	maxSize := cfg.Upload.MaxFileSize
-
-	// Set multipart form memory limit
 	router.MaxMultipartMemory = maxSize
-
-	// Add request body limit middleware
 	router.Use(middleware.DefaultRequestBodyLimit(maxSize))
-
 	log.Printf("📦 Request body limit: %.2f MB", float64(maxSize)/(1024*1024))
+}
+
+// setupMiddlewareWithRedis configures all middleware with optional Redis support
+func setupMiddlewareWithRedis(router *gin.Engine, cfg *appConfig.Config, redisClient *cache.RedisClient) {
+	// 1. Recovery - must be first to catch panics
+	router.Use(middleware.RecoveryHandler())
+
+	// 2. Request ID - for tracing
+	router.Use(middleware.RequestIDMiddleware())
+
+	// 3. CORS - handle cross-origin requests
+	var corsConfig middleware.CORSConfig
+	if cfg.IsDevelopment() {
+		corsConfig = middleware.DevelopmentCORSConfig()
+	} else {
+		corsConfig = middleware.ProductionCORSConfig(cfg.CORS.AllowedOrigins)
+	}
+	router.Use(middleware.CORS(corsConfig))
+
+	// 4. Security Headers
+	router.Use(middleware.SecurityHeaders())
+
+	// 5. Logging - log all requests
+	logConfig := middleware.LoggerConfig{
+		Format:          getLogFormat(cfg),
+		SkipPaths:       []string{"/health", "/metrics"},
+		LogRequestBody:  cfg.IsDevelopment(),
+		LogResponseBody: false,
+		MaxBodySize:     1024,
+	}
+	router.Use(middleware.Logger(logConfig))
+
+	// 6. Rate Limiting - with Redis if available
+	if redisClient != nil {
+		// Redis-based distributed rate limiting
+		log.Println("🔴 Using Redis-based rate limiting")
+		rateLimiter := middleware.NewRateLimiter(
+			redisClient,
+			cfg.API.RateLimit,
+			time.Minute,
+		)
+		router.Use(rateLimiter.Middleware())
+	} else {
+		// Fallback to in-memory rate limiting
+		log.Println("💾 Using in-memory rate limiting")
+		rateLimitConfig := middleware.DefaultRateLimitConfig()
+		rateLimitConfig.Limit = cfg.API.RateLimit
+		router.Use(middleware.RateLimitMiddleware(rateLimitConfig))
+	}
+
+	// 7. Error Handler - must be last
+	router.Use(middleware.ErrorHandler())
+}
+
+// getLogFormat returns the appropriate log format based on config
+func getLogFormat(cfg *appConfig.Config) middleware.LogFormat {
+	if cfg.Logging.Format == "json" {
+		return middleware.JSONFormat
+	}
+	return middleware.TextFormat
 }
 
 // printBanner prints application startup banner
@@ -120,6 +195,7 @@ func printBanner() {
 ╔════════════════════════════════════════════════════════╗
 ║                                                        ║
 ║           💈 BARBERSHOP BOOKING API 💈                 ║
+║                  with Redis Cache                      ║
 ║                                                        ║
 ╚════════════════════════════════════════════════════════╝
 `
@@ -133,6 +209,7 @@ func logConfigSummary(cfg *appConfig.Config) {
 	log.Printf("   Environment: %s", cfg.App.Environment)
 	log.Printf("   Server: %s (mode: %s)", cfg.GetServerAddress(), cfg.Server.GinMode)
 	log.Printf("   Database: Connected")
+	log.Printf("   Redis: %s", cfg.Redis.URL)
 	log.Printf("   JWT Expiration: %v", cfg.JWT.Expiration)
 	log.Printf("   Rate Limit: %d req/min", cfg.API.RateLimit)
 	log.Printf("   Upload Max Size: %.2f MB", float64(cfg.Upload.MaxFileSize)/(1024*1024))

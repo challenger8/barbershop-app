@@ -2,111 +2,80 @@
 package services
 
 import (
-	"barber-booking-system/internal/models"
-	"barber-booking-system/internal/repository"
 	"context"
 	"fmt"
-	"math"
-	"strings"
 
-	"github.com/google/uuid"
+	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/models"
+	"barber-booking-system/internal/repository"
 )
 
-// BarberService handles barber business logic
 type BarberService struct {
-	barberRepo *repository.BarberRepository
+	repo  *repository.BarberRepository
+	cache *cache.CacheService
 }
 
-// NewBarberService creates a new barber service
-func NewBarberService(barberRepo *repository.BarberRepository) *BarberService {
+// NewBarberService creates a new barber service with optional cache
+func NewBarberService(repo *repository.BarberRepository, cache *cache.CacheService) *BarberService {
 	return &BarberService{
-		barberRepo: barberRepo,
+		repo:  repo,
+		cache: cache,
 	}
 }
 
-// GetAllBarbers retrieves all barbers with filters - now using enhanced search
-func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.BarberFilters) ([]models.Barber, error) {
-	barbers, err := s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
+// GetByID retrieves a barber by ID with caching
+func (s *BarberService) GetByID(ctx context.Context, id int) (*models.Barber, error) {
+	var barber *models.Barber
+	var err error
+
+	// Try cache first if available
+	if s.cache != nil {
+		var cachedBarber models.Barber
+		err = s.cache.GetBarber(ctx, id, &cachedBarber)
+		if err == nil {
+			return &cachedBarber, nil // Cache hit
+		}
+	}
+
+	// Cache miss or no cache - fetch from database
+	barber, err = s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get barbers: %w", err)
-	}
-	return barbers, nil
-}
-
-// GetBarberByID retrieves a barber by ID
-func (s *BarberService) GetBarberByID(ctx context.Context, id int) (*models.Barber, error) {
-	barber, err := s.barberRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get barber: %w", err)
-	}
-
-	// Update last active
-	_ = s.barberRepo.UpdateLastActive(ctx, id)
-
-	return barber, nil
-}
-
-// GetBarberByUUID retrieves a barber by UUID
-func (s *BarberService) GetBarberByUUID(ctx context.Context, uuid string) (*models.Barber, error) {
-	barber, err := s.barberRepo.FindByUUID(ctx, uuid)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get barber: %w", err)
-	}
-	return barber, nil
-}
-
-// CreateBarber creates a new barber
-func (s *BarberService) CreateBarber(ctx context.Context, req CreateBarberRequest) (*models.Barber, error) {
-	// Validate request
-	if err := s.validateCreateRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Create barber model
-	barber := &models.Barber{
-		UserID:                req.UserID,
-		UUID:                  uuid.New().String(),
-		ShopName:              req.ShopName,
-		BusinessName:          req.BusinessName,
-		Address:               req.Address,
-		AddressLine2:          req.AddressLine2,
-		City:                  req.City,
-		State:                 req.State,
-		Country:               req.Country,
-		PostalCode:            req.PostalCode,
-		Phone:                 req.Phone,
-		BusinessEmail:         req.BusinessEmail,
-		WebsiteURL:            req.WebsiteURL,
-		Description:           req.Description,
-		YearsExperience:       req.YearsExperience,
-		Specialties:           req.Specialties,
-		Certifications:        req.Certifications,
-		LanguagesSpoken:       req.LanguagesSpoken,
-		WorkingHours:          req.WorkingHours,
-		AdvanceBookingDays:    30,   // Default
-		MinBookingNoticeHours: 2,    // Default
-		CommissionRate:        15.0, // Default
-		PayoutMethod:          "bank_transfer",
-		Status:                "pending",
-	}
-
-	// Create barber
-	if err := s.barberRepo.Create(ctx, barber); err != nil {
-		return nil, fmt.Errorf("failed to create barber: %w", err)
+	// Store in cache if available
+	if s.cache != nil {
+		_ = s.cache.CacheBarber(ctx, id, barber)
 	}
 
 	return barber, nil
 }
 
-// UpdateBarber updates a barber
-func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarberRequest) (*models.Barber, error) {
-	// Get existing barber
-	barber, err := s.barberRepo.FindByID(ctx, id)
+// Update updates a barber with caching
+func (s *BarberService) Update(ctx context.Context, barber *models.Barber) error {
+	// Update in database
+	err := s.repo.Update(ctx, barber)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find barber: %w", err)
+		return err
 	}
 
-	// Update fields
+	// Invalidate cache if available
+	if s.cache != nil {
+		_ = s.cache.InvalidateBarber(ctx, barber.ID)
+	}
+
+	return nil
+}
+
+// UpdateBarber is a wrapper that fetches, updates, and saves
+func (s *BarberService) UpdateBarber(ctx context.Context, id int, req *UpdateBarberRequest) (*models.Barber, error) {
+	// Fetch existing barber
+	barber, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch barber: %w", err)
+	}
+
+	// Apply updates from request - only update if the field is provided
 	if req.ShopName != nil {
 		barber.ShopName = *req.ShopName
 	}
@@ -132,7 +101,7 @@ func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarb
 		barber.PostalCode = *req.PostalCode
 	}
 	if req.Phone != nil {
-		barber.Phone = req.Phone
+		barber.Phone = req.Phone // Both are *string
 	}
 	if req.BusinessEmail != nil {
 		barber.BusinessEmail = req.BusinessEmail
@@ -168,23 +137,50 @@ func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarb
 		barber.WorkingHours = req.WorkingHours
 	}
 
-	// Update barber
-	if err := s.barberRepo.Update(ctx, barber); err != nil {
+	// Update barber using the Update method
+	if err := s.Update(ctx, barber); err != nil {
 		return nil, fmt.Errorf("failed to update barber: %w", err)
 	}
 
 	return barber, nil
 }
 
-// DeleteBarber soft deletes a barber
-func (s *BarberService) DeleteBarber(ctx context.Context, id int) error {
-	if err := s.barberRepo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete barber: %w", err)
+// Delete deletes a barber and invalidates cache
+func (s *BarberService) Delete(ctx context.Context, id int) error {
+	err := s.repo.Delete(ctx, id)
+	if err != nil {
+		return err
 	}
+
+	// Invalidate cache if available
+	if s.cache != nil {
+		_ = s.cache.InvalidateBarber(ctx, id)
+	}
+
 	return nil
 }
 
-// UpdateBarberStatus updates barber status
+// DeleteBarber is an alias for Delete
+func (s *BarberService) DeleteBarber(ctx context.Context, id int) error {
+	return s.Delete(ctx, id)
+}
+
+// UpdateStatus updates barber status with cache invalidation
+func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string) error {
+	err := s.repo.UpdateStatus(ctx, id, status)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache if available
+	if s.cache != nil {
+		_ = s.cache.InvalidateBarber(ctx, id)
+	}
+
+	return nil
+}
+
+// UpdateBarberStatus is an alias for UpdateStatus with validation
 func (s *BarberService) UpdateBarberStatus(ctx context.Context, id int, status string) error {
 	// Validate status
 	validStatuses := []string{"pending", "active", "inactive", "suspended", "rejected"}
@@ -200,148 +196,116 @@ func (s *BarberService) UpdateBarberStatus(ctx context.Context, id int, status s
 		return fmt.Errorf("invalid status: %s", status)
 	}
 
-	if err := s.barberRepo.UpdateStatus(ctx, id, status); err != nil {
-		return fmt.Errorf("failed to update status: %w", err)
-	}
-	return nil
+	return s.UpdateStatus(ctx, id, status)
 }
 
-// GetBarberStatistics retrieves barber statistics
+// GetBarberStatistics retrieves barber statistics with caching
 func (s *BarberService) GetBarberStatistics(ctx context.Context, id int) (*repository.BarberStatistics, error) {
-	stats, err := s.barberRepo.GetStatistics(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get statistics: %w", err)
-	}
-	return stats, nil
-}
-
-// SearchBarbers searches barbers by various criteria - now using enhanced search
-func (s *BarberService) SearchBarbers(ctx context.Context, query string, filters repository.BarberFilters) ([]models.Barber, error) {
-	filters.Search = query
-	return s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
-}
-
-// GetNearbyBarbers retrieves barbers near a location
-func (s *BarberService) GetNearbyBarbers(ctx context.Context, lat, lng float64, radiusKm float64) ([]models.Barber, error) {
-	// This would require PostGIS or similar for proper geo queries
-	// For now, return all barbers with coordinates
-	filters := repository.BarberFilters{
-		Status: "active",
-		Limit:  50,
-	}
-
-	barbers, err := s.barberRepo.FindAllWithEnhancedSearch(ctx, filters)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter by distance (simplified calculation)
-	var nearbyBarbers []models.Barber
-	for _, barber := range barbers {
-		if barber.Latitude != nil && barber.Longitude != nil {
-			distance := calculateDistance(lat, lng, *barber.Latitude, *barber.Longitude)
-			if distance <= radiusKm {
-				nearbyBarbers = append(nearbyBarbers, barber)
-			}
+	// Try cache first if available
+	if s.cache != nil {
+		var cachedStats repository.BarberStatistics
+		statsKey := fmt.Sprintf("stats:%d", id)
+		err := s.cache.GetStats(ctx, statsKey, &cachedStats)
+		if err == nil {
+			return &cachedStats, nil
 		}
 	}
 
-	return nearbyBarbers, nil
+	// Fetch from database
+	stats, err := s.repo.GetStatistics(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statistics: %w", err)
+	}
+
+	// Cache if available
+	if s.cache != nil {
+		statsKey := fmt.Sprintf("stats:%d", id)
+		_ = s.cache.CacheStats(ctx, statsKey, stats)
+	}
+
+	return stats, nil
 }
 
-// validateCreateRequest validates create barber request
-func (s *BarberService) validateCreateRequest(req CreateBarberRequest) error {
-	var errors []string
+// SearchBarbers searches barbers by various criteria
+func (s *BarberService) SearchBarbers(ctx context.Context, query string, filters repository.BarberFilters) ([]models.Barber, error) {
+	filters.Search = query
+	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+}
 
-	if req.UserID <= 0 {
-		errors = append(errors, "user_id is required")
-	}
-	if strings.TrimSpace(req.ShopName) == "" {
-		errors = append(errors, "shop_name is required")
-	}
-	if strings.TrimSpace(req.Address) == "" {
-		errors = append(errors, "address is required")
-	}
-	if strings.TrimSpace(req.City) == "" {
-		errors = append(errors, "city is required")
-	}
-	if strings.TrimSpace(req.State) == "" {
-		errors = append(errors, "state is required")
-	}
-	if strings.TrimSpace(req.Country) == "" {
-		errors = append(errors, "country is required")
-	}
-	if strings.TrimSpace(req.PostalCode) == "" {
-		errors = append(errors, "postal_code is required")
+// GetAllBarbers retrieves all barbers with filters
+func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.BarberFilters) ([]models.Barber, error) {
+	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+}
+
+// CreateBarber creates a new barber
+func (s *BarberService) CreateBarber(ctx context.Context, barber *models.Barber) error {
+	err := s.repo.Create(ctx, barber)
+	if err != nil {
+		return fmt.Errorf("failed to create barber: %w", err)
 	}
 
-	if len(errors) > 0 {
-		return fmt.Errorf("validation errors: %s", strings.Join(errors, ", "))
+	// Cache the new barber if cache is available
+	if s.cache != nil {
+		_ = s.cache.CacheBarber(ctx, barber.ID, barber)
 	}
 
 	return nil
 }
 
-// calculateDistance calculates distance between two points (Haversine formula)
-func calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
-	const earthRadius = 6371.0 // km
-
-	dLat := toRadians(lat2 - lat1)
-	dLng := toRadians(lng2 - lng1)
-
-	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
-		math.Cos(toRadians(lat1))*math.Cos(toRadians(lat2))*
-			math.Sin(dLng/2)*math.Sin(dLng/2)
-
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	return earthRadius * c
+// GetBarber is an alias for GetByID
+func (s *BarberService) GetBarber(ctx context.Context, id int) (*models.Barber, error) {
+	return s.GetByID(ctx, id)
 }
 
-func toRadians(deg float64) float64 {
-	return deg * math.Pi / 180
+// GetBarberByUUID retrieves a barber by UUID
+func (s *BarberService) GetBarberByUUID(ctx context.Context, uuid string) (*models.Barber, error) {
+	return s.repo.FindByUUID(ctx, uuid)
 }
 
-// Request/Response DTOs
+// UpdateBarberRequest represents the update request structure
 type CreateBarberRequest struct {
-	UserID          int                `json:"user_id" binding:"required"`
-	ShopName        string             `json:"shop_name" binding:"required"`
-	BusinessName    *string            `json:"business_name"`
-	Address         string             `json:"address" binding:"required"`
-	AddressLine2    *string            `json:"address_line_2"`
-	City            string             `json:"city" binding:"required"`
-	State           string             `json:"state" binding:"required"`
-	Country         string             `json:"country" binding:"required"`
-	PostalCode      string             `json:"postal_code" binding:"required"`
-	Phone           *string            `json:"phone"`
-	BusinessEmail   *string            `json:"business_email"`
-	WebsiteURL      *string            `json:"website_url"`
-	Description     *string            `json:"description"`
-	YearsExperience *int               `json:"years_experience"`
-	Specialties     models.StringArray `json:"specialties"`
-	Certifications  models.StringArray `json:"certifications"`
-	LanguagesSpoken models.StringArray `json:"languages_spoken"`
-	WorkingHours    models.JSONMap     `json:"working_hours"`
+	UserID                     int                `json:"user_id" binding:"required"`
+	ShopName                   string             `json:"shop_name" binding:"required"`
+	BusinessName               *string            `json:"business_name"`
+	BusinessRegistrationNumber *string            `json:"business_registration_number"`
+	TaxID                      *string            `json:"tax_id"`
+	Address                    string             `json:"address" binding:"required"`
+	AddressLine2               *string            `json:"address_line_2"`
+	City                       string             `json:"city" binding:"required"`
+	State                      string             `json:"state" binding:"required"`
+	Country                    string             `json:"country" binding:"required"`
+	PostalCode                 string             `json:"postal_code" binding:"required"`
+	Latitude                   *float64           `json:"latitude"`
+	Longitude                  *float64           `json:"longitude"`
+	Phone                      *string            `json:"phone"`
+	BusinessEmail              *string            `json:"business_email"`
+	WebsiteURL                 *string            `json:"website_url"`
+	Description                *string            `json:"description"`
+	YearsExperience            *int               `json:"years_experience"`
+	Specialties                models.StringArray `json:"specialties"`
+	Certifications             models.StringArray `json:"certifications"`
+	LanguagesSpoken            models.StringArray `json:"languages_spoken"`
+	WorkingHours               models.JSONMap     `json:"working_hours"`
 }
-
 type UpdateBarberRequest struct {
-	ShopName        *string            `json:"shop_name"`
-	BusinessName    *string            `json:"business_name"`
-	Address         *string            `json:"address"`
-	AddressLine2    *string            `json:"address_line_2"`
-	City            *string            `json:"city"`
-	State           *string            `json:"state"`
-	Country         *string            `json:"country"`
-	PostalCode      *string            `json:"postal_code"`
-	Phone           *string            `json:"phone"`
-	BusinessEmail   *string            `json:"business_email"`
-	WebsiteURL      *string            `json:"website_url"`
-	Description     *string            `json:"description"`
-	YearsExperience *int               `json:"years_experience"`
-	Specialties     models.StringArray `json:"specialties"`
-	Certifications  models.StringArray `json:"certifications"`
-	LanguagesSpoken models.StringArray `json:"languages_spoken"`
-	ProfileImageURL *string            `json:"profile_image_url"`
-	CoverImageURL   *string            `json:"cover_image_url"`
-	GalleryImages   models.StringArray `json:"gallery_images"`
-	WorkingHours    models.JSONMap     `json:"working_hours"`
+	ShopName        *string            `json:"shop_name,omitempty"`
+	BusinessName    *string            `json:"business_name,omitempty"`
+	Address         *string            `json:"address,omitempty"`
+	AddressLine2    *string            `json:"address_line_2,omitempty"`
+	City            *string            `json:"city,omitempty"`
+	State           *string            `json:"state,omitempty"`
+	Country         *string            `json:"country,omitempty"`
+	PostalCode      *string            `json:"postal_code,omitempty"`
+	Phone           *string            `json:"phone,omitempty"`
+	BusinessEmail   *string            `json:"business_email,omitempty"`
+	WebsiteURL      *string            `json:"website_url,omitempty"`
+	Description     *string            `json:"description,omitempty"`
+	YearsExperience *int               `json:"years_experience,omitempty"`
+	Specialties     models.StringArray `json:"specialties,omitempty"`
+	Certifications  models.StringArray `json:"certifications,omitempty"`
+	LanguagesSpoken models.StringArray `json:"languages_spoken,omitempty"`
+	ProfileImageURL *string            `json:"profile_image_url,omitempty"`
+	CoverImageURL   *string            `json:"cover_image_url,omitempty"`
+	GalleryImages   models.StringArray `json:"gallery_images,omitempty"`
+	WorkingHours    models.JSONMap     `json:"working_hours,omitempty"`
 }

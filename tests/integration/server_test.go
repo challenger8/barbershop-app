@@ -49,7 +49,8 @@ func TestAllRoutesRegistered(t *testing.T) {
 	defer dbManager.Close()
 
 	router := gin.New()
-	routes.Setup(router, dbManager.DB, cfg.JWT.Secret)
+	// ✅ Pass nil for cacheService since tests don't need Redis
+	routes.Setup(router, dbManager.DB, cfg.JWT.Secret, nil)
 
 	allRoutes := router.Routes()
 

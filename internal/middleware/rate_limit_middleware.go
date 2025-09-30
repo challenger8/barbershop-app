@@ -2,15 +2,91 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
+	"barber-booking-system/internal/cache"
+
 	"github.com/gin-gonic/gin"
 )
 
-// RateLimitConfig defines the configuration for rate limiting
+// ============================================
+// Redis-based Rate Limiter (Distributed)
+// ============================================
+
+// RateLimiter implements rate limiting using Redis
+type RateLimiter struct {
+	redis       *cache.RedisClient
+	maxRequests int
+	window      time.Duration
+}
+
+// NewRateLimiter creates a new Redis-based rate limiter
+func NewRateLimiter(redis *cache.RedisClient, maxRequests int, window time.Duration) *RateLimiter {
+	return &RateLimiter{
+		redis:       redis,
+		maxRequests: maxRequests,
+		window:      window,
+	}
+}
+
+// Middleware creates rate limiting middleware using Redis
+func (rl *RateLimiter) Middleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get client identifier (IP or user ID)
+		identifier := c.ClientIP()
+		if userID, exists := c.Get("user_id"); exists {
+			identifier = fmt.Sprintf("user:%v", userID)
+		}
+
+		key := fmt.Sprintf("ratelimit:%s", identifier)
+		ctx := context.Background()
+
+		// Get current count
+		count, err := rl.redis.Increment(ctx, key)
+		if err != nil {
+			// If Redis fails, allow the request (fail open)
+			c.Next()
+			return
+		}
+
+		// Set expiration on first request
+		if count == 1 {
+			rl.redis.Expire(ctx, key, rl.window)
+		}
+
+		// Check if rate limit exceeded
+		if count > int64(rl.maxRequests) {
+			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", rl.maxRequests))
+			c.Header("X-RateLimit-Remaining", "0")
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(rl.window).Unix()))
+
+			RespondWithError(c, &AppError{
+				Code:       "RATE_LIMIT_EXCEEDED",
+				Message:    "Too many requests. Please try again later.",
+				StatusCode: http.StatusTooManyRequests,
+			})
+			c.Abort()
+			return
+		}
+
+		// Set rate limit headers
+		remaining := rl.maxRequests - int(count)
+		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", rl.maxRequests))
+		c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+
+		c.Next()
+	}
+}
+
+// ============================================
+// In-Memory Rate Limiter (Fallback)
+// ============================================
+
+// RateLimitConfig defines the configuration for in-memory rate limiting
 type RateLimitConfig struct {
 	Limit      int           // Maximum number of requests
 	Window     time.Duration // Time window
@@ -35,12 +111,24 @@ func DefaultRateLimitConfig() RateLimitConfig {
 	}
 }
 
-// rateLimiter implements a simple in-memory rate limiter
-type rateLimiter struct {
+// StrictRateLimitConfig returns strict rate limit configuration for production
+func StrictRateLimitConfig() RateLimitConfig {
+	return RateLimitConfig{
+		Limit:      50,
+		Window:     1 * time.Minute,
+		KeyFunc:    IPKeyFunc,
+		SkipPaths:  []string{"/health", "/metrics"},
+		Message:    "Too many requests. Please try again later.",
+		StatusCode: http.StatusTooManyRequests,
+	}
+}
+
+// inMemoryRateLimiter implements a simple in-memory rate limiter
+type inMemoryRateLimiter struct {
 	mu      sync.RWMutex
 	clients map[string]*client
 	config  RateLimitConfig
-	stopCh  chan struct{} // Add this
+	stopCh  chan struct{}
 }
 
 // client represents a client's rate limit state
@@ -50,11 +138,12 @@ type client struct {
 	lastAccess time.Time
 }
 
-// newRateLimiter creates a new rate limiter
-func newRateLimiter(config RateLimitConfig) *rateLimiter {
-	rl := &rateLimiter{
+// newInMemoryRateLimiter creates a new in-memory rate limiter
+func newInMemoryRateLimiter(config RateLimitConfig) *inMemoryRateLimiter {
+	rl := &inMemoryRateLimiter{
 		clients: make(map[string]*client),
 		config:  config,
+		stopCh:  make(chan struct{}),
 	}
 
 	// Start cleanup goroutine
@@ -64,7 +153,7 @@ func newRateLimiter(config RateLimitConfig) *rateLimiter {
 }
 
 // allow checks if a request is allowed
-func (rl *rateLimiter) allow(key string) (bool, int, time.Duration) {
+func (rl *inMemoryRateLimiter) allow(key string) (bool, int, time.Duration) {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
@@ -98,7 +187,7 @@ func (rl *rateLimiter) allow(key string) (bool, int, time.Duration) {
 }
 
 // cleanupLoop periodically removes stale clients
-func (rl *rateLimiter) cleanupLoop() {
+func (rl *inMemoryRateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
@@ -111,12 +200,14 @@ func (rl *rateLimiter) cleanupLoop() {
 		}
 	}
 }
-func (rl *rateLimiter) Stop() {
+
+// Stop stops the cleanup goroutine
+func (rl *inMemoryRateLimiter) Stop() {
 	close(rl.stopCh)
 }
 
 // cleanup removes stale clients
-func (rl *rateLimiter) cleanup() {
+func (rl *inMemoryRateLimiter) cleanup() {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
@@ -130,11 +221,11 @@ func (rl *rateLimiter) cleanup() {
 	}
 }
 
-// RateLimit creates a rate limiting middleware
-func RateLimit(config RateLimitConfig) gin.HandlerFunc {
-	limiter := newRateLimiter(config)
+// RateLimitMiddleware creates an in-memory rate limiting middleware
+func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
+	limiter := newInMemoryRateLimiter(config)
 
-	// Create skip paths map
+	// Create skip paths map for O(1) lookup
 	skipPaths := make(map[string]bool)
 	for _, path := range config.SkipPaths {
 		skipPaths[path] = true
@@ -147,10 +238,10 @@ func RateLimit(config RateLimitConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Generate key
+		// Get rate limit key
 		key := config.KeyFunc(c)
 
-		// Check rate limit
+		// Check if request is allowed
 		allowed, remaining, resetIn := limiter.allow(key)
 
 		// Set rate limit headers
@@ -159,17 +250,10 @@ func RateLimit(config RateLimitConfig) gin.HandlerFunc {
 		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(resetIn).Unix()))
 
 		if !allowed {
-			// Rate limit exceeded
-			c.Header("Retry-After", fmt.Sprintf("%d", int(resetIn.Seconds())))
-
 			RespondWithError(c, &AppError{
-				StatusCode: config.StatusCode,
 				Code:       "RATE_LIMIT_EXCEEDED",
 				Message:    config.Message,
-				Details: map[string]interface{}{
-					"retry_after": int(resetIn.Seconds()),
-					"reset_at":    time.Now().Add(resetIn).Unix(),
-				},
+				StatusCode: config.StatusCode,
 			})
 			c.Abort()
 			return
@@ -179,242 +263,15 @@ func RateLimit(config RateLimitConfig) gin.HandlerFunc {
 	}
 }
 
-// DefaultRateLimit creates a rate limiting middleware with default configuration
-func DefaultRateLimit() gin.HandlerFunc {
-	return RateLimit(DefaultRateLimitConfig())
-}
-
-// Key generation functions
-
-// IPKeyFunc generates rate limit key based on IP address
+// IPKeyFunc generates rate limit key based on client IP
 func IPKeyFunc(c *gin.Context) string {
-	return "ip:" + c.ClientIP()
+	return c.ClientIP()
 }
 
-// UserKeyFunc generates rate limit key based on user ID
+// UserKeyFunc generates rate limit key based on user ID (if authenticated)
 func UserKeyFunc(c *gin.Context) string {
-	userID, exists := GetUserID(c)
-	if !exists {
-		// Fall back to IP if user not authenticated
-		return IPKeyFunc(c)
+	if userID, exists := c.Get("user_id"); exists {
+		return fmt.Sprintf("user:%v", userID)
 	}
-	return fmt.Sprintf("user:%d", userID)
-}
-
-// PathKeyFunc generates rate limit key based on path and IP
-func PathKeyFunc(c *gin.Context) string {
-	return fmt.Sprintf("path:%s:ip:%s", c.Request.URL.Path, c.ClientIP())
-}
-
-// UserAndPathKeyFunc generates rate limit key based on user ID and path
-func UserAndPathKeyFunc(c *gin.Context) string {
-	userID, exists := GetUserID(c)
-	if !exists {
-		return PathKeyFunc(c)
-	}
-	return fmt.Sprintf("user:%d:path:%s", userID, c.Request.URL.Path)
-}
-
-// CustomKeyFunc allows creating custom key functions
-func CustomKeyFunc(fn func(*gin.Context) string) KeyFunc {
-	return fn
-}
-
-// Preset configurations
-
-// StrictRateLimit returns a strict rate limit configuration
-func StrictRateLimit() RateLimitConfig {
-	config := DefaultRateLimitConfig()
-	config.Limit = 20
-	config.Window = 1 * time.Minute
-	return config
-}
-
-// RelaxedRateLimit returns a relaxed rate limit configuration
-func RelaxedRateLimit() RateLimitConfig {
-	config := DefaultRateLimitConfig()
-	config.Limit = 1000
-	config.Window = 1 * time.Minute
-	return config
-}
-
-// PerSecondRateLimit returns a per-second rate limit configuration
-func PerSecondRateLimit(limit int) RateLimitConfig {
-	config := DefaultRateLimitConfig()
-	config.Limit = limit
-	config.Window = 1 * time.Second
-	return config
-}
-
-// PerHourRateLimit returns a per-hour rate limit configuration
-func PerHourRateLimit(limit int) RateLimitConfig {
-	config := DefaultRateLimitConfig()
-	config.Limit = limit
-	config.Window = 1 * time.Hour
-	return config
-}
-
-// PerDayRateLimit returns a per-day rate limit configuration
-func PerDayRateLimit(limit int) RateLimitConfig {
-	config := DefaultRateLimitConfig()
-	config.Limit = limit
-	config.Window = 24 * time.Hour
-	return config
-}
-
-// AuthenticatedRateLimit returns different limits for authenticated vs unauthenticated users
-func AuthenticatedRateLimit(authenticatedLimit, unauthenticatedLimit int) gin.HandlerFunc {
-	authenticatedConfig := RateLimitConfig{
-		Limit:      authenticatedLimit,
-		Window:     1 * time.Minute,
-		KeyFunc:    UserKeyFunc,
-		SkipPaths:  []string{"/health", "/metrics"},
-		Message:    "Too many requests. Please try again later.",
-		StatusCode: http.StatusTooManyRequests,
-	}
-
-	unauthenticatedConfig := RateLimitConfig{
-		Limit:      unauthenticatedLimit,
-		Window:     1 * time.Minute,
-		KeyFunc:    IPKeyFunc,
-		SkipPaths:  []string{"/health", "/metrics"},
-		Message:    "Too many requests. Please try again later.",
-		StatusCode: http.StatusTooManyRequests,
-	}
-
-	authenticatedLimiter := newRateLimiter(authenticatedConfig)
-	unauthenticatedLimiter := newRateLimiter(unauthenticatedConfig)
-
-	return func(c *gin.Context) {
-		// Skip rate limiting for certain paths
-		skipPaths := map[string]bool{
-			"/health":  true,
-			"/metrics": true,
-		}
-		if skipPaths[c.Request.URL.Path] {
-			c.Next()
-			return
-		}
-
-		// Check if user is authenticated
-		isAuth := IsAuthenticated(c)
-
-		var limiter *rateLimiter
-		var config RateLimitConfig
-		var key string
-
-		if isAuth {
-			limiter = authenticatedLimiter
-			config = authenticatedConfig
-			key = UserKeyFunc(c)
-		} else {
-			limiter = unauthenticatedLimiter
-			config = unauthenticatedConfig
-			key = IPKeyFunc(c)
-		}
-
-		// Check rate limit
-		allowed, remaining, resetIn := limiter.allow(key)
-
-		// Set rate limit headers
-		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", config.Limit))
-		c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
-		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(resetIn).Unix()))
-
-		if !allowed {
-			c.Header("Retry-After", fmt.Sprintf("%d", int(resetIn.Seconds())))
-
-			RespondWithError(c, &AppError{
-				StatusCode: config.StatusCode,
-				Code:       "RATE_LIMIT_EXCEEDED",
-				Message:    config.Message,
-				Details: map[string]interface{}{
-					"retry_after": int(resetIn.Seconds()),
-					"reset_at":    time.Now().Add(resetIn).Unix(),
-				},
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-// RouteSpecificRateLimit applies different limits to different routes
-type RouteLimit struct {
-	Path   string
-	Limit  int
-	Window time.Duration
-}
-
-// RouteSpecificRateLimiter creates rate limiters for specific routes
-func RouteSpecificRateLimiter(routeLimits []RouteLimit, defaultLimit int) gin.HandlerFunc {
-	limiters := make(map[string]*rateLimiter)
-	configs := make(map[string]RateLimitConfig)
-
-	// Create limiters for each route
-	for _, rl := range routeLimits {
-		config := RateLimitConfig{
-			Limit:      rl.Limit,
-			Window:     rl.Window,
-			KeyFunc:    IPKeyFunc,
-			Message:    "Too many requests. Please try again later.",
-			StatusCode: http.StatusTooManyRequests,
-		}
-		limiters[rl.Path] = newRateLimiter(config)
-		configs[rl.Path] = config
-	}
-
-	// Create default limiter
-	defaultConfig := RateLimitConfig{
-		Limit:      defaultLimit,
-		Window:     1 * time.Minute,
-		KeyFunc:    IPKeyFunc,
-		Message:    "Too many requests. Please try again later.",
-		StatusCode: http.StatusTooManyRequests,
-	}
-	defaultLimiter := newRateLimiter(defaultConfig)
-
-	return func(c *gin.Context) {
-		path := c.Request.URL.Path
-
-		// Get limiter for this path
-		limiter, exists := limiters[path]
-		config := defaultConfig
-		if exists {
-			config = configs[path]
-		} else {
-			limiter = defaultLimiter
-		}
-
-		// Generate key
-		key := config.KeyFunc(c)
-
-		// Check rate limit
-		allowed, remaining, resetIn := limiter.allow(key)
-
-		// Set rate limit headers
-		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", config.Limit))
-		c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
-		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(resetIn).Unix()))
-
-		if !allowed {
-			c.Header("Retry-After", fmt.Sprintf("%d", int(resetIn.Seconds())))
-
-			RespondWithError(c, &AppError{
-				StatusCode: config.StatusCode,
-				Code:       "RATE_LIMIT_EXCEEDED",
-				Message:    config.Message,
-				Details: map[string]interface{}{
-					"retry_after": int(resetIn.Seconds()),
-					"reset_at":    time.Now().Add(resetIn).Unix(),
-				},
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
+	return c.ClientIP()
 }

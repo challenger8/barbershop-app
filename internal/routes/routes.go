@@ -2,6 +2,7 @@
 package routes
 
 import (
+	"barber-booking-system/internal/cache"
 	"barber-booking-system/internal/handlers"
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
@@ -11,13 +12,13 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Setup configures all application routes
-func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string) { // ✅ Add jwtSecret parameter
+// Setup configures all application routes with cache support
+func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, cacheService *cache.CacheService) {
 	// Initialize repositories
 	barberRepo := repository.NewBarberRepository(db)
 
-	// Initialize services
-	barberService := services.NewBarberService(barberRepo)
+	// Initialize services (with cache if available)
+	barberService := services.NewBarberService(barberRepo, cacheService)
 
 	// Initialize handlers
 	barberHandler := handlers.NewBarberHandler(barberService)
@@ -38,7 +39,7 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string) { // ✅ Add jwtSe
 
 		// Protected barber routes (auth required)
 		barbersProtected := v1.Group("/barbers")
-		barbersProtected.Use(middleware.RequireAuth(jwtSecret)) // ✅ Add auth
+		barbersProtected.Use(middleware.RequireAuth(jwtSecret))
 		{
 			barbersProtected.POST("", barberHandler.CreateBarber)
 			barbersProtected.PUT("/:id", barberHandler.UpdateBarber)
