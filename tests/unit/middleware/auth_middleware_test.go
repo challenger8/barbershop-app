@@ -278,7 +278,7 @@ func TestRefreshToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Wait a moment
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	// Refresh token
 	newToken, err := middleware.RefreshToken(originalToken, testSecretKey, 24*time.Hour)

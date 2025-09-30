@@ -132,6 +132,12 @@ func ValidateURI(model interface{}) gin.HandlerFunc {
 				return
 			}
 
+			// Handle binding errors (like invalid type conversions)
+			RespondWithError(c, NewValidationError("Invalid URI parameters", map[string]interface{}{
+				"error": err.Error(),
+			}))
+			c.Abort()
+			return
 		}
 
 		// Store validated URI in context
