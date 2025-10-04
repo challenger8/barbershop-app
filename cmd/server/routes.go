@@ -10,7 +10,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// SetupRoutes configures all application routes with cache support
+// SetupRoutes configures all application routes
 func SetupRoutes(router *gin.Engine, db *sqlx.DB, cfg *appConfig.Config, cacheService *cache.CacheService) {
-	routes.Setup(router, db, cfg.JWT.Secret, cacheService)
+	// Pass cache service to routes setup
+	routes.Setup(router, db, cfg.JWT.Secret, cfg.JWT.Expiration, cacheService)
 }
+
+// NOTE: Keep all other existing functions (setupMiddlewareWithRedis, getLogFormat, etc.) unchanged
+// They are already correct in your file
