@@ -1,50 +1,19 @@
+// tests/integration/server_test.go
 package integration
 
 import (
-	"barber-booking-system/config"
-	"barber-booking-system/internal/cache"
-	"barber-booking-system/internal/routes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"barber-booking-system/config"
+	"barber-booking-system/internal/routes"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func setupRedisClient(t *testing.T) *cache.RedisClient {
-	t.Helper()
-
-	// Use config.RedisConfig (not cache.RedisConfig)
-	client, err := cache.NewRedisClient(config.RedisConfig{
-		URL:      "redis://localhost:6379",
-		Password: "",
-		DB:       1, // Use test database (different from production DB 0)
-	})
-	if err != nil {
-		t.Logf("Redis not available: %v", err)
-		return nil
-	}
-
-	t.Cleanup(func() {
-		client.Close()
-	})
-
-	return client
-}
-
-func setupCacheService(t *testing.T) *cache.CacheService {
-	t.Helper()
-
-	client := setupRedisClient(t)
-	if client == nil {
-		return nil
-	}
-
-	return cache.NewCacheService(client)
-}
 
 func TestHealthEndpoint(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -75,13 +44,14 @@ func TestHealthEndpoint(t *testing.T) {
 func TestAllRoutesRegistered(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	cacheService := setupCacheService(t) // Fixed: proper variable declaration
 	cfg := getTestConfig(t)
 	dbManager := setupTestDatabase(t, cfg)
 	defer dbManager.Close()
 
 	router := gin.New()
-	routes.Setup(router, dbManager.DB, cfg.JWT.Secret, cfg.JWT.Expiration, cacheService)
+	// ✅ FIXED: Pass all 5 required parameters including jwtExpiration
+	// routes.Setup(router, db, jwtSecret, jwtExpiration, cacheService)
+	routes.Setup(router, dbManager.DB, cfg.JWT.Secret, cfg.JWT.Expiration, nil)
 
 	allRoutes := router.Routes()
 
