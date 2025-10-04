@@ -7,7 +7,6 @@ import (
 
 	"barber-booking-system/internal/cache"
 	"barber-booking-system/internal/models"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
