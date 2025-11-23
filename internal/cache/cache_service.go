@@ -84,3 +84,30 @@ func (s *CacheService) GetStats(ctx context.Context, statsKey string, dest inter
 func (s *CacheService) InvalidateAllBarbers(ctx context.Context) error {
 	return s.redis.DeletePattern(ctx, BarberPrefix+"*")
 }
+
+// Generic cache operations
+
+// Set stores any value in cache with medium TTL
+func (s *CacheService) Set(ctx context.Context, key string, value interface{}) error {
+	return s.redis.SetJSON(ctx, key, value, MediumTTL)
+}
+
+// SetWithTTL stores any value in cache with custom TTL
+func (s *CacheService) SetWithTTL(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return s.redis.SetJSON(ctx, key, value, ttl)
+}
+
+// Get retrieves a value from cache
+func (s *CacheService) Get(ctx context.Context, key string, dest interface{}) error {
+	return s.redis.GetJSON(ctx, key, dest)
+}
+
+// Delete removes a value from cache
+func (s *CacheService) Delete(ctx context.Context, key string) error {
+	return s.redis.Delete(ctx, key)
+}
+
+// Exists checks if a key exists in cache
+func (s *CacheService) Exists(ctx context.Context, key string) (bool, error) {
+	return s.redis.Exists(ctx, key)
+}
