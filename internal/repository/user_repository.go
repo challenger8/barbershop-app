@@ -24,17 +24,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 // FindByID retrieves a user by ID
 func (r *UserRepository) FindByID(ctx context.Context, id int) (*models.User, error) {
 	var user models.User
-	query := `
-		SELECT id, uuid, email, password_hash, name, phone, user_type, status,
-		       email_verified, phone_verified, two_factor_enabled, 
-		       failed_login_attempts, locked_until,
-		       date_of_birth, gender, profile_picture_url,
-		       address, city, state, country, postal_code, latitude, longitude,
-		       preferences, notification_settings,
-		       created_at, updated_at, last_login_at, created_by, deleted_at
-		FROM users
-		WHERE id = $1 AND deleted_at IS NULL
-	`
+	query := `SELECT ` + USER_COLUMNS + ` FROM users ` + WHERE_ACTIVE + ` AND id = $1`
 
 	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
@@ -47,20 +37,9 @@ func (r *UserRepository) FindByID(ctx context.Context, id int) (*models.User, er
 	return &user, nil
 }
 
-// FindByEmail retrieves a user by email
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
-	query := `
-		SELECT id, uuid, email, password_hash, name, phone, user_type, status,
-		       email_verified, phone_verified, two_factor_enabled, 
-		       failed_login_attempts, locked_until,
-		       date_of_birth, gender, profile_picture_url,
-		       address, city, state, country, postal_code, latitude, longitude,
-		       preferences, notification_settings,
-		       created_at, updated_at, last_login_at, created_by, deleted_at
-		FROM users
-		WHERE email = $1 AND deleted_at IS NULL
-	`
+	query := `SELECT ` + USER_COLUMNS + ` FROM users ` + WHERE_ACTIVE + ` AND email = $1`
 
 	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
@@ -69,7 +48,6 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models
 		}
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
-
 	return &user, nil
 }
 
@@ -119,18 +97,12 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	user.CreatedAt = now
-	user.UpdatedAt = now
+	// Single line replaces 3 lines
+	SetCreateTimestamps(&user.CreatedAt, &user.UpdatedAt)
 
-	// Set default values
-	if user.Status == "" {
-		user.Status = "active"
-	}
-	if user.UserType == "" {
-		user.UserType = "customer"
-	}
+	// Single line replaces if blocks
+	SetDefaultString(&user.Status, "active")
+	SetDefaultString(&user.UserType, "customer")
 
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
 	if err != nil {

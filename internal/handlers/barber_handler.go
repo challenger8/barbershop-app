@@ -90,6 +90,7 @@ func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id} [get]
 func (h *BarberHandler) GetBarber(c *gin.Context) {
+	// Single line replaces 7 lines
 	id, ok := RequireIntParam(c, "id", "barber")
 	if !ok {
 		return
@@ -97,26 +98,35 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 
 	barber, err := h.barberService.GetBarberByID(c.Request.Context(), id)
 	if err != nil {
-		if err == repository.ErrBarberNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber not found",
-				Message: "No barber found with the given ID",
-			})
-			return
+		// Single line handles common errors
+		if !HandleRepositoryError(c, err, "Barber") {
+			RespondInternalError(c, "fetch barber", err)
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barber",
-			Message: err.Error(),
-		})
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barber,
-	})
+	// Single line replaces 4 lines
+	RespondSuccess(c, barber)
 }
 
+func (h *BarberHandler) CreateBarber(c *gin.Context) {
+	var req services.CreateBarberRequest
+
+	// Single line replaces 5 lines
+	if err := c.ShouldBindJSON(&req); err != nil {
+		RespondValidationError(c, err)
+		return
+	}
+
+	barber, err := h.barberService.CreateBarber(c.Request.Context(), req)
+	if err != nil {
+		RespondInternalError(c, "create barber", err)
+		return
+	}
+
+	// Single line replaces 5 lines
+	RespondCreated(c, barber, "Barber created successfully")
+}
 // GetBarberByUUID godoc
 // @Summary Get barber by UUID
 // @Description Get detailed information about a specific barber by UUID
@@ -164,32 +174,7 @@ func (h *BarberHandler) GetBarberByUUID(c *gin.Context) {
 // @Failure 400 {object} middleware.ErrorResponse
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers [post]
-func (h *BarberHandler) CreateBarber(c *gin.Context) {
-	var req services.CreateBarberRequest
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
-		return
-	}
-
-	barber, err := h.barberService.CreateBarber(c.Request.Context(), req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to create barber",
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, SuccessResponse{
-		Success: true,
-		Data:    barber,
-		Message: "Barber created successfully",
-	})
-}
 
 // UpdateBarber godoc
 // @Summary Update barber

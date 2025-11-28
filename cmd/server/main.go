@@ -132,62 +132,14 @@ func setupRequestLimits(router *gin.Engine, cfg *appConfig.Config) {
 // setupMiddlewareWithRedis configures all middleware with optional Redis support
 func setupMiddlewareWithRedis(router *gin.Engine, cfg *appConfig.Config, redisClient *cache.RedisClient) {
 	// 1. Recovery - must be first to catch panics
-	router.Use(middleware.RecoveryHandler())
-
-	// 2. Request ID - for tracing
-	router.Use(middleware.RequestIDMiddleware())
-
-	// 3. CORS - handle cross-origin requests
-	var corsConfig middleware.CORSConfig
-	if cfg.IsDevelopment() {
-		corsConfig = middleware.DevelopmentCORSConfig()
-	} else {
-		corsConfig = middleware.ProductionCORSConfig(cfg.CORS.AllowedOrigins)
-	}
-	router.Use(middleware.CORS(corsConfig))
-
-	// 4. Security Headers
-	router.Use(middleware.SecurityHeaders())
-
-	// 5. Logging - log all requests
-	logConfig := middleware.LoggerConfig{
-		Format:          getLogFormat(cfg),
-		SkipPaths:       []string{"/health", "/metrics"},
-		LogRequestBody:  cfg.IsDevelopment(),
-		LogResponseBody: false,
-		MaxBodySize:     1024,
-	}
-	router.Use(middleware.Logger(logConfig))
-
-	// 6. Rate Limiting - with Redis if available
-	if redisClient != nil {
-		// Redis-based distributed rate limiting
-		log.Println("🔴 Using Redis-based rate limiting")
-		rateLimiter := middleware.NewRateLimiter(
-			redisClient,
-			cfg.API.RateLimit,
-			time.Minute,
-		)
-		router.Use(rateLimiter.Middleware())
-	} else {
-		// Fallback to in-memory rate limiting
-		log.Println("💾 Using in-memory rate limiting")
-		rateLimitConfig := middleware.DefaultRateLimitConfig()
-		rateLimitConfig.Limit = cfg.API.RateLimit
-		router.Use(middleware.RateLimitMiddleware(rateLimitConfig))
-	}
-
-	// 7. Error Handler - must be last
-	router.Use(middleware.ErrorHandler())
+	middleware.SetupRequestLimits(router, cfg.Upload.MaxFileSize)
+	middleware.SetupAll(router, middleware.SetupConfig{
+		Config:      cfg,
+		RedisClient: redisClient,
+	})
 }
 
-// getLogFormat returns the appropriate log format based on config
-func getLogFormat(cfg *appConfig.Config) middleware.LogFormat {
-	if cfg.Logging.Format == "json" {
-		return middleware.JSONFormat
-	}
-	return middleware.TextFormat
-}
+
 
 // printBanner prints application startup banner
 func printBanner() {
