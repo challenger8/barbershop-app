@@ -6,7 +6,6 @@ import (
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,16 +40,15 @@ func NewBarberHandler(barberService *services.BarberService) *BarberHandler {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers [get]
 func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
-	// Parse filters from query parameters
 	filters := repository.BarberFilters{
 		Status:    c.Query("status"),
 		City:      c.Query("city"),
 		State:     c.Query("state"),
 		Search:    c.Query("search"),
 		SortBy:    c.Query("sort_by"),
-		Limit:     parseIntQuery(c, "limit", 20),
-		Offset:    parseIntQuery(c, "offset", 0),
-		MinRating: parseFloatQuery(c, "min_rating", 0),
+		Limit:     ParseIntQuery(c, "limit", 20),       // Shared function (capitalized)
+		Offset:    ParseIntQuery(c, "offset", 0),       // Shared function (capitalized)
+		MinRating: ParseFloatQuery(c, "min_rating", 0), // Shared function (capitalized)
 	}
 
 	if verifiedStr := c.Query("is_verified"); verifiedStr != "" {
@@ -92,12 +90,8 @@ func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id} [get]
 func (h *BarberHandler) GetBarber(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
@@ -211,13 +205,10 @@ func (h *BarberHandler) CreateBarber(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id} [put]
 func (h *BarberHandler) UpdateBarber(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
+
 	}
 
 	var req services.UpdateBarberRequest
@@ -265,13 +256,10 @@ func (h *BarberHandler) UpdateBarber(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id} [delete]
 func (h *BarberHandler) DeleteBarber(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
+
 	}
 
 	if err := h.barberService.DeleteBarber(c.Request.Context(), id); err != nil {
@@ -309,12 +297,8 @@ func (h *BarberHandler) DeleteBarber(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/status [patch]
 func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
@@ -361,12 +345,8 @@ func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/statistics [get]
 func (h *BarberHandler) GetBarberStatistics(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
@@ -424,25 +404,6 @@ func (h *BarberHandler) SearchBarbers(c *gin.Context) {
 			"count": len(barbers),
 		},
 	})
-}
-
-// Helper functions
-func parseIntQuery(c *gin.Context, key string, defaultValue int) int {
-	if value := c.Query(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-func parseFloatQuery(c *gin.Context, key string, defaultValue float64) float64 {
-	if value := c.Query(key); value != "" {
-		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-			return floatValue
-		}
-	}
-	return defaultValue
 }
 
 // Request types (handler-specific)

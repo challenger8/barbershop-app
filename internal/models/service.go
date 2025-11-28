@@ -68,7 +68,6 @@ type Service struct {
 	ShortDescription    string  `json:"short_description" db:"short_description"`
 	DetailedDescription *string `json:"detailed_description" db:"detailed_description"`
 	CategoryID          int     `json:"category_id" db:"category_id"`
-
 	// Service characteristics
 	ServiceType        string `json:"service_type" db:"service_type"`                 // haircut, styling, treatment, grooming
 	Complexity         int    `json:"complexity" db:"complexity"`                     // 1-5 scale (1=easy, 5=expert)
@@ -136,7 +135,8 @@ type Service struct {
 	ChangeLog JSONMap `json:"change_log" db:"change_log"`
 
 	// Relations (populated when needed via joins)
-	Category *ServiceCategory `json:"category,omitempty"`
+	CategoryName *string          `json:"category_name,omitempty" db:"category_name"` // Populated from JOIN
+	Category     *ServiceCategory `json:"category,omitempty"`
 }
 
 // BarberService represents the junction table - how a barber offers a specific service

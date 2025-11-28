@@ -2,16 +2,14 @@
 package integration
 
 import (
+	"barber-booking-system/internal/models"
+	"barber-booking-system/internal/routes"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"barber-booking-system/config"
-	"barber-booking-system/internal/models"
-	"barber-booking-system/internal/routes"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -35,18 +33,6 @@ func getTestBarber() models.Barber {
 		Latitude:    float64Ptr(40.7128),
 		Longitude:   float64Ptr(-74.0060),
 	}
-}
-
-func setupTestRouter(t *testing.T) (*gin.Engine, *config.DatabaseManager, string) {
-	gin.SetMode(gin.TestMode)
-
-	cfg := getTestConfig(t)
-	dbManager := setupTestDatabase(t, cfg)
-
-	router := gin.New()
-	routes.Setup(router, dbManager.DB, cfg.JWT.Secret, cfg.JWT.Expiration, nil)
-
-	return router, dbManager, cfg.JWT.Secret
 }
 
 // =============================================================================

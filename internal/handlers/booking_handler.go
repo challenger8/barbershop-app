@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"barber-booking-system/internal/middleware"
@@ -33,48 +32,6 @@ func NewBookingHandler(bookingService *services.BookingService) *BookingHandler 
 // HELPER FUNCTIONS
 // ========================================================================
 
-// parseIntParam parses an integer from URL parameter
-func parseIntParam(c *gin.Context, paramName string) (int, error) {
-	value, err := strconv.Atoi(c.Param(paramName))
-	if err != nil {
-		return 0, err
-	}
-	return value, nil
-}
-
-// parseIntQuery parses an integer from query string with default value
-func parseIntQueryWithDefault(c *gin.Context, paramName string, defaultValue int) int {
-	value := c.Query(paramName)
-	if value == "" {
-		return defaultValue
-	}
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue
-	}
-	return intValue
-}
-
-// parseTimeQuery parses a time from query string
-func parseTimeQuery(c *gin.Context, paramName string) time.Time {
-	value := c.Query(paramName)
-	if value == "" {
-		return time.Time{}
-	}
-	// Try parsing different formats
-	formats := []string{
-		time.RFC3339,
-		"2006-01-02T15:04:05",
-		"2006-01-02",
-	}
-	for _, format := range formats {
-		if t, err := time.Parse(format, value); err == nil {
-			return t
-		}
-	}
-	return time.Time{}
-}
-
 // buildBookingFilters builds BookingFilters from query parameters
 func buildBookingFilters(c *gin.Context) repository.BookingFilters {
 	return repository.BookingFilters{
@@ -82,14 +39,14 @@ func buildBookingFilters(c *gin.Context) repository.BookingFilters {
 		PaymentStatus: c.Query("payment_status"),
 		BookingSource: c.Query("booking_source"),
 		Search:        c.Query("search"),
-		StartDateFrom: parseTimeQuery(c, "start_date_from"),
-		StartDateTo:   parseTimeQuery(c, "start_date_to"),
-		CreatedFrom:   parseTimeQuery(c, "created_from"),
-		CreatedTo:     parseTimeQuery(c, "created_to"),
-		SortBy:        c.DefaultQuery("sort_by", "created_at"),
-		Order:         c.DefaultQuery("order", "DESC"),
-		Limit:         parseIntQueryWithDefault(c, "limit", 50),
-		Offset:        parseIntQueryWithDefault(c, "offset", 0),
+		StartDateFrom: ParseTimeQuery(c, "start_date_from"), // Shared function
+		StartDateTo:   ParseTimeQuery(c, "start_date_to"),   // Shared function
+		CreatedFrom:   ParseTimeQuery(c, "created_from"),    // Shared function
+		CreatedTo:     ParseTimeQuery(c, "created_to"),      // Shared function
+		SortBy:        c.Query("sort_by"),
+		Order:         c.Query("order"),
+		Limit:         ParseIntQuery(c, "limit", 50), // Shared function
+		Offset:        ParseIntQuery(c, "offset", 0), // Shared function
 	}
 }
 
@@ -189,18 +146,14 @@ func containsAny(s string, substrings []string) bool {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/bookings/{id} [get]
 func (h *BookingHandler) GetBooking(c *gin.Context) {
-	// Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
 
-	// Get booking
 	booking, err := h.bookingService.GetBookingByID(c.Request.Context(), id)
+
+	// Get booking
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
 			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
@@ -376,13 +329,8 @@ func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/bookings [get]
 func (h *BookingHandler) GetBarberBookings(c *gin.Context) {
-	// Parse barber ID
-	barberID, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	barberID, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
@@ -428,13 +376,8 @@ func (h *BookingHandler) GetBarberBookings(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/bookings/today [get]
 func (h *BookingHandler) GetTodayBookings(c *gin.Context) {
-	// Parse barber ID
-	barberID, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	barberID, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
@@ -478,13 +421,8 @@ func (h *BookingHandler) GetTodayBookings(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/bookings/{id} [put]
 func (h *BookingHandler) UpdateBooking(c *gin.Context) {
-	// Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
 
@@ -548,27 +486,8 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/bookings/{id}/status [patch]
 func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
-	// ─────────────────────────────────────────────────────────────────
-	// TODO: YOUR TASK #1 - Complete this handler
-	// ─────────────────────────────────────────────────────────────────
-	// Steps:
-	// 1. Parse booking ID from URL parameter "id"
-	// 2. Parse request body into services.UpdateStatusRequest
-	// 3. Get user ID from auth context (middleware.GetUserID)
-	// 4. Call h.bookingService.UpdateStatus()
-	// 5. Handle errors (ErrBookingNotFound → 404, ErrInvalidStatusChange → 422)
-	// 6. Return success response with updated booking
-	//
-	// Look at UpdateBooking() above for reference!
-	// ─────────────────────────────────────────────────────────────────
-
-	// Step 1: Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
 
@@ -642,13 +561,8 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/bookings/{id}/reschedule [put]
 func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
-	// Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
 
@@ -719,32 +633,10 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/bookings/{id} [delete]
 func (h *BookingHandler) CancelBooking(c *gin.Context) {
-	// ─────────────────────────────────────────────────────────────────
-	// TODO: YOUR TASK #2 - Complete this handler
-	// ─────────────────────────────────────────────────────────────────
-	// Steps:
-	// 1. Parse booking ID from URL parameter "id"
-	// 2. Parse request body into services.CancelBookingRequest (optional body)
-	// 3. Get user ID from auth context - REQUIRED for cancellation
-	// 4. Call h.bookingService.CancelBooking()
-	// 5. Handle errors:
-	//    - ErrBookingNotFound → 404
-	//    - ErrCancellationNotAllowed → 422
-	// 6. Return success message
-	//
-	// Note: For DELETE requests, body might be empty, so handle that case
-	// ─────────────────────────────────────────────────────────────────
-
-	// Step 1: Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
-
 	// Step 2: Parse request body (optional)
 	var req services.CancelBookingRequest
 	// Ignore error if body is empty - cancellation reason is optional
@@ -761,7 +653,7 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 	}
 
 	// Step 4: Cancel booking
-	err = h.bookingService.CancelBooking(c.Request.Context(), id, req, userID)
+	err := h.bookingService.CancelBooking(c.Request.Context(), id, req, userID)
 	if err != nil {
 		// Step 5: Handle errors
 		if err == repository.ErrBookingNotFound {
@@ -810,17 +702,13 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/bookings/availability [get]
 func (h *BookingHandler) CheckAvailability(c *gin.Context) {
-	// Parse parameters
-	barberID := parseIntQueryWithDefault(c, "barber_id", 0)
+	barberID := ParseIntQuery(c, "barber_id", 0) // Shared function
 	if barberID == 0 {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Missing barber_id",
-			Message: "barber_id query parameter is required",
-		})
+		RespondBadRequest(c, "Missing barber_id", "barber_id query parameter is required")
 		return
 	}
 
-	startTime := parseTimeQuery(c, "start_time")
+	startTime := ParseTimeQuery(c, "start_time")
 	if startTime.IsZero() {
 		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
 			Error:   "Invalid start_time",
@@ -829,7 +717,7 @@ func (h *BookingHandler) CheckAvailability(c *gin.Context) {
 		return
 	}
 
-	duration := parseIntQueryWithDefault(c, "duration", 0)
+	duration := ParseIntQuery(c, "duration", 0)
 	if duration == 0 {
 		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
 			Error:   "Missing duration",
@@ -878,23 +766,20 @@ func (h *BookingHandler) CheckAvailability(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/bookings/stats [get]
 func (h *BookingHandler) GetBarberBookingStats(c *gin.Context) {
-	// Parse barber ID
-	barberID, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	barberID, ok := RequireIntParam(c, "id", "barber")
+	if !ok {
 		return
 	}
 
 	// Parse date range (default to last 30 days)
-	to := parseTimeQuery(c, "to")
+	to := ParseTimeQuery(c, "to")
+
+	
 	if to.IsZero() {
 		to = time.Now()
 	}
 
-	from := parseTimeQuery(c, "from")
+	from := ParseTimeQuery(c, "from")
 	if from.IsZero() {
 		from = to.AddDate(0, 0, -30) // 30 days ago
 	}
@@ -938,16 +823,10 @@ func (h *BookingHandler) GetBarberBookingStats(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/bookings/{id}/history [get]
 func (h *BookingHandler) GetBookingHistory(c *gin.Context) {
-	// Parse booking ID
-	id, err := parseIntParam(c, "id")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid booking ID",
-			Message: "Booking ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "booking")
+	if !ok {
 		return
 	}
-
 	// Get history
 	history, err := h.bookingService.GetBookingHistory(c.Request.Context(), id)
 	if err != nil {

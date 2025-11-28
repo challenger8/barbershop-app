@@ -6,7 +6,6 @@ import (
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,15 +45,15 @@ func NewServiceHandler(serviceService *services.ServiceService) *ServiceHandler 
 // @Router /api/v1/services [get]
 func (h *ServiceHandler) GetAllServices(c *gin.Context) {
 	filters := repository.ServiceFilters{
-		CategoryID:   parseIntQuery(c, "category_id", 0),
+		CategoryID:   ParseIntQuery(c, "category_id", 0), // Shared function
 		ServiceType:  c.Query("service_type"),
-		MinRating:    parseFloatQuery(c, "min_rating", 0),
-		Complexity:   parseIntQuery(c, "complexity", 0),
+		MinRating:    ParseFloatQuery(c, "min_rating", 0), // Shared function
+		Complexity:   ParseIntQuery(c, "complexity", 0),   // Shared function
 		TargetGender: c.Query("target_gender"),
 		Search:       c.Query("search"),
 		SortBy:       c.Query("sort_by"),
-		Limit:        parseIntQuery(c, "limit", 20),
-		Offset:       parseIntQuery(c, "offset", 0),
+		Limit:        ParseIntQuery(c, "limit", 20), // Shared function
+		Offset:       ParseIntQuery(c, "offset", 0), // Shared function
 	}
 
 	if activeStr := c.Query("is_active"); activeStr != "" {
@@ -100,12 +99,8 @@ func (h *ServiceHandler) GetAllServices(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/{id} [get]
 func (h *ServiceHandler) GetService(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid service ID",
-			Message: "Service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "service")
+	if !ok {
 		return
 	}
 
@@ -224,12 +219,8 @@ func (h *ServiceHandler) CreateService(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/{id} [put]
 func (h *ServiceHandler) UpdateService(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid service ID",
-			Message: "Service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "service")
+	if !ok {
 		return
 	}
 
@@ -283,12 +274,8 @@ func (h *ServiceHandler) UpdateService(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/{id} [delete]
 func (h *ServiceHandler) DeleteService(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid service ID",
-			Message: "Service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "service")
+	if !ok {
 		return
 	}
 
@@ -327,7 +314,7 @@ func (h *ServiceHandler) DeleteService(c *gin.Context) {
 func (h *ServiceHandler) SearchServices(c *gin.Context) {
 	query := c.Query("q")
 	filters := repository.ServiceFilters{
-		CategoryID: parseIntQuery(c, "category_id", 0),
+		CategoryID: ParseIntQuery(c, "category_id", 0), // Shared function
 		Limit:      50,
 	}
 	isActive := true
@@ -398,12 +385,8 @@ func (h *ServiceHandler) GetAllCategories(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/categories/{id} [get]
 func (h *ServiceHandler) GetCategory(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid category ID",
-			Message: "Category ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "category")
+	if !ok {
 		return
 	}
 
@@ -481,12 +464,8 @@ func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/categories/{id} [put]
 func (h *ServiceHandler) UpdateCategory(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid category ID",
-			Message: "Category ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "category")
+	if !ok {
 		return
 	}
 
@@ -535,12 +514,8 @@ func (h *ServiceHandler) UpdateCategory(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/categories/{id} [delete]
 func (h *ServiceHandler) DeleteCategory(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid category ID",
-			Message: "Category ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "category")
+	if !ok {
 		return
 	}
 
@@ -579,12 +554,8 @@ func (h *ServiceHandler) DeleteCategory(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{barber_id}/services [get]
 func (h *ServiceHandler) GetBarberServices(c *gin.Context) {
-	barberID, err := strconv.Atoi(c.Param("barber_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber ID",
-			Message: "Barber ID must be a number",
-		})
+	barberID, ok := RequireIntParam(c, "barber_id", "barber")
+	if !ok {
 		return
 	}
 
@@ -619,12 +590,8 @@ func (h *ServiceHandler) GetBarberServices(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/{service_id}/barbers [get]
 func (h *ServiceHandler) GetBarbersOfferingService(c *gin.Context) {
-	serviceID, err := strconv.Atoi(c.Param("service_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid service ID",
-			Message: "Service ID must be a number",
-		})
+	serviceID, ok := RequireIntParam(c, "service_id", "service")
+	if !ok {
 		return
 	}
 
@@ -699,12 +666,8 @@ func (h *ServiceHandler) AddServiceToBarber(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barber-services/{id} [put]
 func (h *ServiceHandler) UpdateBarberService(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber service ID",
-			Message: "Barber service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber service")
+	if !ok {
 		return
 	}
 
@@ -753,12 +716,8 @@ func (h *ServiceHandler) UpdateBarberService(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barber-services/{id} [delete]
 func (h *ServiceHandler) RemoveServiceFromBarber(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber service ID",
-			Message: "Barber service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber service")
+	if !ok {
 		return
 	}
 
@@ -796,12 +755,8 @@ func (h *ServiceHandler) RemoveServiceFromBarber(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barber-services/{id} [get]
 func (h *ServiceHandler) GetBarberServiceByID(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid barber service ID",
-			Message: "Barber service ID must be a number",
-		})
+	id, ok := RequireIntParam(c, "id", "barber service")
+	if !ok {
 		return
 	}
 

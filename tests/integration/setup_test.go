@@ -2,12 +2,17 @@
 package integration
 
 import (
+	"barber-booking-system/internal/middleware"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"barber-booking-system/config"
 	appConfig "barber-booking-system/internal/config"
+	"barber-booking-system/internal/routes"
+
+	"github.com/gin-gonic/gin"
 )
 
 func getTestConfig(t *testing.T) *appConfig.Config {
@@ -50,19 +55,54 @@ func setupTestDatabase(t *testing.T, cfg *appConfig.Config) *config.DatabaseMana
 	return dbManager
 }
 
-func cleanupTestData(t *testing.T, dbManager *config.DatabaseManager) {
-	// Only clean test data (data created during tests)
-	// Be very careful with this in production database
-	queries := []string{
-		"DELETE FROM bookings WHERE booking_number LIKE 'TEST%'",
-		"DELETE FROM barbers WHERE shop_name LIKE 'Test%'",
-		"DELETE FROM users WHERE email LIKE 'test%@test.com'",
-	}
+func setupTestRouter(t *testing.T) (*gin.Engine, *config.DatabaseManager, string) {
+	gin.SetMode(gin.TestMode)
 
-	for _, query := range queries {
-		_, err := dbManager.DB.Exec(query)
-		if err != nil {
-			t.Logf("Warning: cleanup query failed: %v", err)
-		}
-	}
+	cfg := getTestConfig(t)
+	dbManager := setupTestDatabase(t, cfg)
+
+	router := gin.New()
+	routes.Setup(router, dbManager.DB, cfg.JWT.Secret, cfg.JWT.Expiration, nil)
+
+	return router, dbManager, cfg.JWT.Secret
+}
+
+// tests/integration/test_helpers.go
+
+// Pointer helper functions for tests
+// These make it easy to create pointer values for optional fields
+
+// String pointer helper
+func stringPtr(s string) *string {
+	return &s
+}
+
+// Int pointer helper
+func intPtr(i int) *int {
+	return &i
+}
+
+// Int64 pointer helper
+func int64Ptr(i int64) *int64 {
+	return &i
+}
+
+// Float64 pointer helper
+func float64Ptr(f float64) *float64 {
+	return &f
+}
+
+// Bool pointer helper
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+// Time pointer helper
+func timePtr(t time.Time) *time.Time {
+	return &t
+}
+
+// generateTestToken creates a JWT token for testing
+func generateTestToken(userID int, email string, userType string, jwtSecret string) (string, error) {
+	return middleware.GenerateToken(userID, email, userType, jwtSecret, 24*time.Hour)
 }
