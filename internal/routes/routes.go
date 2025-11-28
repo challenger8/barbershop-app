@@ -15,106 +15,157 @@ import (
 
 // Setup configures all application routes
 func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time.Duration, cacheService *cache.CacheService) {
-	// Initialize repositories
+	// ========================================================================
+	// INITIALIZE REPOSITORIES
+	// ========================================================================
 	userRepo := repository.NewUserRepository(db)
 	barberRepo := repository.NewBarberRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
+	bookingRepo := repository.NewBookingRepository(db) // NEW
 
-	// Initialize services (with cache support)
+	// ========================================================================
+	// INITIALIZE SERVICES
+	// ========================================================================
 	userService := services.NewUserService(userRepo, jwtSecret, jwtExpiration)
 	barberService := services.NewBarberService(barberRepo, cacheService)
 	serviceService := services.NewServiceService(serviceRepo, cacheService)
+	bookingService := services.NewBookingService(bookingRepo, barberRepo, serviceRepo, cacheService) // NEW
 
-	// Initialize handlers
+	// ========================================================================
+	// INITIALIZE HANDLERS
+	// ========================================================================
 	authHandler := handlers.NewAuthHandler(userService)
 	barberHandler := handlers.NewBarberHandler(barberService)
 	serviceHandler := handlers.NewServiceHandler(serviceService)
+	bookingHandler := handlers.NewBookingHandler(bookingService) // NEW
 
-	// API v1 routes
+	// ========================================================================
+	// API v1 ROUTES
+	// ========================================================================
 	v1 := router.Group("/api/v1")
 	{
-		// Authentication routes
+		// ────────────────────────────────────────────────────────────────
+		// AUTHENTICATION ROUTES
+		// ────────────────────────────────────────────────────────────────
 		auth := v1.Group("/auth")
 		{
-			// Public auth routes (no authentication required)
+			// Public auth routes
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 
-			// Protected auth routes (authentication required)
-			authProtected := auth.Group("")
-			authProtected.Use(middleware.RequireAuth(jwtSecret))
+			// Protected auth routes
+			protected := auth.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
 			{
-				authProtected.GET("/me", authHandler.GetMe)
-				authProtected.PUT("/profile", authHandler.UpdateProfile)
-				authProtected.POST("/change-password", authHandler.ChangePassword)
-				authProtected.POST("/logout", authHandler.Logout)
+				protected.GET("/me", authHandler.GetMe)
+				protected.PUT("/profile", authHandler.UpdateProfile)
+				protected.POST("/change-password", authHandler.ChangePassword)
+				protected.POST("/logout", authHandler.Logout)
 			}
 		}
 
-		// Barber routes
+		// ────────────────────────────────────────────────────────────────
+		// BARBER ROUTES
+		// ────────────────────────────────────────────────────────────────
 		barbers := v1.Group("/barbers")
 		{
-			// Public barber routes (no auth required)
+			// Public barber routes
 			barbers.GET("", barberHandler.GetAllBarbers)
 			barbers.GET("/search", barberHandler.SearchBarbers)
 			barbers.GET("/:id", barberHandler.GetBarber)
 			barbers.GET("/uuid/:uuid", barberHandler.GetBarberByUUID)
 			barbers.GET("/:id/statistics", barberHandler.GetBarberStatistics)
+			barbers.GET("/:id/services", serviceHandler.GetBarberServices)
+
+			// NEW: Barber booking routes (public - view bookings)
+			barbers.GET("/:id/bookings", bookingHandler.GetBarberBookings)
+			barbers.GET("/:id/bookings/today", bookingHandler.GetTodayBookings)
+			barbers.GET("/:id/bookings/stats", bookingHandler.GetBarberBookingStats)
+
+			// Protected barber routes
+			protected := barbers.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
+			{
+				protected.POST("", barberHandler.CreateBarber)
+				protected.PUT("/:id", barberHandler.UpdateBarber)
+				protected.DELETE("/:id", barberHandler.DeleteBarber)
+				protected.PATCH("/:id/status", barberHandler.UpdateBarberStatus)
+			}
 		}
 
-		// Protected barber routes (auth required)
-		barbersProtected := v1.Group("/barbers")
-		barbersProtected.Use(middleware.RequireAuth(jwtSecret))
+		// ────────────────────────────────────────────────────────────────
+		// SERVICE ROUTES
+		// ────────────────────────────────────────────────────────────────
+		svcs := v1.Group("/services")
 		{
-			barbersProtected.POST("", barberHandler.CreateBarber)
-			barbersProtected.PUT("/:id", barberHandler.UpdateBarber)
-			barbersProtected.DELETE("/:id", barberHandler.DeleteBarber)
-			barbersProtected.PATCH("/:id/status", barberHandler.UpdateBarberStatus)
+			// Public service routes
+			svcs.GET("", serviceHandler.GetAllServices)
+			svcs.GET("/search", serviceHandler.SearchServices)
+			svcs.GET("/:id", serviceHandler.GetService)
+			svcs.GET("/slug/:slug", serviceHandler.GetServiceBySlug)
+			svcs.GET("/categories", serviceHandler.GetAllCategories)
+			svcs.GET("/categories/:id", serviceHandler.GetCategory)
+
+			// Protected service routes (admin only)
+			protected := svcs.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
+			{
+				protected.POST("", serviceHandler.CreateService)
+				protected.PUT("/:id", serviceHandler.UpdateService)
+				protected.DELETE("/:id", serviceHandler.DeleteService)
+
+				// Category management
+				protected.POST("/categories", serviceHandler.CreateCategory)
+				protected.PUT("/categories/:id", serviceHandler.UpdateCategory)
+				protected.DELETE("/categories/:id", serviceHandler.DeleteCategory)
+			}
 		}
 
-		// Service routes
-		services := v1.Group("/services")
-		{
-			// Public service routes (no auth required)
-			services.GET("", serviceHandler.GetAllServices)
-			services.GET("/search", serviceHandler.SearchServices)
-			services.GET("/categories", serviceHandler.GetAllCategories)
-			services.GET("/categories/:id", serviceHandler.GetCategory)
-			services.GET("/:id", serviceHandler.GetService)
-			services.GET("/slug/:slug", serviceHandler.GetServiceBySlug)
-			services.GET("/:service_id/barbers", serviceHandler.GetBarbersOfferingService)
-		}
-
-		// Protected service routes (auth required - admin only)
-		servicesProtected := v1.Group("/services")
-		servicesProtected.Use(middleware.RequireAuth(jwtSecret))
-		{
-			servicesProtected.POST("", serviceHandler.CreateService)
-			servicesProtected.PUT("/:id", serviceHandler.UpdateService)
-			servicesProtected.DELETE("/:id", serviceHandler.DeleteService)
-			servicesProtected.POST("/categories", serviceHandler.CreateCategory)
-			servicesProtected.PUT("/categories/:id", serviceHandler.UpdateCategory)
-			servicesProtected.DELETE("/categories/:id", serviceHandler.DeleteCategory)
-		}
-
-		// Barber services routes (services offered by barbers)
+		// ────────────────────────────────────────────────────────────────
+		// BARBER-SERVICE ROUTES (Junction table management)
+		// ────────────────────────────────────────────────────────────────
 		barberServices := v1.Group("/barber-services")
 		{
-			// Public routes
-			barberServices.GET("/:id", serviceHandler.GetBarberServiceByID)
+			// Protected (all require auth)
+			barberServices.Use(middleware.RequireAuth(jwtSecret))
+			{
+				barberServices.POST("", serviceHandler.AddServiceToBarber)
+				barberServices.PUT("/:id", serviceHandler.UpdateBarberService)
+				barberServices.DELETE("/:id", serviceHandler.RemoveServiceFromBarber)
+			}
 		}
 
-		// Protected barber services routes
-		barberServicesProtected := v1.Group("/barber-services")
-		barberServicesProtected.Use(middleware.RequireAuth(jwtSecret))
+		// ────────────────────────────────────────────────────────────────
+		// BOOKING ROUTES (NEW!)
+		// ────────────────────────────────────────────────────────────────
+		bookings := v1.Group("/bookings")
 		{
-			barberServicesProtected.POST("", serviceHandler.AddServiceToBarber)
-			barberServicesProtected.PUT("/:id", serviceHandler.UpdateBarberService)
-			barberServicesProtected.DELETE("/:id", serviceHandler.RemoveServiceFromBarber)
-		}
+			// Public booking routes
+			bookings.GET("/availability", bookingHandler.CheckAvailability)
+			bookings.GET("/uuid/:uuid", bookingHandler.GetBookingByUUID)
+			bookings.GET("/number/:number", bookingHandler.GetBookingByNumber)
 
-		// Get barber's services (nested under barbers)
-		v1.GET("/barbers/:barber_id/services", serviceHandler.GetBarberServices)
+			// Protected booking routes
+			protected := bookings.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
+			{
+				// Create booking
+				protected.POST("", bookingHandler.CreateBooking)
+
+				// Get bookings
+				protected.GET("/me", bookingHandler.GetMyBookings)
+				protected.GET("/:id", bookingHandler.GetBooking)
+				protected.GET("/:id/history", bookingHandler.GetBookingHistory)
+
+				// Update booking
+				protected.PUT("/:id", bookingHandler.UpdateBooking)
+				protected.PATCH("/:id/status", bookingHandler.UpdateBookingStatus)
+				protected.PUT("/:id/reschedule", bookingHandler.RescheduleBooking)
+
+				// Cancel booking
+				protected.DELETE("/:id", bookingHandler.CancelBooking)
+			}
+		}
 	}
 }
