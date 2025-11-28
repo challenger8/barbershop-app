@@ -109,6 +109,18 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 	RespondSuccess(c, barber)
 }
 
+// CreateBarber godoc
+// @Summary Create new barber
+// @Description Create a new barber profile
+// @Tags barbers
+// @Accept json
+// @Produce json
+// @Param barber body services.CreateBarberRequest true "Barber data"
+// @Success 201 {object} SuccessResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
+// @Security BearerAuth
+// @Router /api/v1/barbers [post]
 func (h *BarberHandler) CreateBarber(c *gin.Context) {
 	var req services.CreateBarberRequest
 
@@ -127,6 +139,7 @@ func (h *BarberHandler) CreateBarber(c *gin.Context) {
 	// Single line replaces 5 lines
 	RespondCreated(c, barber, "Barber created successfully")
 }
+
 // GetBarberByUUID godoc
 // @Summary Get barber by UUID
 // @Description Get detailed information about a specific barber by UUID
@@ -174,7 +187,6 @@ func (h *BarberHandler) GetBarberByUUID(c *gin.Context) {
 // @Failure 400 {object} middleware.ErrorResponse
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers [post]
-
 
 // UpdateBarber godoc
 // @Summary Update barber

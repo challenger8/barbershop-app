@@ -3,6 +3,7 @@ package main
 
 import (
 	"barber-booking-system/config"
+	_ "barber-booking-system/docs"
 	"barber-booking-system/internal/cache"
 	appConfig "barber-booking-system/internal/config"
 	"barber-booking-system/internal/middleware"
@@ -16,7 +17,31 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	// Swagger imports
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Barbershop Booking API
+// @version 1.0.0
+// @description A production-ready RESTful API for barbershop booking system
+// @description Features: User authentication, Barber management, Service catalog, Booking system
+
+// @contact.name API Support
+// @contact.email support@barbershop.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
 
 func main() {
 	// Print startup banner
@@ -78,6 +103,9 @@ func main() {
 	// Setup routes (pass cache service)
 	SetupRoutes(router, dbManager.DB, cfg, cacheService)
 
+	// Setup Swagger
+	setupSwagger(router)
+
 	// Create server manager
 	serverManager := config.NewServerManager(cfg.Server, router)
 
@@ -86,6 +114,7 @@ func main() {
 		log.Printf("🚀 Server starting on %s", serverManager.GetFullAddress())
 		log.Printf("📝 Environment: %s", cfg.App.Environment)
 		log.Printf("🔧 Gin mode: %s", cfg.Server.GinMode)
+		log.Printf("📚 Swagger UI: http://%s/swagger/index.html", serverManager.GetFullAddress())
 		if redisClient != nil {
 			log.Printf("🔴 Redis: Enabled (caching & rate limiting)")
 		} else {
@@ -113,6 +142,12 @@ func main() {
 	log.Println("✅ Server exited gracefully")
 }
 
+// setupSwagger configures Swagger documentation route
+func setupSwagger(router *gin.Engine) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	log.Println("📚 Swagger documentation enabled at /swagger/index.html")
+}
+
 // setupRouter configures basic middleware and health check
 func setupRouter(cfg *appConfig.Config, dbManager *config.DatabaseManager) *gin.Engine {
 	gin.SetMode(cfg.Server.GinMode)
@@ -131,15 +166,12 @@ func setupRequestLimits(router *gin.Engine, cfg *appConfig.Config) {
 
 // setupMiddlewareWithRedis configures all middleware with optional Redis support
 func setupMiddlewareWithRedis(router *gin.Engine, cfg *appConfig.Config, redisClient *cache.RedisClient) {
-	// 1. Recovery - must be first to catch panics
 	middleware.SetupRequestLimits(router, cfg.Upload.MaxFileSize)
 	middleware.SetupAll(router, middleware.SetupConfig{
 		Config:      cfg,
 		RedisClient: redisClient,
 	})
 }
-
-
 
 // printBanner prints application startup banner
 func printBanner() {
@@ -167,7 +199,6 @@ func logConfigSummary(cfg *appConfig.Config) {
 	log.Printf("   Upload Max Size: %.2f MB", float64(cfg.Upload.MaxFileSize)/(1024*1024))
 	log.Printf("   CORS Origins: %v", cfg.CORS.AllowedOrigins)
 
-	// Warning for development
 	if cfg.IsDevelopment() {
 		log.Println("⚠️  Running in DEVELOPMENT mode")
 	} else if cfg.IsProduction() {

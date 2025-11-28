@@ -1,0 +1,2388 @@
+basePath: /
+definitions:
+  handlers.StatusUpdateRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  handlers.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      meta: {}
+      success:
+        type: boolean
+    type: object
+  middleware.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  models.JSONMap:
+    additionalProperties: true
+    type: object
+  services.AuthResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/services.UserProfileResponse'
+    type: object
+  services.CancelBookingRequest:
+    properties:
+      is_by_customer:
+        type: boolean
+      reason:
+        type: string
+    type: object
+  services.ChangePasswordRequest:
+    properties:
+      confirm_password:
+        type: string
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        type: string
+    required:
+    - confirm_password
+    - new_password
+    - old_password
+    type: object
+  services.CreateBarberServiceRequest:
+    properties:
+      advance_notice_hours:
+        type: integer
+      available_days:
+        items:
+          type: string
+        type: array
+      available_time_slots:
+        $ref: '#/definitions/models.JSONMap'
+      barber_id:
+        type: integer
+      before_after_images:
+        items:
+          type: string
+        type: array
+      buffer_time_minutes:
+        type: integer
+      consultation_duration:
+        type: integer
+      currency:
+        type: string
+      custom_description:
+        type: string
+      custom_name:
+        type: string
+      discount_price:
+        type: number
+      discount_valid_until:
+        type: string
+      display_order:
+        type: integer
+      estimated_duration_max:
+        type: integer
+      estimated_duration_min:
+        type: integer
+      is_featured:
+        type: boolean
+      is_promotional:
+        type: boolean
+      is_seasonal:
+        type: boolean
+      max_advance_booking_days:
+        type: integer
+      max_customer_age:
+        type: integer
+      max_price:
+        type: number
+      min_customer_age:
+        type: integer
+      portfolio_images:
+        items:
+          type: string
+        type: array
+      post_service_care:
+        type: string
+      pre_service_instructions:
+        type: string
+      price:
+        type: number
+      promotion_end_date:
+        type: string
+      promotion_start_date:
+        type: string
+      promotional_text:
+        type: string
+      requires_consultation:
+        type: boolean
+      seasonal_end_month:
+        type: integer
+      seasonal_start_month:
+        type: integer
+      service_id:
+        type: integer
+      service_note:
+        type: string
+    required:
+    - barber_id
+    - estimated_duration_min
+    - price
+    - service_id
+    type: object
+  services.CreateBookingRequest:
+    properties:
+      barber_id:
+        description: Required fields
+        type: integer
+      booking_source:
+        description: mobile_app, web_app, phone, walk_in
+        type: string
+      customer_email:
+        type: string
+      customer_id:
+        description: Customer info (either customer_id OR guest info)
+        type: integer
+      customer_name:
+        type: string
+      customer_phone:
+        type: string
+      discount_amount:
+        type: number
+      duration_minutes:
+        maximum: 480
+        minimum: 15
+        type: integer
+      notes:
+        description: Optional fields
+        type: string
+      service_id:
+        type: integer
+      service_price:
+        description: Pricing (optional - will be calculated if not provided)
+        type: number
+      special_requests:
+        type: string
+      start_time:
+        type: string
+    required:
+    - barber_id
+    - duration_minutes
+    - service_id
+    - start_time
+    type: object
+  services.CreateCategoryRequest:
+    properties:
+      category_path:
+        type: string
+      color_hex:
+        type: string
+      description:
+        type: string
+      icon_url:
+        type: string
+      image_url:
+        type: string
+      is_featured:
+        type: boolean
+      keywords:
+        items:
+          type: string
+        type: array
+      level:
+        type: integer
+      meta_description:
+        type: string
+      meta_title:
+        type: string
+      name:
+        type: string
+      parent_category_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - name
+    type: object
+  services.CreateServiceRequest:
+    properties:
+      allergen_warnings:
+        items:
+          type: string
+        type: array
+      allows_add_ons:
+        type: boolean
+      category_id:
+        type: integer
+      complexity:
+        maximum: 5
+        minimum: 1
+        type: integer
+      created_by:
+        type: integer
+      currency:
+        type: string
+      default_duration_max:
+        type: integer
+      default_duration_min:
+        type: integer
+      detailed_description:
+        type: string
+      gallery_images:
+        items:
+          type: string
+        type: array
+      hair_types:
+        items:
+          type: string
+        type: array
+      has_variations:
+        type: boolean
+      health_precautions:
+        items:
+          type: string
+        type: array
+      image_url:
+        type: string
+      meta_description:
+        type: string
+      name:
+        type: string
+      required_certifications:
+        items:
+          type: string
+        type: array
+      required_products:
+        items:
+          type: string
+        type: array
+      required_tools:
+        items:
+          type: string
+        type: array
+      requires_consultation:
+        type: boolean
+      requires_health_check:
+        type: boolean
+      search_keywords:
+        items:
+          type: string
+        type: array
+      service_type:
+        type: string
+      short_description:
+        type: string
+      skill_level_required:
+        type: string
+      slug:
+        type: string
+      suggested_price_max:
+        type: number
+      suggested_price_min:
+        type: number
+      tags:
+        items:
+          type: string
+        type: array
+      target_age_max:
+        type: integer
+      target_age_min:
+        type: integer
+      target_gender:
+        type: string
+      video_url:
+        type: string
+    required:
+    - category_id
+    - complexity
+    - default_duration_min
+    - name
+    - service_type
+    - short_description
+    type: object
+  services.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  services.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phone:
+        type: string
+      user_type:
+        enum:
+        - customer
+        - barber
+        - admin
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  services.RescheduleBookingRequest:
+    properties:
+      duration_minutes:
+        type: integer
+      new_start_time:
+        type: string
+      reason:
+        type: string
+    required:
+    - new_start_time
+    type: object
+  services.UpdateBarberRequest:
+    properties:
+      address:
+        type: string
+      address_line_2:
+        type: string
+      business_email:
+        type: string
+      business_name:
+        type: string
+      certifications:
+        items:
+          type: string
+        type: array
+      city:
+        type: string
+      country:
+        type: string
+      cover_image_url:
+        type: string
+      description:
+        type: string
+      gallery_images:
+        items:
+          type: string
+        type: array
+      languages_spoken:
+        items:
+          type: string
+        type: array
+      phone:
+        type: string
+      postal_code:
+        type: string
+      profile_image_url:
+        type: string
+      shop_name:
+        type: string
+      specialties:
+        items:
+          type: string
+        type: array
+      state:
+        type: string
+      website_url:
+        type: string
+      working_hours:
+        $ref: '#/definitions/models.JSONMap'
+      years_experience:
+        type: integer
+    type: object
+  services.UpdateBarberServiceRequest:
+    properties:
+      advance_notice_hours:
+        type: integer
+      available_days:
+        items:
+          type: string
+        type: array
+      buffer_time_minutes:
+        type: integer
+      currency:
+        type: string
+      custom_description:
+        type: string
+      custom_name:
+        type: string
+      discount_price:
+        type: number
+      discount_valid_until:
+        type: string
+      display_order:
+        type: integer
+      estimated_duration_max:
+        type: integer
+      estimated_duration_min:
+        type: integer
+      is_active:
+        type: boolean
+      is_featured:
+        type: boolean
+      is_promotional:
+        type: boolean
+      max_advance_booking_days:
+        type: integer
+      max_price:
+        type: number
+      portfolio_images:
+        items:
+          type: string
+        type: array
+      price:
+        type: number
+      promotional_text:
+        type: string
+      service_note:
+        type: string
+    type: object
+  services.UpdateBookingRequest:
+    properties:
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      customer_phone:
+        type: string
+      internal_notes:
+        type: string
+      notes:
+        type: string
+      special_requests:
+        type: string
+    type: object
+  services.UpdateCategoryRequest:
+    properties:
+      color_hex:
+        type: string
+      description:
+        type: string
+      icon_url:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      is_featured:
+        type: boolean
+      name:
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  services.UpdateProfileRequest:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      date_of_birth:
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        - other
+        - prefer_not_to_say
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      preferences:
+        additionalProperties: true
+        type: object
+      profile_picture_url:
+        type: string
+      state:
+        type: string
+    type: object
+  services.UpdateServiceRequest:
+    properties:
+      allows_add_ons:
+        type: boolean
+      category_id:
+        type: integer
+      complexity:
+        type: integer
+      currency:
+        type: string
+      default_duration_max:
+        type: integer
+      default_duration_min:
+        type: integer
+      detailed_description:
+        type: string
+      gallery_images:
+        items:
+          type: string
+        type: array
+      hair_types:
+        items:
+          type: string
+        type: array
+      has_variations:
+        type: boolean
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      last_modified_by:
+        type: integer
+      name:
+        type: string
+      required_products:
+        items:
+          type: string
+        type: array
+      required_tools:
+        items:
+          type: string
+        type: array
+      requires_consultation:
+        type: boolean
+      search_keywords:
+        items:
+          type: string
+        type: array
+      service_type:
+        type: string
+      short_description:
+        type: string
+      skill_level_required:
+        type: string
+      slug:
+        type: string
+      suggested_price_max:
+        type: number
+      suggested_price_min:
+        type: number
+      tags:
+        items:
+          type: string
+        type: array
+      target_gender:
+        type: string
+    type: object
+  services.UpdateStatusRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  services.UserProfileResponse:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      gender:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      phone_verified:
+        type: boolean
+      postal_code:
+        type: string
+      preferences:
+        additionalProperties: true
+        type: object
+      profile_picture_url:
+        type: string
+      state:
+        type: string
+      status:
+        type: string
+      user_type:
+        type: string
+      uuid:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@barbershop.com
+    name: API Support
+  description: |-
+    A production-ready RESTful API for barbershop booking system
+    Features: User authentication, Barber management, Service catalog, Booking system
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Barbershop Booking API
+  version: 1.0.0
+paths:
+  /api/v1/auth/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change the password of the currently authenticated user
+      parameters:
+      - description: Password data
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/services.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change user password
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/services.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout the current user (client should delete the token)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Get the profile of the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.UserProfileResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - auth
+  /api/v1/auth/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update the profile of the currently authenticated user
+      parameters:
+      - description: Profile data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.UserProfileResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new JWT token from an existing valid token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.AuthResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refresh JWT token
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account and return JWT token
+      parameters:
+      - description: Registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/services.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/services.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /api/v1/barber-services:
+    post:
+      consumes:
+      - application/json
+      description: Add a service to a barber's offerings (protected)
+      parameters:
+      - description: Barber service data
+        in: body
+        name: barber_service
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateBarberServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Add service to barber
+      tags:
+      - services
+  /api/v1/barber-services/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a service from a barber's offerings (protected)
+      parameters:
+      - description: Barber service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Remove service from barber
+      tags:
+      - services
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific barber service
+      parameters:
+      - description: Barber service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber service by ID
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Update a barber's service offering (protected)
+      parameters:
+      - description: Barber service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated barber service data
+        in: body
+        name: barber_service
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateBarberServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update barber service
+      tags:
+      - services
+  /api/v1/barbers:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all barbers with optional filters
+      parameters:
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by city
+        in: query
+        name: city
+        type: string
+      - description: Filter by state
+        in: query
+        name: state
+        type: string
+      - description: Minimum rating
+        in: query
+        name: min_rating
+        type: number
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      - description: Sort by field (rating, total_bookings, shop_name)
+        in: query
+        name: sort_by
+        type: string
+      - default: 20
+        description: Number of results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get all barbers
+      tags:
+      - barbers
+  /api/v1/barbers/{barber_id}/services:
+    get:
+      consumes:
+      - application/json
+      description: Get all services offered by a specific barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: barber_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber's services
+      tags:
+      - services
+  /api/v1/barbers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Delete barber
+      tags:
+      - barbers
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber by ID
+      tags:
+      - barbers
+    put:
+      consumes:
+      - application/json
+      description: Update barber information
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated barber data
+        in: body
+        name: barber
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateBarberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update barber
+      tags:
+      - barbers
+  /api/v1/barbers/{id}/bookings:
+    get:
+      consumes:
+      - application/json
+      description: Get all bookings for a specific barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by payment status
+        in: query
+        name: payment_status
+        type: string
+      - description: Filter by start date from (RFC3339)
+        in: query
+        name: start_date_from
+        type: string
+      - description: Filter by start date to (RFC3339)
+        in: query
+        name: start_date_to
+        type: string
+      - default: scheduled_start_time
+        description: Sort by field
+        in: query
+        name: sort_by
+        type: string
+      - default: ASC
+        description: Sort order (ASC/DESC)
+        in: query
+        name: order
+        type: string
+      - default: 50
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber's bookings
+      tags:
+      - bookings
+  /api/v1/barbers/{id}/bookings/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get booking statistics (total, completed, cancelled, revenue) for
+        a barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 30 days ago
+        description: From date (RFC3339)
+        in: query
+        name: from
+        type: string
+      - default: now
+        description: To date (RFC3339)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get booking statistics for a barber
+      tags:
+      - bookings
+  /api/v1/barbers/{id}/bookings/today:
+    get:
+      consumes:
+      - application/json
+      description: Get all bookings scheduled for today for a specific barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get today's bookings for a barber
+      tags:
+      - bookings
+  /api/v1/barbers/{id}/statistics:
+    get:
+      consumes:
+      - application/json
+      description: Get comprehensive statistics for a barber
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber statistics
+      tags:
+      - barbers
+  /api/v1/barbers/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a barber (pending, active, inactive, suspended,
+        rejected)
+      parameters:
+      - description: Barber ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status data
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update barber status
+      tags:
+      - barbers
+  /api/v1/barbers/search:
+    get:
+      consumes:
+      - application/json
+      description: Search barbers by query string
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Filter by city
+        in: query
+        name: city
+        type: string
+      - description: Filter by state
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Search barbers
+      tags:
+      - barbers
+  /api/v1/barbers/uuid/{uuid}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific barber by UUID
+      parameters:
+      - description: Barber UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barber by UUID
+      tags:
+      - barbers
+  /api/v1/bookings:
+    post:
+      consumes:
+      - application/json
+      description: Create a new appointment booking
+      parameters:
+      - description: Booking data
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "409":
+          description: Time slot conflict
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new booking
+      tags:
+      - bookings
+  /api/v1/bookings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel an existing booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cancellation details
+        in: body
+        name: cancel
+        schema:
+          $ref: '#/definitions/services.CancelBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Cannot cancel booking
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel a booking
+      tags:
+      - bookings
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get booking by ID
+      tags:
+      - bookings
+    put:
+      consumes:
+      - application/json
+      description: Update booking information (not status)
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated booking data
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update booking details
+      tags:
+      - bookings
+  /api/v1/bookings/{id}/history:
+    get:
+      consumes:
+      - application/json
+      description: Get the audit trail of changes for a booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get booking history
+      tags:
+      - bookings
+  /api/v1/bookings/{id}/reschedule:
+    put:
+      consumes:
+      - application/json
+      description: Change the scheduled time of a booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New schedule
+        in: body
+        name: reschedule
+        required: true
+        schema:
+          $ref: '#/definitions/services.RescheduleBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "409":
+          description: Time slot conflict
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reschedule a booking
+      tags:
+      - bookings
+  /api/v1/bookings/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a booking (pending → confirmed → in_progress
+        → completed)
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New status
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "422":
+          description: Invalid status transition
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update booking status
+      tags:
+      - bookings
+  /api/v1/bookings/availability:
+    get:
+      consumes:
+      - application/json
+      description: Check if a specific time slot is available for a barber
+      parameters:
+      - description: Barber ID
+        in: query
+        name: barber_id
+        required: true
+        type: integer
+      - description: Start time (RFC3339)
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: Duration in minutes
+        in: query
+        name: duration
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Check time slot availability
+      tags:
+      - bookings
+  /api/v1/bookings/me:
+    get:
+      consumes:
+      - application/json
+      description: Get all bookings for the authenticated customer
+      parameters:
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by payment status
+        in: query
+        name: payment_status
+        type: string
+      - description: Filter by start date from (RFC3339)
+        in: query
+        name: start_date_from
+        type: string
+      - description: Filter by start date to (RFC3339)
+        in: query
+        name: start_date_to
+        type: string
+      - default: created_at
+        description: Sort by field
+        in: query
+        name: sort_by
+        type: string
+      - default: DESC
+        description: Sort order (ASC/DESC)
+        in: query
+        name: order
+        type: string
+      - default: 50
+        description: Limit results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get my bookings
+      tags:
+      - bookings
+  /api/v1/bookings/number/{number}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific booking by its human-readable
+        booking number
+      parameters:
+      - description: Booking Number (e.g., BK202411281234)
+        in: path
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get booking by booking number
+      tags:
+      - bookings
+  /api/v1/bookings/uuid/{uuid}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific booking by UUID
+      parameters:
+      - description: Booking UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get booking by UUID
+      tags:
+      - bookings
+  /api/v1/services:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all services from the catalog with optional filters
+      parameters:
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: integer
+      - description: Filter by service type (haircut, styling, treatment, grooming)
+        in: query
+        name: service_type
+        type: string
+      - description: Filter by active status
+        in: query
+        name: is_active
+        type: boolean
+      - description: Minimum rating
+        in: query
+        name: min_rating
+        type: number
+      - description: Filter by complexity (1-5)
+        in: query
+        name: complexity
+        type: integer
+      - description: Filter by target gender (male, female, all)
+        in: query
+        name: target_gender
+        type: string
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      - description: Sort by field (name, popularity, rating, duration, complexity)
+        in: query
+        name: sort_by
+        type: string
+      - default: 20
+        description: Number of results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get all services
+      tags:
+      - services
+    post:
+      consumes:
+      - application/json
+      description: Create a new service in the catalog (admin only)
+      parameters:
+      - description: Service data
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Create new service
+      tags:
+      - services
+  /api/v1/services/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a service (admin only)
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Delete service
+      tags:
+      - services
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get service by ID
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Update service information (admin only)
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated service data
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update service
+      tags:
+      - services
+  /api/v1/services/{service_id}/barbers:
+    get:
+      consumes:
+      - application/json
+      description: Get all barbers that offer a specific service
+      parameters:
+      - description: Service ID
+        in: path
+        name: service_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get barbers offering a service
+      tags:
+      - services
+  /api/v1/services/categories:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all service categories
+      parameters:
+      - default: true
+        description: Only return active categories
+        in: query
+        name: active_only
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get all service categories
+      tags:
+      - services
+    post:
+      consumes:
+      - application/json
+      description: Create a new service category (admin only)
+      parameters:
+      - description: Category data
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Create new category
+      tags:
+      - services
+  /api/v1/services/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a category (admin only)
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Delete category
+      tags:
+      - services
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get category by ID
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Update category information (admin only)
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated category data
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update category
+      tags:
+      - services
+  /api/v1/services/search:
+    get:
+      consumes:
+      - application/json
+      description: Search services by query string
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Filter by category
+        in: query
+        name: category_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Search services
+      tags:
+      - services
+  /api/v1/services/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific service by its URL slug
+      parameters:
+      - description: Service slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get service by slug
+      tags:
+      - services
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

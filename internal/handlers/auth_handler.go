@@ -30,9 +30,9 @@ func NewAuthHandler(userService *services.UserService) *AuthHandler {
 // @Produce json
 // @Param user body services.RegisterRequest true "Registration data"
 // @Success 201 {object} SuccessResponse{data=services.AuthResponse}
-// @Failure 400 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 422 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req services.RegisterRequest
@@ -87,10 +87,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Produce json
 // @Param credentials body services.LoginRequest true "Login credentials"
 // @Success 200 {object} SuccessResponse{data=services.AuthResponse}
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Failure 422 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req services.LoginRequest
@@ -153,8 +153,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} SuccessResponse{data=services.AuthResponse}
-// @Failure 401 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	// Extract token from header
@@ -210,9 +210,9 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} SuccessResponse{data=services.UserProfileResponse}
-// @Failure 401 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Failure 404 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/me [get]
 func (h *AuthHandler) GetMe(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
@@ -258,10 +258,10 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 // @Security BearerAuth
 // @Param profile body services.UpdateProfileRequest true "Profile data"
 // @Success 200 {object} SuccessResponse{data=services.UserProfileResponse}
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Failure 422 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/profile [put]
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	// Get user ID from context
@@ -317,10 +317,10 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 // @Security BearerAuth
 // @Param password body services.ChangePasswordRequest true "Password data"
 // @Success 200 {object} SuccessResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Failure 422 {object} middleware.ErrorResponse
+// @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/change-password [post]
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	// Get user ID from context
@@ -386,7 +386,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} SuccessResponse
-// @Failure 401 {object} ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
 // @Router /api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Note: Since we're using JWT, logout is handled client-side by deleting the token
