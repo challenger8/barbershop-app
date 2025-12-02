@@ -2,10 +2,10 @@
 package handlers
 
 import (
-	"barber-booking-system/internal/middleware"
+	"net/http"
+
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,9 +46,9 @@ func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
 		State:     c.Query("state"),
 		Search:    c.Query("search"),
 		SortBy:    c.Query("sort_by"),
-		Limit:     ParseIntQuery(c, "limit", 20),       // Shared function (capitalized)
-		Offset:    ParseIntQuery(c, "offset", 0),       // Shared function (capitalized)
-		MinRating: ParseFloatQuery(c, "min_rating", 0), // Shared function (capitalized)
+		Limit:     ParseIntQuery(c, "limit", 20),
+		Offset:    ParseIntQuery(c, "offset", 0),
+		MinRating: ParseFloatQuery(c, "min_rating", 0),
 	}
 
 	if verifiedStr := c.Query("is_verified"); verifiedStr != "" {
@@ -59,21 +59,14 @@ func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
 	// Get barbers
 	barbers, err := h.barberService.GetAllBarbers(c.Request.Context(), filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barbers",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barbers", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barbers,
-		Meta: map[string]interface{}{
-			"count":  len(barbers),
-			"limit":  filters.Limit,
-			"offset": filters.Offset,
-		},
+	RespondSuccessWithMeta(c, barbers, map[string]interface{}{
+		"count":  len(barbers),
+		"limit":  filters.Limit,
+		"offset": filters.Offset,
 	})
 }
 
@@ -90,7 +83,6 @@ func (h *BarberHandler) GetAllBarbers(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id} [get]
 func (h *BarberHandler) GetBarber(c *gin.Context) {
-	// Single line replaces 7 lines
 	id, ok := RequireIntParam(c, "id", "barber")
 	if !ok {
 		return
@@ -98,14 +90,14 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 
 	barber, err := h.barberService.GetBarberByID(c.Request.Context(), id)
 	if err != nil {
-		// Single line handles common errors
-		if !HandleRepositoryError(c, err, "Barber") {
-			RespondInternalError(c, "fetch barber", err)
+		if err == repository.ErrBarberNotFound {
+			RespondNotFound(c, "Barber")
+			return
 		}
+		RespondInternalError(c, "fetch barber", err)
 		return
 	}
 
-	// Single line replaces 4 lines
 	RespondSuccess(c, barber)
 }
 
@@ -122,21 +114,17 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/barbers [post]
 func (h *BarberHandler) CreateBarber(c *gin.Context) {
-	var req services.CreateBarberRequest
-
-	// Single line replaces 5 lines
-	if err := c.ShouldBindJSON(&req); err != nil {
-		RespondValidationError(c, err)
+	req, ok := BindJSON[services.CreateBarberRequest](c)
+	if !ok {
 		return
 	}
 
-	barber, err := h.barberService.CreateBarber(c.Request.Context(), req)
+	barber, err := h.barberService.CreateBarber(c.Request.Context(), *req)
 	if err != nil {
 		RespondInternalError(c, "create barber", err)
 		return
 	}
 
-	// Single line replaces 5 lines
 	RespondCreated(c, barber, "Barber created successfully")
 }
 
@@ -157,36 +145,15 @@ func (h *BarberHandler) GetBarberByUUID(c *gin.Context) {
 	barber, err := h.barberService.GetBarberByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		if err == repository.ErrBarberNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber not found",
-				Message: "No barber found with the given UUID",
-			})
+			RespondNotFound(c, "Barber")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barber",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barber", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barber,
-	})
+	RespondSuccess(c, barber)
 }
-
-// CreateBarber godoc
-// @Summary Create new barber
-// @Description Create a new barber profile
-// @Tags barbers
-// @Accept json
-// @Produce json
-// @Param barber body services.CreateBarberRequest true "Barber data"
-// @Success 201 {object} SuccessResponse
-// @Failure 400 {object} middleware.ErrorResponse
-// @Failure 500 {object} middleware.ErrorResponse
-// @Router /api/v1/barbers [post]
 
 // UpdateBarber godoc
 // @Summary Update barber
@@ -205,31 +172,20 @@ func (h *BarberHandler) UpdateBarber(c *gin.Context) {
 	id, ok := RequireIntParam(c, "id", "barber")
 	if !ok {
 		return
-
 	}
 
-	var req services.UpdateBarberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateBarberRequest](c)
+	if !ok {
 		return
 	}
 
-	barber, err := h.barberService.UpdateBarber(c.Request.Context(), id, req)
+	barber, err := h.barberService.UpdateBarber(c.Request.Context(), id, *req)
 	if err != nil {
 		if err == repository.ErrBarberNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber not found",
-				Message: "No barber found with the given ID",
-			})
+			RespondNotFound(c, "Barber")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update barber",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update barber", err)
 		return
 	}
 
@@ -256,28 +212,18 @@ func (h *BarberHandler) DeleteBarber(c *gin.Context) {
 	id, ok := RequireIntParam(c, "id", "barber")
 	if !ok {
 		return
-
 	}
 
 	if err := h.barberService.DeleteBarber(c.Request.Context(), id); err != nil {
 		if err == repository.ErrBarberNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber not found",
-				Message: "No barber found with the given ID",
-			})
+			RespondNotFound(c, "Barber")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to delete barber",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "delete barber", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Barber deleted successfully",
-	})
+	RespondSuccessWithMessage(c, "Barber deleted successfully")
 }
 
 // UpdateBarberStatus godoc
@@ -299,34 +245,21 @@ func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
 		return
 	}
 
-	var req StatusUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[StatusUpdateRequest](c)
+	if !ok {
 		return
 	}
 
 	if err := h.barberService.UpdateBarberStatus(c.Request.Context(), id, req.Status); err != nil {
 		if err == repository.ErrBarberNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber not found",
-				Message: "No barber found with the given ID",
-			})
+			RespondNotFound(c, "Barber")
 			return
 		}
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Failed to update status",
-			Message: err.Error(),
-		})
+		RespondBadRequest(c, "Failed to update status", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Status updated successfully",
-	})
+	RespondSuccessWithMessage(c, "Status updated successfully")
 }
 
 // GetBarberStatistics godoc
@@ -349,17 +282,11 @@ func (h *BarberHandler) GetBarberStatistics(c *gin.Context) {
 
 	stats, err := h.barberService.GetBarberStatistics(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch statistics",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barber statistics", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    stats,
-	})
+	RespondSuccess(c, stats)
 }
 
 // SearchBarbers godoc
@@ -386,20 +313,13 @@ func (h *BarberHandler) SearchBarbers(c *gin.Context) {
 
 	barbers, err := h.barberService.SearchBarbers(c.Request.Context(), query, filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Search failed",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "search barbers", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barbers,
-		Meta: map[string]interface{}{
-			"query": query,
-			"count": len(barbers),
-		},
+	RespondSuccessWithMeta(c, barbers, map[string]interface{}{
+		"query": query,
+		"count": len(barbers),
 	})
 }
 

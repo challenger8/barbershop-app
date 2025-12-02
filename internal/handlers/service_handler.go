@@ -45,15 +45,15 @@ func NewServiceHandler(serviceService *services.ServiceService) *ServiceHandler 
 // @Router /api/v1/services [get]
 func (h *ServiceHandler) GetAllServices(c *gin.Context) {
 	filters := repository.ServiceFilters{
-		CategoryID:   ParseIntQuery(c, "category_id", 0), // Shared function
+		CategoryID:   ParseIntQuery(c, "category_id", 0),
 		ServiceType:  c.Query("service_type"),
-		MinRating:    ParseFloatQuery(c, "min_rating", 0), // Shared function
-		Complexity:   ParseIntQuery(c, "complexity", 0),   // Shared function
+		MinRating:    ParseFloatQuery(c, "min_rating", 0),
+		Complexity:   ParseIntQuery(c, "complexity", 0),
 		TargetGender: c.Query("target_gender"),
 		Search:       c.Query("search"),
 		SortBy:       c.Query("sort_by"),
-		Limit:        ParseIntQuery(c, "limit", 20), // Shared function
-		Offset:       ParseIntQuery(c, "offset", 0), // Shared function
+		Limit:        ParseIntQuery(c, "limit", 20),
+		Offset:       ParseIntQuery(c, "offset", 0),
 	}
 
 	if activeStr := c.Query("is_active"); activeStr != "" {
@@ -68,21 +68,14 @@ func (h *ServiceHandler) GetAllServices(c *gin.Context) {
 
 	servicesList, err := h.serviceService.GetAllServices(c.Request.Context(), filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch services",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch services", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    servicesList,
-		Meta: map[string]interface{}{
-			"count":  len(servicesList),
-			"limit":  filters.Limit,
-			"offset": filters.Offset,
-		},
+	RespondSuccessWithMeta(c, servicesList, map[string]interface{}{
+		"count":  len(servicesList),
+		"limit":  filters.Limit,
+		"offset": filters.Offset,
 	})
 }
 
@@ -107,23 +100,14 @@ func (h *ServiceHandler) GetService(c *gin.Context) {
 	service, err := h.serviceService.GetServiceByID(c.Request.Context(), id)
 	if err != nil {
 		if err == repository.ErrServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Service not found",
-				Message: "No service found with the given ID",
-			})
+			RespondNotFound(c, "Service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch service", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    service,
-	})
+	RespondSuccess(c, service)
 }
 
 // GetServiceBySlug godoc
@@ -143,23 +127,14 @@ func (h *ServiceHandler) GetServiceBySlug(c *gin.Context) {
 	service, err := h.serviceService.GetServiceBySlug(c.Request.Context(), slug)
 	if err != nil {
 		if err == repository.ErrServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Service not found",
-				Message: "No service found with the given slug",
-			})
+			RespondNotFound(c, "Service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch service", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    service,
-	})
+	RespondSuccess(c, service)
 }
 
 // CreateService godoc
@@ -174,13 +149,8 @@ func (h *ServiceHandler) GetServiceBySlug(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services [post]
 func (h *ServiceHandler) CreateService(c *gin.Context) {
-	var req services.CreateServiceRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.CreateServiceRequest](c)
+	if !ok {
 		return
 	}
 
@@ -189,12 +159,9 @@ func (h *ServiceHandler) CreateService(c *gin.Context) {
 		req.CreatedBy = &userID
 	}
 
-	service, err := h.serviceService.CreateService(c.Request.Context(), req)
+	service, err := h.serviceService.CreateService(c.Request.Context(), *req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to create service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "create service", err)
 		return
 	}
 
@@ -224,12 +191,8 @@ func (h *ServiceHandler) UpdateService(c *gin.Context) {
 		return
 	}
 
-	var req services.UpdateServiceRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateServiceRequest](c)
+	if !ok {
 		return
 	}
 
@@ -238,19 +201,13 @@ func (h *ServiceHandler) UpdateService(c *gin.Context) {
 		req.LastModifiedBy = &userID
 	}
 
-	service, err := h.serviceService.UpdateService(c.Request.Context(), id, req)
+	service, err := h.serviceService.UpdateService(c.Request.Context(), id, *req)
 	if err != nil {
 		if err == repository.ErrServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Service not found",
-				Message: "No service found with the given ID",
-			})
+			RespondNotFound(c, "Service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update service", err)
 		return
 	}
 
@@ -281,23 +238,14 @@ func (h *ServiceHandler) DeleteService(c *gin.Context) {
 
 	if err := h.serviceService.DeleteService(c.Request.Context(), id); err != nil {
 		if err == repository.ErrServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Service not found",
-				Message: "No service found with the given ID",
-			})
+			RespondNotFound(c, "Service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to delete service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "delete service", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Service deleted successfully",
-	})
+	RespondSuccessWithMessage(c, "Service deleted successfully")
 }
 
 // SearchServices godoc
@@ -314,7 +262,7 @@ func (h *ServiceHandler) DeleteService(c *gin.Context) {
 func (h *ServiceHandler) SearchServices(c *gin.Context) {
 	query := c.Query("q")
 	filters := repository.ServiceFilters{
-		CategoryID: ParseIntQuery(c, "category_id", 0), // Shared function
+		CategoryID: ParseIntQuery(c, "category_id", 0),
 		Limit:      50,
 	}
 	isActive := true
@@ -322,20 +270,13 @@ func (h *ServiceHandler) SearchServices(c *gin.Context) {
 
 	servicesList, err := h.serviceService.SearchServices(c.Request.Context(), query, filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Search failed",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "search services", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    servicesList,
-		Meta: map[string]interface{}{
-			"query": query,
-			"count": len(servicesList),
-		},
+	RespondSuccessWithMeta(c, servicesList, map[string]interface{}{
+		"query": query,
+		"count": len(servicesList),
 	})
 }
 
@@ -356,19 +297,12 @@ func (h *ServiceHandler) GetAllCategories(c *gin.Context) {
 
 	categories, err := h.serviceService.GetAllCategories(c.Request.Context(), activeOnly)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch categories",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch categories", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    categories,
-		Meta: map[string]interface{}{
-			"count": len(categories),
-		},
+	RespondSuccessWithMeta(c, categories, map[string]interface{}{
+		"count": len(categories),
 	})
 }
 
@@ -393,23 +327,14 @@ func (h *ServiceHandler) GetCategory(c *gin.Context) {
 	category, err := h.serviceService.GetCategoryByID(c.Request.Context(), id)
 	if err != nil {
 		if err == repository.ErrCategoryNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Category not found",
-				Message: "No category found with the given ID",
-			})
+			RespondNotFound(c, "Category")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch category",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch category", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    category,
-	})
+	RespondSuccess(c, category)
 }
 
 // CreateCategory godoc
@@ -424,22 +349,14 @@ func (h *ServiceHandler) GetCategory(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/categories [post]
 func (h *ServiceHandler) CreateCategory(c *gin.Context) {
-	var req services.CreateCategoryRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.CreateCategoryRequest](c)
+	if !ok {
 		return
 	}
 
-	category, err := h.serviceService.CreateCategory(c.Request.Context(), req)
+	category, err := h.serviceService.CreateCategory(c.Request.Context(), *req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to create category",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "create category", err)
 		return
 	}
 
@@ -469,28 +386,18 @@ func (h *ServiceHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	var req services.UpdateCategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateCategoryRequest](c)
+	if !ok {
 		return
 	}
 
-	category, err := h.serviceService.UpdateCategory(c.Request.Context(), id, req)
+	category, err := h.serviceService.UpdateCategory(c.Request.Context(), id, *req)
 	if err != nil {
 		if err == repository.ErrCategoryNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Category not found",
-				Message: "No category found with the given ID",
-			})
+			RespondNotFound(c, "Category")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update category",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update category", err)
 		return
 	}
 
@@ -521,23 +428,14 @@ func (h *ServiceHandler) DeleteCategory(c *gin.Context) {
 
 	if err := h.serviceService.DeleteCategory(c.Request.Context(), id); err != nil {
 		if err == repository.ErrCategoryNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Category not found",
-				Message: "No category found with the given ID",
-			})
+			RespondNotFound(c, "Category")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to delete category",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "delete category", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Category deleted successfully",
-	})
+	RespondSuccessWithMessage(c, "Category deleted successfully")
 }
 
 // ==================== Barber Service Endpoints ====================
@@ -561,20 +459,13 @@ func (h *ServiceHandler) GetBarberServices(c *gin.Context) {
 
 	barberServices, err := h.serviceService.GetBarberServices(c.Request.Context(), barberID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barber services",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barber services", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barberServices,
-		Meta: map[string]interface{}{
-			"barber_id": barberID,
-			"count":     len(barberServices),
-		},
+	RespondSuccessWithMeta(c, barberServices, map[string]interface{}{
+		"barber_id": barberID,
+		"count":     len(barberServices),
 	})
 }
 
@@ -597,20 +488,13 @@ func (h *ServiceHandler) GetBarbersOfferingService(c *gin.Context) {
 
 	barberServices, err := h.serviceService.GetBarbersOfferingService(c.Request.Context(), serviceID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barbers",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barbers offering service", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barberServices,
-		Meta: map[string]interface{}{
-			"service_id": serviceID,
-			"count":      len(barberServices),
-		},
+	RespondSuccessWithMeta(c, barberServices, map[string]interface{}{
+		"service_id": serviceID,
+		"count":      len(barberServices),
 	})
 }
 
@@ -626,22 +510,14 @@ func (h *ServiceHandler) GetBarbersOfferingService(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barber-services [post]
 func (h *ServiceHandler) AddServiceToBarber(c *gin.Context) {
-	var req services.CreateBarberServiceRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.CreateBarberServiceRequest](c)
+	if !ok {
 		return
 	}
 
-	barberService, err := h.serviceService.AddServiceToBarber(c.Request.Context(), req)
+	barberService, err := h.serviceService.AddServiceToBarber(c.Request.Context(), *req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to add service to barber",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "add service to barber", err)
 		return
 	}
 
@@ -671,28 +547,18 @@ func (h *ServiceHandler) UpdateBarberService(c *gin.Context) {
 		return
 	}
 
-	var req services.UpdateBarberServiceRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateBarberServiceRequest](c)
+	if !ok {
 		return
 	}
 
-	barberService, err := h.serviceService.UpdateBarberService(c.Request.Context(), id, req)
+	barberService, err := h.serviceService.UpdateBarberService(c.Request.Context(), id, *req)
 	if err != nil {
 		if err == repository.ErrBarberServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber service not found",
-				Message: "No barber service found with the given ID",
-			})
+			RespondNotFound(c, "Barber service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update barber service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update barber service", err)
 		return
 	}
 
@@ -723,23 +589,14 @@ func (h *ServiceHandler) RemoveServiceFromBarber(c *gin.Context) {
 
 	if err := h.serviceService.RemoveServiceFromBarber(c.Request.Context(), id); err != nil {
 		if err == repository.ErrBarberServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber service not found",
-				Message: "No barber service found with the given ID",
-			})
+			RespondNotFound(c, "Barber service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to remove service from barber",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "remove service from barber", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Service removed from barber successfully",
-	})
+	RespondSuccessWithMessage(c, "Service removed from barber successfully")
 }
 
 // GetBarberServiceByID godoc
@@ -763,21 +620,12 @@ func (h *ServiceHandler) GetBarberServiceByID(c *gin.Context) {
 	barberService, err := h.serviceService.GetBarberServiceByID(c.Request.Context(), id)
 	if err != nil {
 		if err == repository.ErrBarberServiceNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Barber service not found",
-				Message: "No barber service found with the given ID",
-			})
+			RespondNotFound(c, "Barber service")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch barber service",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch barber service", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barberService,
-	})
+	RespondSuccess(c, barberService)
 }

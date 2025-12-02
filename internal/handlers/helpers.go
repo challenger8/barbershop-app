@@ -124,6 +124,70 @@ func RespondUnauthorized(c *gin.Context, message string) {
 		Message: message,
 	})
 }
+// ============================================================================
+// JSON/QUERY/URI BINDING HELPERS (Generic with Type Parameters)
+// ============================================================================
+
+// BindJSON is a generic helper that binds and validates JSON request body.
+// Returns the parsed struct and true on success, or sends error response and returns nil, false.
+// 
+// Usage:
+//   req, ok := BindJSON[services.CreateServiceRequest](c)
+//   if !ok {
+//       return // Error response already sent
+//   }
+//   // Use req here...
+func BindJSON[T any](c *gin.Context) (*T, bool) {
+	var req T
+	if err := c.ShouldBindJSON(&req); err != nil {
+		RespondValidationError(c, err)
+		return nil, false
+	}
+	return &req, true
+}
+
+// BindQuery is a generic helper that binds and validates query parameters.
+// Returns the parsed struct and true on success, or sends error response and returns nil, false.
+//
+// Usage:
+//   filters, ok := BindQuery[FilterParams](c)
+//   if !ok {
+//       return
+//   }
+func BindQuery[T any](c *gin.Context) (*T, bool) {
+	var req T
+	if err := c.ShouldBindQuery(&req); err != nil {
+		RespondValidationError(c, err)
+		return nil, false
+	}
+	return &req, true
+}
+
+// BindURI is a generic helper that binds and validates URI parameters.
+// Returns the parsed struct and true on success, or sends error response and returns nil, false.
+//
+// Usage:
+//   params, ok := BindURI[URIParams](c)
+//   if !ok {
+//       return
+//   }
+func BindURI[T any](c *gin.Context) (*T, bool) {
+	var req T
+	if err := c.ShouldBindUri(&req); err != nil {
+		RespondValidationError(c, err)
+		return nil, false
+	}
+	return &req, true
+}
+
+// RespondValidationError sends a 400 response for validation errors
+// This should already exist in your code, but adding here for completeness
+func RespondValidationError(c *gin.Context, err error) {
+	c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
+		Error:   "Invalid request body",
+		Message: err.Error(),
+	})
+}
 
 // ============================================================================
 // SUCCESS RESPONSE HELPERS
@@ -187,13 +251,6 @@ func HandleRepositoryError(c *gin.Context, err error, entityName string) bool {
 	}
 }
 
-// RespondValidationError sends a 400 response for validation errors
-func RespondValidationError(c *gin.Context, err error) {
-	c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-		Error:   "Invalid request body",
-		Message: err.Error(),
-	})
-}
 
 // PaginationMeta creates standardized pagination metadata
 func PaginationMeta(count, limit, offset int) map[string]interface{} {

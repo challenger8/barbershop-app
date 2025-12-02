@@ -39,15 +39,29 @@ func buildBookingFilters(c *gin.Context) repository.BookingFilters {
 		PaymentStatus: c.Query("payment_status"),
 		BookingSource: c.Query("booking_source"),
 		Search:        c.Query("search"),
-		StartDateFrom: ParseTimeQuery(c, "start_date_from"), // Shared function
-		StartDateTo:   ParseTimeQuery(c, "start_date_to"),   // Shared function
-		CreatedFrom:   ParseTimeQuery(c, "created_from"),    // Shared function
-		CreatedTo:     ParseTimeQuery(c, "created_to"),      // Shared function
+		StartDateFrom: ParseTimeQuery(c, "start_date_from"),
+		StartDateTo:   ParseTimeQuery(c, "start_date_to"),
+		CreatedFrom:   ParseTimeQuery(c, "created_from"),
+		CreatedTo:     ParseTimeQuery(c, "created_to"),
 		SortBy:        c.Query("sort_by"),
 		Order:         c.Query("order"),
-		Limit:         ParseIntQuery(c, "limit", 50), // Shared function
-		Offset:        ParseIntQuery(c, "offset", 0), // Shared function
+		Limit:         ParseIntQuery(c, "limit", 50),
+		Offset:        ParseIntQuery(c, "offset", 0),
 	}
+}
+
+// containsAny checks if string contains any of the substrings
+func containsAny(s string, substrings []string) bool {
+	for _, sub := range substrings {
+		if len(s) >= len(sub) {
+			for i := 0; i <= len(s)-len(sub); i++ {
+				if s[i:i+len(sub)] == sub {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // ========================================================================
@@ -69,14 +83,8 @@ func buildBookingFilters(c *gin.Context) repository.BookingFilters {
 // @Security BearerAuth
 // @Router /api/v1/bookings [post]
 func (h *BookingHandler) CreateBooking(c *gin.Context) {
-	var req services.CreateBookingRequest
-
-	// Parse request body
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.CreateBookingRequest](c)
+	if !ok {
 		return
 	}
 
@@ -91,7 +99,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 	}
 
 	// Create booking
-	booking, err := h.bookingService.CreateBooking(c.Request.Context(), req, createdByUserID)
+	booking, err := h.bookingService.CreateBooking(c.Request.Context(), *req, createdByUserID)
 	if err != nil {
 		// Check for specific error types
 		statusCode := http.StatusInternalServerError
@@ -108,25 +116,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking created successfully",
-	})
-}
-
-// containsAny checks if string contains any of the substrings
-func containsAny(s string, substrings []string) bool {
-	for _, sub := range substrings {
-		if len(s) >= len(sub) {
-			for i := 0; i <= len(s)-len(sub); i++ {
-				if s[i:i+len(sub)] == sub {
-					return true
-				}
-			}
-		}
-	}
-	return false
+	RespondCreated(c, booking, "Booking created successfully")
 }
 
 // ========================================================================
@@ -152,27 +142,16 @@ func (h *BookingHandler) GetBooking(c *gin.Context) {
 	}
 
 	booking, err := h.bookingService.GetBookingByID(c.Request.Context(), id)
-
-	// Get booking
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given ID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch booking", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-	})
+	RespondSuccess(c, booking)
 }
 
 // GetBookingByUUID godoc
@@ -192,23 +171,14 @@ func (h *BookingHandler) GetBookingByUUID(c *gin.Context) {
 	booking, err := h.bookingService.GetBookingByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given UUID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch booking", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-	})
+	RespondSuccess(c, booking)
 }
 
 // GetBookingByNumber godoc
@@ -228,23 +198,14 @@ func (h *BookingHandler) GetBookingByNumber(c *gin.Context) {
 	booking, err := h.bookingService.GetBookingByNumber(c.Request.Context(), bookingNumber)
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given booking number",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch booking", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-	})
+	RespondSuccess(c, booking)
 }
 
 // ========================================================================
@@ -274,10 +235,7 @@ func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 	// Get authenticated user ID
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, middleware.ErrorResponse{
-			Error:   "Unauthorized",
-			Message: "You must be logged in to view your bookings",
-		})
+		RespondUnauthorized(c, "You must be logged in to view your bookings")
 		return
 	}
 
@@ -287,21 +245,14 @@ func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 	// Get bookings
 	bookings, err := h.bookingService.GetCustomerBookings(c.Request.Context(), userID, filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch bookings",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch bookings", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    bookings,
-		Meta: map[string]interface{}{
-			"count":  len(bookings),
-			"limit":  filters.Limit,
-			"offset": filters.Offset,
-		},
+	RespondSuccessWithMeta(c, bookings, map[string]interface{}{
+		"count":  len(bookings),
+		"limit":  filters.Limit,
+		"offset": filters.Offset,
 	})
 }
 
@@ -345,22 +296,15 @@ func (h *BookingHandler) GetBarberBookings(c *gin.Context) {
 	// Get bookings
 	bookings, err := h.bookingService.GetBarberBookings(c.Request.Context(), barberID, filters)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch bookings",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch bookings", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    bookings,
-		Meta: map[string]interface{}{
-			"barber_id": barberID,
-			"count":     len(bookings),
-			"limit":     filters.Limit,
-			"offset":    filters.Offset,
-		},
+	RespondSuccessWithMeta(c, bookings, map[string]interface{}{
+		"barber_id": barberID,
+		"count":     len(bookings),
+		"limit":     filters.Limit,
+		"offset":    filters.Offset,
 	})
 }
 
@@ -384,21 +328,14 @@ func (h *BookingHandler) GetTodayBookings(c *gin.Context) {
 	// Get today's bookings
 	bookings, err := h.bookingService.GetTodayBookings(c.Request.Context(), barberID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch today's bookings",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch today's bookings", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    bookings,
-		Meta: map[string]interface{}{
-			"barber_id": barberID,
-			"date":      time.Now().Format("2006-01-02"),
-			"count":     len(bookings),
-		},
+	RespondSuccessWithMeta(c, bookings, map[string]interface{}{
+		"barber_id": barberID,
+		"date":      time.Now().Format("2006-01-02"),
+		"count":     len(bookings),
 	})
 }
 
@@ -426,13 +363,8 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 		return
 	}
 
-	// Parse request body
-	var req services.UpdateBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateBookingRequest](c)
+	if !ok {
 		return
 	}
 
@@ -443,19 +375,13 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 	}
 
 	// Update booking
-	booking, err := h.bookingService.UpdateBooking(c.Request.Context(), id, req, updatedByUserID)
+	booking, err := h.bookingService.UpdateBooking(c.Request.Context(), id, *req, updatedByUserID)
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given ID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update booking", err)
 		return
 	}
 
@@ -491,31 +417,22 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 		return
 	}
 
-	// Step 2: Parse request body
-	var req services.UpdateStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.UpdateStatusRequest](c)
+	if !ok {
 		return
 	}
 
-	// Step 3: Get user ID from auth context
+	// Get user ID from auth context
 	var updatedByUserID *int
 	if userID, exists := middleware.GetUserID(c); exists {
 		updatedByUserID = &userID
 	}
 
-	// Step 4: Update status
+	// Update status
 	booking, err := h.bookingService.UpdateStatus(c.Request.Context(), id, req.Status, updatedByUserID)
 	if err != nil {
-		// Step 5: Handle errors
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given ID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
 		// Check for invalid status transition
@@ -526,14 +443,10 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to update booking status",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "update booking status", err)
 		return
 	}
 
-	// Step 6: Return success
 	c.JSON(http.StatusOK, SuccessResponse{
 		Success: true,
 		Data:    booking,
@@ -566,13 +479,8 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 		return
 	}
 
-	// Parse request body
-	var req services.RescheduleBookingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid request body",
-			Message: err.Error(),
-		})
+	req, ok := BindJSON[services.RescheduleBookingRequest](c)
+	if !ok {
 		return
 	}
 
@@ -583,13 +491,10 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 	}
 
 	// Reschedule booking
-	booking, err := h.bookingService.RescheduleBooking(c.Request.Context(), id, req, rescheduledByUserID)
+	booking, err := h.bookingService.RescheduleBooking(c.Request.Context(), id, *req, rescheduledByUserID)
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given ID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
 		if containsAny(err.Error(), []string{"not available", "conflict"}) {
@@ -599,10 +504,7 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to reschedule booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "reschedule booking", err)
 		return
 	}
 
@@ -637,30 +539,24 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 	if !ok {
 		return
 	}
-	// Step 2: Parse request body (optional)
+
+	// Parse request body (optional)
 	var req services.CancelBookingRequest
 	// Ignore error if body is empty - cancellation reason is optional
 	_ = c.ShouldBindJSON(&req)
 
-	// Step 3: Get user ID from auth context
+	// Get user ID from auth context
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, middleware.ErrorResponse{
-			Error:   "Unauthorized",
-			Message: "You must be logged in to cancel a booking",
-		})
+		RespondUnauthorized(c, "You must be logged in to cancel a booking")
 		return
 	}
 
-	// Step 4: Cancel booking
+	// Cancel booking
 	err := h.bookingService.CancelBooking(c.Request.Context(), id, req, userID)
 	if err != nil {
-		// Step 5: Handle errors
 		if err == repository.ErrBookingNotFound {
-			c.JSON(http.StatusNotFound, middleware.ErrorResponse{
-				Error:   "Booking not found",
-				Message: "No booking found with the given ID",
-			})
+			RespondNotFound(c, "Booking")
 			return
 		}
 		if err == repository.ErrCancellationNotAllowed {
@@ -670,18 +566,11 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to cancel booking",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "cancel booking", err)
 		return
 	}
 
-	// Step 6: Return success
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Message: "Booking cancelled successfully",
-	})
+	RespondSuccessWithMessage(c, "Booking cancelled successfully")
 }
 
 // ========================================================================
@@ -702,7 +591,7 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/bookings/availability [get]
 func (h *BookingHandler) CheckAvailability(c *gin.Context) {
-	barberID := ParseIntQuery(c, "barber_id", 0) // Shared function
+	barberID := ParseIntQuery(c, "barber_id", 0)
 	if barberID == 0 {
 		RespondBadRequest(c, "Missing barber_id", "barber_id query parameter is required")
 		return
@@ -710,41 +599,29 @@ func (h *BookingHandler) CheckAvailability(c *gin.Context) {
 
 	startTime := ParseTimeQuery(c, "start_time")
 	if startTime.IsZero() {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Invalid start_time",
-			Message: "start_time query parameter is required (RFC3339 format)",
-		})
+		RespondBadRequest(c, "Invalid start_time", "start_time query parameter is required (RFC3339 format)")
 		return
 	}
 
 	duration := ParseIntQuery(c, "duration", 0)
 	if duration == 0 {
-		c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-			Error:   "Missing duration",
-			Message: "duration query parameter is required (in minutes)",
-		})
+		RespondBadRequest(c, "Missing duration", "duration query parameter is required (in minutes)")
 		return
 	}
 
 	// Check availability
 	available, err := h.bookingService.CheckAvailability(c.Request.Context(), barberID, startTime, duration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to check availability",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "check availability", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data: map[string]interface{}{
-			"barber_id":  barberID,
-			"start_time": startTime,
-			"duration":   duration,
-			"end_time":   startTime.Add(time.Duration(duration) * time.Minute),
-			"available":  available,
-		},
+	RespondSuccess(c, map[string]interface{}{
+		"barber_id":  barberID,
+		"start_time": startTime,
+		"duration":   duration,
+		"end_time":   startTime.Add(time.Duration(duration) * time.Minute),
+		"available":  available,
 	})
 }
 
@@ -773,8 +650,6 @@ func (h *BookingHandler) GetBarberBookingStats(c *gin.Context) {
 
 	// Parse date range (default to last 30 days)
 	to := ParseTimeQuery(c, "to")
-
-	
 	if to.IsZero() {
 		to = time.Now()
 	}
@@ -787,21 +662,14 @@ func (h *BookingHandler) GetBarberBookingStats(c *gin.Context) {
 	// Get statistics
 	stats, err := h.bookingService.GetBarberStats(c.Request.Context(), barberID, from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch statistics",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch booking stats", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    stats,
-		Meta: map[string]interface{}{
-			"barber_id": barberID,
-			"from":      from,
-			"to":        to,
-		},
+	RespondSuccessWithMeta(c, stats, map[string]interface{}{
+		"barber_id": barberID,
+		"from":      from,
+		"to":        to,
 	})
 }
 
@@ -827,22 +695,16 @@ func (h *BookingHandler) GetBookingHistory(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	// Get history
 	history, err := h.bookingService.GetBookingHistory(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
-			Error:   "Failed to fetch booking history",
-			Message: err.Error(),
-		})
+		RespondInternalError(c, "fetch booking history", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    history,
-		Meta: map[string]interface{}{
-			"booking_id": id,
-			"count":      len(history),
-		},
+	RespondSuccessWithMeta(c, history, map[string]interface{}{
+		"booking_id": id,
+		"count":      len(history),
 	})
 }
