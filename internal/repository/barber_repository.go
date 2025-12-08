@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -109,7 +110,7 @@ func (r *BarberRepository) FindAllWithEnhancedSearch(ctx context.Context, filter
 	query += " ORDER BY " + orderBy
 
 	// Pagination
-	limit := 20
+	limit := config.DefaultPageLimit
 	offset := 0
 	if filters.Limit > 0 {
 		limit = filters.Limit
@@ -421,7 +422,7 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 
 	// Set default values
 	if barber.Status == "" {
-		barber.Status = "pending"
+		barber.Status = config.BarberStatusPending
 	}
 	if barber.Rating == 0 {
 		barber.Rating = 0.0
@@ -611,8 +612,3 @@ type BarberStatistics struct {
 	AverageRating     float64 `db:"average_rating" json:"average_rating"`
 	TotalRevenue      float64 `db:"total_revenue" json:"total_revenue"`
 }
-
-// Custom errors
-var (
-	ErrBarberNotFound = fmt.Errorf("barber not found")
-)

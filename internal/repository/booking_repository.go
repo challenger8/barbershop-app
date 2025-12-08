@@ -82,8 +82,7 @@ type BookingHistoryFilters struct {
 // ========================================================================
 
 var (
-	ErrBookingNotFound         = fmt.Errorf("booking not found")
-	ErrBookingConflict         = fmt.Errorf("time slot already booked")
+	
 	ErrInvalidStatusChange     = fmt.Errorf("invalid status transition")
 	ErrBookingAlreadyCancelled = fmt.Errorf("booking is already cancelled")
 	ErrCancellationNotAllowed  = fmt.Errorf("booking cannot be cancelled")

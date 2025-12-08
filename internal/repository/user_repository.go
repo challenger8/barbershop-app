@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -102,8 +103,8 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 	SetCreateTimestamps(&user.CreatedAt, &user.UpdatedAt)
 
 	// Single line replaces if blocks
-	SetDefaultString(&user.Status, "active")
-	SetDefaultString(&user.UserType, "customer")
+	SetDefaultString(&user.Status, config.UserStatusActive)
+	SetDefaultString(&user.UserType, config.UserTypeCustomer)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
 	if err != nil {

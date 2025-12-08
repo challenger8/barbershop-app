@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 
@@ -216,84 +217,111 @@ func (s *BookingService) toBookingResponse(booking *models.Booking) *BookingResp
 }
 
 // ========================================================================
-// CREATE BOOKING
+// EXTRACTED HELPER FUNCTIONS FOR CreateBooking
 // ========================================================================
+// Add these functions to booking_service.go after toBookingResponse() (around line 238)
 
-// CreateBooking creates a new booking with full validation
-func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingRequest, createdByUserID *int) (*BookingResponse, error) {
-	// ─────────────────────────────────────────────────────────────────
-	// Step 1: Validate booking time
-	// ─────────────────────────────────────────────────────────────────
-	if err := s.validateBookingTime(req.StartTime, req.DurationMinutes); err != nil {
-		return nil, err
-	}
-
-	// ─────────────────────────────────────────────────────────────────
-	// Step 2: Validate barber exists and is active
-	// ─────────────────────────────────────────────────────────────────
-	barber, err := s.barberRepo.FindByID(ctx, req.BarberID)
+// validateAndFetchBarber validates barber exists and is active
+func (s *BookingService) validateAndFetchBarber(ctx context.Context, barberID int) (*models.Barber, error) {
+	barber, err := s.barberRepo.FindByID(ctx, barberID)
 	if err != nil {
 		return nil, fmt.Errorf("barber not found: %w", err)
 	}
-	if barber.Status != "active" {
+
+	if barber.Status != config.BarberStatusActive {
 		return nil, fmt.Errorf("barber is not accepting bookings")
 	}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 3: Validate service exists and get pricing
-	// ─────────────────────────────────────────────────────────────────
-	barberService, err := s.serviceRepo.FindBarberServiceByID(ctx, req.ServiceID)
+	return barber, nil
+}
+
+// validateAndFetchBarberService validates service exists, is active, and belongs to barber
+func (s *BookingService) validateAndFetchBarberService(ctx context.Context, serviceID int) (*models.BarberService, error) {
+	barberService, err := s.serviceRepo.FindBarberServiceByID(ctx, serviceID)
 	if err != nil {
 		return nil, fmt.Errorf("service not found: %w", err)
 	}
+
 	if !barberService.IsActive {
 		return nil, fmt.Errorf("service is not available")
 	}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 4: Check for time slot conflicts
-	// ─────────────────────────────────────────────────────────────────
-	endTime := s.calculateEndTime(req.StartTime, req.DurationMinutes)
-	hasConflict, err := s.repo.CheckConflict(ctx, req.BarberID, req.StartTime, endTime, 0)
+	return barberService, nil
+}
+
+// checkTimeSlotAvailability verifies no booking conflicts exist
+func (s *BookingService) checkTimeSlotAvailability(ctx context.Context, barberID int, startTime, endTime time.Time, excludeBookingID int) error {
+	hasConflict, err := s.repo.CheckConflict(ctx, barberID, startTime, endTime, excludeBookingID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check availability: %w", err)
+		return fmt.Errorf("failed to check availability: %w", err)
 	}
+
 	if hasConflict {
-		return nil, fmt.Errorf("time slot is not available, please choose another time")
+		return fmt.Errorf("time slot is not available, please choose another time")
 	}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 5: Validate customer info
-	// ─────────────────────────────────────────────────────────────────
-	if req.CustomerID == nil {
-		// Guest booking - require contact info
-		if req.CustomerName == nil || *req.CustomerName == "" {
-			return nil, fmt.Errorf("customer name is required for guest bookings")
-		}
-		if (req.CustomerEmail == nil || *req.CustomerEmail == "") &&
-			(req.CustomerPhone == nil || *req.CustomerPhone == "") {
-			return nil, fmt.Errorf("email or phone is required for guest bookings")
-		}
+	return nil
+}
+
+// validateCustomerInfo ensures either customer_id or guest contact info is provided
+func (s *BookingService) validateCustomerInfo(req CreateBookingRequest) error {
+	if req.CustomerID != nil {
+		return nil // Customer ID provided, no additional validation needed
 	}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 6: Calculate pricing
-	// ─────────────────────────────────────────────────────────────────
+	// Guest booking - require contact info
+	if req.CustomerName == nil || *req.CustomerName == "" {
+		return fmt.Errorf("customer name is required for guest bookings")
+	}
+
+	if (req.CustomerEmail == nil || *req.CustomerEmail == "") &&
+		(req.CustomerPhone == nil || *req.CustomerPhone == "") {
+		return fmt.Errorf("email or phone is required for guest bookings")
+	}
+
+	return nil
+}
+
+// PricingResult holds calculated pricing breakdown
+type PricingResult struct {
+	ServicePrice   float64
+	DiscountAmount float64
+	TaxAmount      float64
+	TotalPrice     float64
+}
+
+// calculateBookingPricing calculates all pricing components
+func (s *BookingService) calculateBookingPricing(barberService *models.BarberService, req CreateBookingRequest) PricingResult {
+	// Use provided price or default to barber service price
 	servicePrice := barberService.Price
 	if req.ServicePrice != nil {
 		servicePrice = *req.ServicePrice
 	}
 
+	// Apply discount if provided
 	discountAmount := 0.0
 	if req.DiscountAmount != nil {
 		discountAmount = *req.DiscountAmount
 	}
 
+	// Calculate tax and total
 	_, _, taxAmount, totalPrice := s.calculateTotalPrice(servicePrice, discountAmount)
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 7: Build booking model
-	// ─────────────────────────────────────────────────────────────────
+	return PricingResult{
+		ServicePrice:   servicePrice,
+		DiscountAmount: discountAmount,
+		TaxAmount:      taxAmount,
+		TotalPrice:     totalPrice,
+	}
+}
+
+// buildBookingFromRequest constructs a booking model from request data
+func (s *BookingService) buildBookingFromRequest(
+	req CreateBookingRequest,
+	barberService *models.BarberService,
+	pricing PricingResult,
+	endTime time.Time,
+) *models.Booking {
 	booking := &models.Booking{
 		UUID:          uuid.New().String(),
 		BookingNumber: s.generateBookingNumber(),
@@ -301,22 +329,22 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 		CustomerID: req.CustomerID,
 		BarberID:   req.BarberID,
 
-		ServiceName:              *barberService.CustomName,
+		ServiceName:              getServiceName(barberService),
 		EstimatedDurationMinutes: req.DurationMinutes,
 
 		CustomerName:  req.CustomerName,
 		CustomerEmail: req.CustomerEmail,
 		CustomerPhone: req.CustomerPhone,
 
-		Status: "pending",
+		Status: config.BookingStatusPending,
 
-		ServicePrice:   servicePrice,
-		DiscountAmount: discountAmount,
-		TaxAmount:      taxAmount,
-		TotalPrice:     totalPrice,
-		Currency:       "USD",
+		ServicePrice:   pricing.ServicePrice,
+		DiscountAmount: pricing.DiscountAmount,
+		TaxAmount:      pricing.TaxAmount,
+		TotalPrice:     pricing.TotalPrice,
+		Currency:       config.DefaultCurrency,
 
-		PaymentStatus: "pending",
+		PaymentStatus: config.PaymentStatusPending,
 
 		Notes:           req.Notes,
 		SpecialRequests: req.SpecialRequests,
@@ -324,28 +352,39 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 		ScheduledStartTime: req.StartTime,
 		ScheduledEndTime:   endTime,
 
-		BookingSource: req.BookingSource,
+		BookingSource: getBookingSource(req.BookingSource),
 	}
 
-	if booking.BookingSource == "" {
-		booking.BookingSource = "web_app"
-	}
+	return booking
+}
 
-	// Get service category if available
+// getServiceName extracts the appropriate service name
+func getServiceName(barberService *models.BarberService) string {
+	if barberService.CustomName != nil && *barberService.CustomName != "" {
+		return *barberService.CustomName
+	}
 	if barberService.Service.Name != "" {
-		booking.ServiceName = barberService.Service.Name
+		return barberService.Service.Name
 	}
+	return "Unknown Service"
+}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 8: Create booking in database
-	// ─────────────────────────────────────────────────────────────────
+// getBookingSource returns booking source or default
+func getBookingSource(source string) string {
+	if source != "" {
+		return source
+	}
+	return "web_app"
+}
+
+// saveBookingWithHistory saves booking and creates audit trail
+func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *models.Booking, createdByUserID *int) error {
+	// Create booking in database
 	if err := s.repo.Create(ctx, booking); err != nil {
-		return nil, fmt.Errorf("failed to create booking: %w", err)
+		return fmt.Errorf("failed to create booking: %w", err)
 	}
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 9: Create audit history
-	// ─────────────────────────────────────────────────────────────────
+	// Create audit history
 	history := &models.BookingHistory{
 		BookingID:  booking.ID,
 		ChangedBy:  createdByUserID,
@@ -359,13 +398,67 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 	}
 	_ = s.repo.CreateHistory(ctx, history) // Don't fail if history creation fails
 
-	// ─────────────────────────────────────────────────────────────────
-	// Step 10: Invalidate cache
-	// ─────────────────────────────────────────────────────────────────
+	return nil
+}
+
+// ========================================================================
+// CREATE BOOKING
+// ========================================================================
+
+// CreateBooking creates a new booking with full validation
+// ========================================================================
+// REFACTORED CreateBooking - REPLACE YOUR EXISTING ONE (lines 239-368)
+// ========================================================================
+
+// CreateBooking creates a new booking with full validation
+func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingRequest, createdByUserID *int) (*BookingResponse, error) {
+	// Step 1: Validate booking time
+	if err := s.validateBookingTime(req.StartTime, req.DurationMinutes); err != nil {
+		return nil, err
+	}
+	
+	// Step 2: Validate barber exists and is active
+	barber, err := s.validateAndFetchBarber(ctx, req.BarberID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Step 3: Validate service exists and get pricing
+	barberService, err := s.validateAndFetchBarberService(ctx, req.ServiceID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Step 4: Check for time slot conflicts
+	endTime := s.calculateEndTime(req.StartTime, req.DurationMinutes)
+	if err := s.checkTimeSlotAvailability(ctx, req.BarberID, req.StartTime, endTime, 0); err != nil {
+		return nil, err
+	}
+	
+	// Step 5: Validate customer info
+	if err := s.validateCustomerInfo(req); err != nil {
+		return nil, err
+	}
+	
+	// Step 6: Calculate pricing
+	pricing := s.calculateBookingPricing(barberService, req)
+	
+	// Step 7: Build booking model
+	booking := s.buildBookingFromRequest(req, barberService, pricing, endTime)
+	
+	// Step 8: Save booking with audit trail
+	if err := s.saveBookingWithHistory(ctx, booking, createdByUserID); err != nil {
+		return nil, err
+	}
+	
+	// Step 9: Invalidate cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, req.BarberID)
 	}
-
+	
+	// Suppress unused variable warning (can be removed if barber is used elsewhere)
+	_ = barber
+	
 	return s.toBookingResponse(booking), nil
 }
 

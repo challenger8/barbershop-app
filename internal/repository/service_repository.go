@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -50,13 +51,6 @@ type BarberServiceFilters struct {
 	Limit      int
 	Offset     int
 }
-
-// Custom errors
-var (
-	ErrServiceNotFound       = fmt.Errorf("service not found")
-	ErrBarberServiceNotFound = fmt.Errorf("barber service not found")
-	ErrCategoryNotFound      = fmt.Errorf("category not found")
-)
 
 // FindAll retrieves all services with optional filters
 func (r *ServiceRepository) FindAll(ctx context.Context, filters ServiceFilters) ([]models.Service, error) {
@@ -145,7 +139,7 @@ func (r *ServiceRepository) FindAll(ctx context.Context, filters ServiceFilters)
 	query += " ORDER BY " + orderBy
 
 	// Pagination
-	limit := 20
+	limit := config.DefaultPageLimit
 	offset := 0
 	if filters.Limit > 0 {
 		limit = filters.Limit
@@ -263,7 +257,7 @@ func (r *ServiceRepository) Create(ctx context.Context, service *models.Service)
 
 	// Set defaults
 	if service.Currency == "" {
-		service.Currency = "USD"
+		service.Currency = config.DefaultCurrency
 	}
 	if service.Version == 0 {
 		service.Version = 1
@@ -600,7 +594,8 @@ func (r *ServiceRepository) FindBarberServices(ctx context.Context, filters Barb
 	query += " ORDER BY " + orderBy
 
 	// Pagination
-	limit := 50
+	limit := config.BarberServicesPageLimit
+
 	offset := 0
 	if filters.Limit > 0 {
 		limit = filters.Limit
@@ -681,9 +676,8 @@ func (r *ServiceRepository) CreateBarberService(ctx context.Context, bs *models.
 	bs.CreatedAt = now
 	bs.UpdatedAt = now
 
-	// Set defaults
 	if bs.Currency == "" {
-		bs.Currency = "USD"
+		bs.Currency = config.DefaultCurrency
 	}
 
 	rows, err := r.db.NamedQueryContext(ctx, query, bs)
