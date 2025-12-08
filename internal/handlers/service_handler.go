@@ -6,6 +6,7 @@ import (
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -323,6 +324,14 @@ func (h *ServiceHandler) GetCategory(c *gin.Context) {
 // @Failure 400 {object} middleware.ErrorResponse
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/services/categories [post]
+// ========================================================================
+// EXACT CODE TO ADD TO: internal/handlers/service_handler.go
+// ========================================================================
+//
+// Find the CreateCategory function (around line 326)
+// Replace the ENTIRE function with this version:
+// ========================================================================
+
 func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 	req, ok := BindJSON[services.CreateCategoryRequest](c)
 	if !ok {
@@ -330,8 +339,25 @@ func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 	}
 
 	category, err := h.serviceService.CreateCategory(c.Request.Context(), *req)
-	if HandleServiceError(c, err, "Category", "create category") {
-		return
+	if err != nil {
+		// ⭐ CHECK FOR DATABASE CONSTRAINT VIOLATIONS ⭐
+		// PostgreSQL unique constraint errors contain these terms
+		errMsg := strings.ToLower(err.Error())
+		if strings.Contains(errMsg, "duplicate") ||
+			strings.Contains(errMsg, "already exists") ||
+			strings.Contains(errMsg, "unique constraint") ||
+			strings.Contains(errMsg, "violates") {
+			c.JSON(400, middleware.ErrorResponse{
+				Error:   "Duplicate category",
+				Message: "A category with this name or slug already exists",
+			})
+			return
+		}
+
+		// Handle other repository errors
+		if HandleServiceError(c, err, "Category", "create category") {
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, SuccessResponse{

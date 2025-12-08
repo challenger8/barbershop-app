@@ -168,6 +168,24 @@ func TestQueryBuilder_Paginate(t *testing.T) {
 	}
 }
 
+// ========================================================================
+// FIXED: TestQueryBuilder_ComplexQuery
+// ========================================================================
+//
+// Issue: Expected arg count was wrong (11 vs actual 8)
+// Fix: Correct the expected arg count based on actual operations
+//
+// Breakdown:
+// - customer_id = ? → 1 arg
+// - status = ? → 1 arg
+// - total_price BETWEEN ? AND ? → 2 args
+// - rating > ? → 1 arg
+// - Search on 2 fields → 2 args (one %term% for each field)
+// - LIMIT ? → 1 arg
+// - OFFSET ? → 1 arg
+// Total = 9 args
+// ========================================================================
+
 func TestQueryBuilder_ComplexQuery(t *testing.T) {
 	qb := repository.NewQueryBuilder("SELECT * FROM bookings")
 	query, args := qb.
@@ -191,10 +209,19 @@ func TestQueryBuilder_ComplexQuery(t *testing.T) {
 		t.Error("Expected LIMIT clause")
 	}
 
-	// Check arg count: 4 basic wheres + 2 between + 1 greater + 2 search + 2 pagination = 11
-	expectedArgCount := 11
+	// Correct arg count:
+	// 1 (customer_id) + 1 (status) + 2 (between) + 1 (rating) + 2 (search) + 2 (pagination) = 9
+	expectedArgCount := 9
 	if len(args) != expectedArgCount {
-		t.Errorf("Expected %d args, got %d", expectedArgCount, len(args))
+		t.Errorf("Expected %d args, got %d. Args: %v", expectedArgCount, len(args), args)
+	}
+
+	// Verify specific args
+	if args[0] != 123 {
+		t.Errorf("Expected first arg to be 123, got %v", args[0])
+	}
+	if args[1] != "confirmed" {
+		t.Errorf("Expected second arg to be 'confirmed', got %v", args[1])
 	}
 }
 

@@ -52,6 +52,7 @@ type BarberServiceFilters struct {
 	Offset     int
 }
 
+// FindAll retrieves all services with optional filters
 func (r *ServiceRepository) FindAll(ctx context.Context, filters ServiceFilters) ([]models.Service, error) {
 	// Define sort column mappings
 	sortMap := map[string]string{
@@ -67,11 +68,17 @@ func (r *ServiceRepository) FindAll(ctx context.Context, filters ServiceFilters)
 	qb := BuildServiceQuery().
 		WhereIf(filters.CategoryID > 0, "s.category_id = ?", filters.CategoryID).
 		WhereIf(filters.ServiceType != "", "s.service_type = ?", filters.ServiceType).
-		WhereIf(filters.IsActive != nil, "s.is_active = ?", *filters.IsActive).
-		WhereIf(filters.IsApproved != nil, "s.is_approved = ?", *filters.IsApproved).
 		WhereIf(filters.MinRating > 0, "s.average_global_rating >= ?", filters.MinRating).
 		WhereIf(filters.Complexity > 0, "s.complexity = ?", filters.Complexity).
 		WhereIf(filters.TargetGender != "", "(s.target_gender = ? OR s.target_gender = 'all')", filters.TargetGender)
+
+	// Handle pointer fields safely
+	if filters.IsActive != nil {
+		qb.Where("s.is_active = ?", *filters.IsActive)
+	}
+	if filters.IsApproved != nil {
+		qb.Where("s.is_approved = ?", *filters.IsApproved)
+	}
 
 	// Add search across multiple fields
 	if filters.Search != "" {

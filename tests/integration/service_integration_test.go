@@ -300,7 +300,7 @@ func TestGetAllCategories_Success(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/v1/services/categories", nil)
 	router.ServeHTTP(w, req)
 
-    t.Logf("Response Code: %d, Body: %s", w.Code, w.Body.String())
+	t.Logf("Response Code: %d, Body: %s", w.Code, w.Body.String())
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
@@ -340,7 +340,7 @@ func TestCreateCategory_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// Category creation should succeed or fail with DB constraint
-	assert.Contains(t, []int{http.StatusCreated, http.StatusInternalServerError}, w.Code)
+	assert.Contains(t, []int{http.StatusCreated, http.StatusBadRequest}, w.Code)
 }
 
 func TestCreateCategory_Unauthorized(t *testing.T) {

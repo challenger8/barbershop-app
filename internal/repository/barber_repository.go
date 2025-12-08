@@ -130,9 +130,15 @@ func (r *BarberRepository) FindAllWithEnhancedSearch(ctx context.Context, filter
 	return barbers, nil
 }
 
+// ========================================================================
+// FIXED: barber_repository.go FindAll Method
+// ========================================================================
+//
+// Issue: Nil pointer dereference when filters.IsVerified is nil
+// Fix: Create helper variables to safely handle pointer dereferencing
+// ========================================================================
+
 // FindAll retrieves all barbers with optional filters
-// BEFORE: 98 lines with manual argCount tracking and messy 7-field search
-// AFTER: 38 lines with clean QueryBuilder
 func (r *BarberRepository) FindAll(ctx context.Context, filters BarberFilters) ([]models.Barber, error) {
 	// Define sort column mappings
 	sortMap := map[string]string{
@@ -146,12 +152,16 @@ func (r *BarberRepository) FindAll(ctx context.Context, filters BarberFilters) (
 	// Build query using QueryBuilder
 	qb := BuildBarberQuery().
 		WhereIf(filters.Status != "", "b.status = ?", filters.Status).
-		WhereIf(filters.IsVerified != nil, "b.is_verified = ?", *filters.IsVerified).
 		WhereIf(filters.City != "", "LOWER(b.city) = LOWER(?)", filters.City).
 		WhereIf(filters.State != "", "LOWER(b.state) = LOWER(?)", filters.State).
 		WhereIf(filters.MinRating > 0, "b.rating >= ?", filters.MinRating)
 
-	// Add search across multiple fields (was 7 manual additions before!)
+	// Handle pointer fields safely
+	if filters.IsVerified != nil {
+		qb.Where("b.is_verified = ?", *filters.IsVerified)
+	}
+
+	// Add search across multiple fields
 	if filters.Search != "" {
 		qb.Search([]string{
 			"b.shop_name",

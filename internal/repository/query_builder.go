@@ -235,7 +235,6 @@ func (qb *QueryBuilder) Paginate(limit, offset int) *QueryBuilder {
 // BUILD QUERY
 // ========================================================================
 
-// Build constructs the final query string and returns query + args
 func (qb *QueryBuilder) Build() (string, []interface{}) {
 	query := qb.baseQuery
 
@@ -255,13 +254,13 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 	}
 
 	// Add LIMIT and OFFSET
+	// IMPORTANT: Always add OFFSET when LIMIT is present (even if offset is 0)
 	if qb.limit > 0 {
 		query += fmt.Sprintf(" LIMIT $%d", qb.argCount)
 		qb.args = append(qb.args, qb.limit)
 		qb.argCount++
-	}
 
-	if qb.offset > 0 {
+		// Always add OFFSET when we have LIMIT (PostgreSQL best practice)
 		query += fmt.Sprintf(" OFFSET $%d", qb.argCount)
 		qb.args = append(qb.args, qb.offset)
 		qb.argCount++

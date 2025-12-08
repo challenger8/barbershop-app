@@ -2,8 +2,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 
@@ -220,6 +223,14 @@ func (h *BarberHandler) DeleteBarber(c *gin.Context) {
 // @Failure 404 {object} middleware.ErrorResponse
 // @Failure 500 {object} middleware.ErrorResponse
 // @Router /api/v1/barbers/{id}/status [patch]
+// ========================================================================
+// EXACT CODE TO ADD TO: internal/handlers/barber_handler.go
+// ========================================================================
+//
+// Find the UpdateBarberStatus function (around line 223)
+// Replace the ENTIRE function with this version:
+// ========================================================================
+
 func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
 	id, ok := RequireIntParam(c, "id", "barber")
 	if !ok {
@@ -231,6 +242,32 @@ func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
 		return
 	}
 
+	// ⭐ VALIDATE STATUS BEFORE CALLING SERVICE ⭐
+	validStatuses := []string{
+		config.BarberStatusPending,   // "pending"
+		config.BarberStatusActive,    // "active"
+		config.BarberStatusInactive,  // "inactive"
+		config.BarberStatusSuspended, // "suspended"
+		config.BarberStatusRejected,  // "rejected"
+	}
+
+	isValid := false
+	for _, s := range validStatuses {
+		if req.Status == s {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		c.JSON(400, middleware.ErrorResponse{
+			Error:   "Invalid status",
+			Message: fmt.Sprintf("Status must be one of: %v. Got: %s", validStatuses, req.Status),
+		})
+		return
+	}
+
+	// Now call service with validated status
 	if err := h.barberService.UpdateBarberStatus(c.Request.Context(), id, req.Status); err != nil {
 		if HandleServiceError(c, err, "Barber", "update barber status") {
 			return
