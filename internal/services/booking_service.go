@@ -136,17 +136,9 @@ func (s *BookingService) calculateEndTime(startTime time.Time, durationMinutes i
 // 2. Calculate total: total = servicePrice - discountAmount + taxAmount
 // 3. Return servicePrice, discountAmount, taxAmount, totalPrice
 // ─────────────────────────────────────────────────────────────────────────
-func (s *BookingService) calculateTotalPrice(servicePrice float64, discountAmount float64) (float64, float64, float64, float64) {
-	// YOUR CODE HERE:
-	// Hint: taxRate := 0.08
-
-	// For now, returning placeholder - YOU IMPLEMENT THIS
+func (s *BookingService) calculateTotalPrice(servicePrice float64, discountAmount float64) *models.PricingBreakdown {
 	taxRate := 0.08
-	taxableAmount := servicePrice - discountAmount
-	taxAmount := taxableAmount * taxRate
-	totalPrice := taxableAmount + taxAmount
-
-	return servicePrice, discountAmount, taxAmount, totalPrice
+	return models.CalculatePricing(servicePrice, discountAmount, taxRate)
 }
 
 // validateBookingTime checks if the booking time is valid
@@ -248,10 +240,33 @@ func (s *BookingService) validateAndFetchBarberService(ctx context.Context, serv
 
 	return barberService, nil
 }
+func (s *BookingService) checkTimeSlotAvailability(
+	ctx context.Context,
+	barberID int,
+	startTime, endTime time.Time,
+	excludeBookingID int,
+) error {
+	opts := models.NewTimeSlotCheckOptions(startTime, endTime,
+		models.WithExcludeBooking(excludeBookingID))
+	return s.checkTimeSlotAvailabilityWithOptions(ctx, barberID, opts)
+}
+func (s *BookingService) checkTimeSlotAvailabilityWithOptions(
+	ctx context.Context,
+	barberID int,
+	opts *models.TimeSlotCheckOptions,
+) error {
+	// Get effective times (with buffer if specified)
+	effectiveStart := opts.GetEffectiveStartTime()
+	effectiveEnd := opts.GetEffectiveEndTime()
 
-// checkTimeSlotAvailability verifies no booking conflicts exist
-func (s *BookingService) checkTimeSlotAvailability(ctx context.Context, barberID int, startTime, endTime time.Time, excludeBookingID int) error {
-	hasConflict, err := s.repo.CheckConflict(ctx, barberID, startTime, endTime, excludeBookingID)
+	// Check for conflicts
+	hasConflict, err := s.repo.CheckConflict(
+		ctx,
+		barberID,
+		effectiveStart,
+		effectiveEnd,
+		opts.ExcludeBookingID,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to check availability: %w", err)
 	}
@@ -305,13 +320,13 @@ func (s *BookingService) calculateBookingPricing(barberService *models.BarberSer
 	}
 
 	// Calculate tax and total
-	_, _, taxAmount, totalPrice := s.calculateTotalPrice(servicePrice, discountAmount)
+	pricing := s.calculateTotalPrice(servicePrice, discountAmount)
 
 	return PricingResult{
-		ServicePrice:   servicePrice,
-		DiscountAmount: discountAmount,
-		TaxAmount:      taxAmount,
-		TotalPrice:     totalPrice,
+		ServicePrice:   pricing.ServicePrice,
+		DiscountAmount: pricing.DiscountAmount,
+		TaxAmount:      pricing.TaxAmount,
+		TotalPrice:     pricing.TotalPrice,
 	}
 }
 
@@ -416,49 +431,49 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 	if err := s.validateBookingTime(req.StartTime, req.DurationMinutes); err != nil {
 		return nil, err
 	}
-	
+
 	// Step 2: Validate barber exists and is active
 	barber, err := s.validateAndFetchBarber(ctx, req.BarberID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Step 3: Validate service exists and get pricing
 	barberService, err := s.validateAndFetchBarberService(ctx, req.ServiceID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Step 4: Check for time slot conflicts
 	endTime := s.calculateEndTime(req.StartTime, req.DurationMinutes)
 	if err := s.checkTimeSlotAvailability(ctx, req.BarberID, req.StartTime, endTime, 0); err != nil {
 		return nil, err
 	}
-	
+
 	// Step 5: Validate customer info
 	if err := s.validateCustomerInfo(req); err != nil {
 		return nil, err
 	}
-	
+
 	// Step 6: Calculate pricing
 	pricing := s.calculateBookingPricing(barberService, req)
-	
+
 	// Step 7: Build booking model
 	booking := s.buildBookingFromRequest(req, barberService, pricing, endTime)
-	
+
 	// Step 8: Save booking with audit trail
 	if err := s.saveBookingWithHistory(ctx, booking, createdByUserID); err != nil {
 		return nil, err
 	}
-	
+
 	// Step 9: Invalidate cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, req.BarberID)
 	}
-	
+
 	// Suppress unused variable warning (can be removed if barber is used elsewhere)
 	_ = barber
-	
+
 	return s.toBookingResponse(booking), nil
 }
 
@@ -610,9 +625,16 @@ func (s *BookingService) UpdateBooking(ctx context.Context, id int, req UpdateBo
 	return s.toBookingResponse(booking), nil
 }
 
-// UpdateStatus updates the booking status
+// ========================================================================
+// UPDATED: internal/services/booking_service.go
+// ========================================================================
+//
+// Replace the UpdateStatus method (around line 613-645) with this version:
+// ========================================================================
+
+// UpdateStatus updates the booking status with state machine validation
 func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus string, updatedByUserID *int) (*BookingResponse, error) {
-	// Get current booking for history
+	// Get current booking
 	booking, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -620,12 +642,17 @@ func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus str
 
 	oldStatus := booking.Status
 
-	// Update status (repository handles validation)
-	if err := s.repo.UpdateStatus(ctx, id, newStatus); err != nil {
-		return nil, err
+	// ⭐ VALIDATE STATE TRANSITION USING STATE MACHINE ⭐
+	if err := booking.ValidateStatusTransition(newStatus); err != nil {
+		return nil, fmt.Errorf("invalid status transition: %w", err)
 	}
 
-	// Create history
+	// Update status in database
+	if err := s.repo.UpdateStatus(ctx, id, newStatus); err != nil {
+		return nil, fmt.Errorf("failed to update status: %w", err)
+	}
+
+	// Create audit history
 	history := &models.BookingHistory{
 		BookingID:  booking.ID,
 		ChangedBy:  updatedByUserID,
@@ -633,7 +660,12 @@ func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus str
 		OldValues:  models.JSONMap{"status": oldStatus},
 		NewValues:  models.JSONMap{"status": newStatus},
 	}
-	_ = s.repo.CreateHistory(ctx, history)
+
+	// Log history (don't fail if history creation fails)
+	if err := s.repo.CreateHistory(ctx, history); err != nil {
+		// Log error but don't fail the status update
+		fmt.Printf("Warning: failed to create booking history: %v\n", err)
+	}
 
 	// Invalidate cache
 	if s.cache != nil {
@@ -642,6 +674,51 @@ func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus str
 
 	// Return updated booking
 	return s.GetBookingByID(ctx, id)
+}
+
+// ========================================================================
+// NEW HELPER METHOD: Get Allowed Transitions
+// ========================================================================
+
+// GetAllowedStatusTransitions returns the valid next states for a booking
+// This is useful for API clients to know what actions are available
+func (s *BookingService) GetAllowedStatusTransitions(ctx context.Context, id int) ([]string, error) {
+	booking, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return booking.GetAllowedStatusTransitions(), nil
+}
+
+// ========================================================================
+// UPDATED: Cancel Booking Method
+// ========================================================================
+
+// CancelBooking cancels a booking with state machine validation
+func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBookingRequest, cancelledByUserID *int) (*BookingResponse, error) {
+	// Get existing booking
+	booking, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// ⭐ CHECK IF CANCELLATION IS ALLOWED USING STATE MACHINE ⭐
+	if !booking.CanTransitionTo(config.BookingStatusCancelled) {
+		return nil, fmt.Errorf(
+			"booking cannot be cancelled from status '%s'. Current status must be one of: %v",
+			booking.Status,
+			[]string{config.BookingStatusPending, config.BookingStatusConfirmed, config.BookingStatusInProgress},
+		)
+	}
+
+	// Check if already in a terminal state
+	if booking.IsInTerminalState() {
+		return nil, fmt.Errorf("booking is already in a terminal state: %s", booking.Status)
+	}
+
+	// Update status to cancelled
+	return s.UpdateStatus(ctx, id, config.BookingStatusCancelled, cancelledByUserID)
 }
 
 // ========================================================================
@@ -724,34 +801,43 @@ func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req Resc
 // CANCEL OPERATION
 // ========================================================================
 
-// CancelBooking cancels a booking
-func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBookingRequest, cancelledByUserID int) error {
-	// Get booking to validate and for cache invalidation
-	booking, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	// Cancel the booking
-	if err := s.repo.Cancel(ctx, id, cancelledByUserID, req.Reason, req.IsByCustomer); err != nil {
-		return err
-	}
-
-	// Invalidate cache
-	if s.cache != nil {
-		_ = s.cache.InvalidateBarber(ctx, booking.BarberID)
-	}
-
-	return nil
-}
-
 // ========================================================================
 // STATISTICS
 // ========================================================================
+func (s *BookingService) GetBarberStats(
+	ctx context.Context,
+	barberID int,
+	from, to time.Time,
+) (*repository.BookingStats, error) {
+	opts := models.NewStatsQueryOptions(from, to)
+	return s.GetBarberStatsEnhanced(ctx, barberID, opts)
+}
 
 // GetBarberStats retrieves booking statistics for a barber
-func (s *BookingService) GetBarberStats(ctx context.Context, barberID int, from, to time.Time) (*repository.BookingStats, error) {
-	return s.repo.GetBarberStats(ctx, barberID, from, to)
+func (s *BookingService) GetBarberStatsEnhanced(
+	ctx context.Context,
+	barberID int,
+	opts *models.StatsQueryOptions,
+) (*repository.BookingStats, error) {
+	// Get base stats
+	stats, err := s.repo.GetBarberStats(ctx, barberID, opts.FromDate, opts.ToDate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add trends if requested
+	if opts.IncludeTrends {
+		// TODO: Calculate trends
+		// This would compare current period with previous period
+	}
+
+	// Add ratings if requested
+	if opts.IncludeRatings {
+		// TODO: Add rating metrics
+		// This would aggregate review data
+	}
+
+	return stats, nil
 }
 
 // GetBookingHistory retrieves the audit history for a booking
@@ -764,11 +850,33 @@ func (s *BookingService) GetBookingHistory(ctx context.Context, bookingID int) (
 // ========================================================================
 
 // CheckAvailability checks if a time slot is available for a barber
-func (s *BookingService) CheckAvailability(ctx context.Context, barberID int, startTime time.Time, durationMinutes int) (bool, error) {
+func (s *BookingService) CheckAvailabilityEnhanced(
+	ctx context.Context,
+	barberID int,
+	startTime time.Time,
+	durationMinutes int,
+	opts ...models.TimeSlotCheckOption,
+) (bool, error) {
 	endTime := s.calculateEndTime(startTime, durationMinutes)
-	hasConflict, err := s.repo.CheckConflict(ctx, barberID, startTime, endTime, 0)
+
+	// Create options with any additional settings
+	checkOpts := models.NewTimeSlotCheckOptions(startTime, endTime, opts...)
+
+	// Use the enhanced check
+	err := s.checkTimeSlotAvailabilityWithOptions(ctx, barberID, checkOpts)
 	if err != nil {
-		return false, err
+		return false, nil // Not available (has conflict)
 	}
-	return !hasConflict, nil
+
+	return true, nil // Available
+}
+
+// KEEP OLD VERSION FOR BACKWARD COMPATIBILITY
+func (s *BookingService) CheckAvailability(
+	ctx context.Context,
+	barberID int,
+	startTime time.Time,
+	durationMinutes int,
+) (bool, error) {
+	return s.CheckAvailabilityEnhanced(ctx, barberID, startTime, durationMinutes)
 }

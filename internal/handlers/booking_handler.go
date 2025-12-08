@@ -553,7 +553,7 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 	}
 
 	// Cancel booking
-	err := h.bookingService.CancelBooking(c.Request.Context(), id, req, userID)
+	_, err := h.bookingService.CancelBooking(c.Request.Context(), id, req, &userID)
 	if err != nil {
 		if err == repository.ErrBookingNotFound {
 			RespondNotFound(c, "Booking")

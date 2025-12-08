@@ -19,15 +19,6 @@ import (
 //   - Reusable patterns
 //   - Easy to test
 //   - DRY principle
-//
-// Usage Example:
-//   qb := NewQueryBuilder("SELECT * FROM services").
-//       Where("category_id = ?", categoryID).
-//       Where("is_active = ?", true).
-//       Search([]string{"name", "description"}, searchTerm).
-//       OrderBy("created_at", "DESC").
-//       Paginate(20, 0).
-//       Build()
 // ========================================================================
 
 // QueryBuilder helps construct SQL queries safely and cleanly
@@ -134,6 +125,20 @@ func (qb *QueryBuilder) WhereLessThan(column string, value interface{}) *QueryBu
 	return qb.Where(column+" < ?", value)
 }
 
+// WhereNull adds a WHERE column IS NULL condition
+func (qb *QueryBuilder) WhereNull(column string) *QueryBuilder {
+	condition := fmt.Sprintf("%s IS NULL", column)
+	qb.conditions = append(qb.conditions, condition)
+	return qb
+}
+
+// WhereNotNull adds a WHERE column IS NOT NULL condition
+func (qb *QueryBuilder) WhereNotNull(column string) *QueryBuilder {
+	condition := fmt.Sprintf("%s IS NOT NULL", column)
+	qb.conditions = append(qb.conditions, condition)
+	return qb
+}
+
 // ========================================================================
 // SEARCH OPERATIONS
 // ========================================================================
@@ -235,6 +240,7 @@ func (qb *QueryBuilder) Paginate(limit, offset int) *QueryBuilder {
 // BUILD QUERY
 // ========================================================================
 
+// Build constructs the final query string and returns query + args
 func (qb *QueryBuilder) Build() (string, []interface{}) {
 	query := qb.baseQuery
 
@@ -254,7 +260,7 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 	}
 
 	// Add LIMIT and OFFSET
-	// IMPORTANT: Always add OFFSET when LIMIT is present (even if offset is 0)
+	// FIXED: Always add OFFSET when LIMIT is present (even if offset is 0)
 	if qb.limit > 0 {
 		query += fmt.Sprintf(" LIMIT $%d", qb.argCount)
 		qb.args = append(qb.args, qb.limit)
@@ -281,20 +287,6 @@ func BuildServiceQuery() *QueryBuilder {
 		LEFT JOIN service_categories c ON s.category_id = c.id
 	`
 	return NewQueryBuilder(baseQuery)
-}
-
-// WhereNull adds a WHERE column IS NULL condition
-func (qb *QueryBuilder) WhereNull(column string) *QueryBuilder {
-	condition := fmt.Sprintf("%s IS NULL", column)
-	qb.conditions = append(qb.conditions, condition)
-	return qb
-}
-
-// WhereNotNull adds a WHERE column IS NOT NULL condition
-func (qb *QueryBuilder) WhereNotNull(column string) *QueryBuilder {
-	condition := fmt.Sprintf("%s IS NOT NULL", column)
-	qb.conditions = append(qb.conditions, condition)
-	return qb
 }
 
 // BuildBarberQuery creates a pre-configured builder for barbers
