@@ -49,22 +49,6 @@ func SetDefaultFloat(field *float64, defaultValue float64) {
 // ========================================================================
 
 // QueryBuilder helps build dynamic SQL queries with conditions
-type QueryBuilder struct {
-	baseQuery string
-	args      []interface{}
-	argCount  int
-	conditions []string
-}
-
-// NewQueryBuilder creates a new query builder
-func NewQueryBuilder(baseQuery string) *QueryBuilder {
-	return &QueryBuilder{
-		baseQuery: baseQuery,
-		args:      make([]interface{}, 0),
-		argCount:  1,
-		conditions: make([]string, 0),
-	}
-}
 
 // AddCondition adds a WHERE condition
 func (qb *QueryBuilder) AddCondition(condition string, value interface{}) {
@@ -78,18 +62,6 @@ func (qb *QueryBuilder) AddOptionalCondition(condition string, value interface{}
 	if checkFunc(value) {
 		qb.AddCondition(condition, value)
 	}
-}
-
-// Build constructs the final query string
-func (qb *QueryBuilder) Build() (string, []interface{}) {
-	query := qb.baseQuery
-	if len(qb.conditions) > 0 {
-		query += " WHERE " + qb.conditions[0]
-		for i := 1; i < len(qb.conditions); i++ {
-			query += " AND " + qb.conditions[i]
-		}
-	}
-	return query, qb.args
 }
 
 // ========================================================================

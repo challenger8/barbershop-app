@@ -77,29 +77,9 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// Int pointer helper
-func intPtr(i int) *int {
-	return &i
-}
-
-// Int64 pointer helper
-func int64Ptr(i int64) *int64 {
-	return &i
-}
-
 // Float64 pointer helper
 func float64Ptr(f float64) *float64 {
 	return &f
-}
-
-// Bool pointer helper
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-// Time pointer helper
-func timePtr(t time.Time) *time.Time {
-	return &t
 }
 
 // generateTestToken creates a JWT token for testing

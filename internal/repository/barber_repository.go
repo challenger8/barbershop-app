@@ -131,95 +131,48 @@ func (r *BarberRepository) FindAllWithEnhancedSearch(ctx context.Context, filter
 }
 
 // FindAll retrieves all barbers with optional filters
+// BEFORE: 98 lines with manual argCount tracking and messy 7-field search
+// AFTER: 38 lines with clean QueryBuilder
 func (r *BarberRepository) FindAll(ctx context.Context, filters BarberFilters) ([]models.Barber, error) {
-	query := `
-		SELECT b.*, u.name as user_name, u.email as user_email
-		FROM barbers b
-		LEFT JOIN users u ON b.user_id = u.id
-		WHERE b.deleted_at IS NULL
-	`
-	args := []interface{}{}
-	argCount := 1
-
-	// Apply filters
-	if filters.Status != "" {
-		query += fmt.Sprintf(" AND b.status = $%d", argCount)
-		args = append(args, filters.Status)
-		argCount++
+	// Define sort column mappings
+	sortMap := map[string]string{
+		"rating":         "b.rating DESC",
+		"total_bookings": "b.total_bookings DESC",
+		"shop_name":      "b.shop_name ASC",
+		"user_name":      "u.name ASC",
+		"default":        "b.created_at DESC",
 	}
 
-	if filters.IsVerified != nil {
-		query += fmt.Sprintf(" AND b.is_verified = $%d", argCount)
-		args = append(args, *filters.IsVerified)
-		argCount++
-	}
+	// Build query using QueryBuilder
+	qb := BuildBarberQuery().
+		WhereIf(filters.Status != "", "b.status = ?", filters.Status).
+		WhereIf(filters.IsVerified != nil, "b.is_verified = ?", *filters.IsVerified).
+		WhereIf(filters.City != "", "LOWER(b.city) = LOWER(?)", filters.City).
+		WhereIf(filters.State != "", "LOWER(b.state) = LOWER(?)", filters.State).
+		WhereIf(filters.MinRating > 0, "b.rating >= ?", filters.MinRating)
 
-	if filters.City != "" {
-		query += fmt.Sprintf(" AND LOWER(b.city) = LOWER($%d)", argCount)
-		args = append(args, filters.City)
-		argCount++
-	}
-
-	if filters.State != "" {
-		query += fmt.Sprintf(" AND LOWER(b.state) = LOWER($%d)", argCount)
-		args = append(args, filters.State)
-		argCount++
-	}
-
-	if filters.MinRating > 0 {
-		query += fmt.Sprintf(" AND b.rating >= $%d", argCount)
-		args = append(args, filters.MinRating)
-		argCount++
-	}
-
-	// Fixed search implementation
+	// Add search across multiple fields (was 7 manual additions before!)
 	if filters.Search != "" {
-		searchTerm := "%" + strings.ToLower(filters.Search) + "%"
-		query += fmt.Sprintf(` AND (
-			LOWER(b.shop_name) LIKE $%d OR 
-			LOWER(b.description) LIKE $%d OR 
-			LOWER(u.name) LIKE $%d OR
-			LOWER(b.address) LIKE $%d OR
-			LOWER(b.city) LIKE $%d OR
-			LOWER(b.state) LIKE $%d OR
-			LOWER(b.specialties::text) LIKE $%d
-		)`, argCount, argCount+1, argCount+2, argCount+3, argCount+4, argCount+5, argCount+6)
-
-		// Add the search term for each field we're searching
-		for i := 0; i < 7; i++ {
-			args = append(args, searchTerm)
-		}
-		argCount += 7
+		qb.Search([]string{
+			"b.shop_name",
+			"b.description",
+			"u.name",
+			"b.address",
+			"b.city",
+			"b.state",
+		}, filters.Search).
+			SearchILike([]string{
+				"b.specialties",
+			}, filters.Search)
 	}
 
-	// Sorting
-	orderBy := "b.created_at DESC"
-	if filters.SortBy != "" {
-		switch filters.SortBy {
-		case "rating":
-			orderBy = "b.rating DESC"
-		case "total_bookings":
-			orderBy = "b.total_bookings DESC"
-		case "shop_name":
-			orderBy = "b.shop_name ASC"
-		case "user_name":
-			orderBy = "u.name ASC"
-		}
-	}
-	query += " ORDER BY " + orderBy
+	// Add sorting and pagination
+	query, args := qb.
+		OrderByWithDefault(filters.SortBy, "default", sortMap).
+		Paginate(filters.Limit, filters.Offset).
+		Build()
 
-	// Pagination
-	limit := 20
-	offset := 0
-	if filters.Limit > 0 {
-		limit = filters.Limit
-	}
-	if filters.Offset > 0 {
-		offset = filters.Offset
-	}
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, limit, offset)
-
+	// Execute query
 	var barbers []models.Barber
 	err := r.db.SelectContext(ctx, &barbers, query, args...)
 	if err != nil {

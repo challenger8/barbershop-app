@@ -52,104 +52,47 @@ type BarberServiceFilters struct {
 	Offset     int
 }
 
-// FindAll retrieves all services with optional filters
 func (r *ServiceRepository) FindAll(ctx context.Context, filters ServiceFilters) ([]models.Service, error) {
-	query := `
-		SELECT s.*, c.name as category_name
-		FROM services s
-		LEFT JOIN service_categories c ON s.category_id = c.id
-		WHERE 1=1
-	`
-	args := []interface{}{}
-	argCount := 1
-
-	// Apply filters
-	if filters.CategoryID > 0 {
-		query += fmt.Sprintf(" AND s.category_id = $%d", argCount)
-		args = append(args, filters.CategoryID)
-		argCount++
+	// Define sort column mappings
+	sortMap := map[string]string{
+		"name":       "s.name ASC",
+		"popularity": "s.global_popularity_score DESC",
+		"rating":     "s.average_global_rating DESC",
+		"duration":   "s.default_duration_min ASC",
+		"complexity": "s.complexity ASC",
+		"default":    "s.created_at DESC",
 	}
 
-	if filters.ServiceType != "" {
-		query += fmt.Sprintf(" AND s.service_type = $%d", argCount)
-		args = append(args, filters.ServiceType)
-		argCount++
-	}
+	// Build query using QueryBuilder
+	qb := BuildServiceQuery().
+		WhereIf(filters.CategoryID > 0, "s.category_id = ?", filters.CategoryID).
+		WhereIf(filters.ServiceType != "", "s.service_type = ?", filters.ServiceType).
+		WhereIf(filters.IsActive != nil, "s.is_active = ?", *filters.IsActive).
+		WhereIf(filters.IsApproved != nil, "s.is_approved = ?", *filters.IsApproved).
+		WhereIf(filters.MinRating > 0, "s.average_global_rating >= ?", filters.MinRating).
+		WhereIf(filters.Complexity > 0, "s.complexity = ?", filters.Complexity).
+		WhereIf(filters.TargetGender != "", "(s.target_gender = ? OR s.target_gender = 'all')", filters.TargetGender)
 
-	if filters.IsActive != nil {
-		query += fmt.Sprintf(" AND s.is_active = $%d", argCount)
-		args = append(args, *filters.IsActive)
-		argCount++
-	}
-
-	if filters.IsApproved != nil {
-		query += fmt.Sprintf(" AND s.is_approved = $%d", argCount)
-		args = append(args, *filters.IsApproved)
-		argCount++
-	}
-
-	if filters.MinRating > 0 {
-		query += fmt.Sprintf(" AND s.average_global_rating >= $%d", argCount)
-		args = append(args, filters.MinRating)
-		argCount++
-	}
-
-	if filters.Complexity > 0 {
-		query += fmt.Sprintf(" AND s.complexity = $%d", argCount)
-		args = append(args, filters.Complexity)
-		argCount++
-	}
-
-	if filters.TargetGender != "" {
-		query += fmt.Sprintf(" AND (s.target_gender = $%d OR s.target_gender = 'all')", argCount)
-		args = append(args, filters.TargetGender)
-		argCount++
-	}
-
-	// Search
+	// Add search across multiple fields
 	if filters.Search != "" {
-		searchTerm := "%" + strings.ToLower(filters.Search) + "%"
-		query += fmt.Sprintf(` AND (
-			LOWER(s.name) LIKE $%d OR
-			LOWER(s.short_description) LIKE $%d OR
-			LOWER(s.detailed_description) LIKE $%d OR
-			s.tags::text ILIKE $%d OR
-			s.search_keywords::text ILIKE $%d
-		)`, argCount, argCount, argCount, argCount, argCount)
-		args = append(args, searchTerm)
-		argCount++
+		qb.Search([]string{
+			"s.name",
+			"s.short_description",
+			"s.detailed_description",
+		}, filters.Search).
+			SearchILike([]string{
+				"s.tags",
+				"s.search_keywords",
+			}, filters.Search)
 	}
 
-	// Sorting
-	orderBy := "s.created_at DESC"
-	if filters.SortBy != "" {
-		switch filters.SortBy {
-		case "name":
-			orderBy = "s.name ASC"
-		case "popularity":
-			orderBy = "s.global_popularity_score DESC"
-		case "rating":
-			orderBy = "s.average_global_rating DESC"
-		case "duration":
-			orderBy = "s.default_duration_min ASC"
-		case "complexity":
-			orderBy = "s.complexity ASC"
-		}
-	}
-	query += " ORDER BY " + orderBy
+	// Add sorting and pagination
+	query, args := qb.
+		OrderByWithDefault(filters.SortBy, "default", sortMap).
+		Paginate(filters.Limit, filters.Offset).
+		Build()
 
-	// Pagination
-	limit := config.DefaultPageLimit
-	offset := 0
-	if filters.Limit > 0 {
-		limit = filters.Limit
-	}
-	if filters.Offset > 0 {
-		offset = filters.Offset
-	}
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, limit, offset)
-
+	// Execute query
 	var services []models.Service
 	err := r.db.SelectContext(ctx, &services, query, args...)
 	if err != nil {

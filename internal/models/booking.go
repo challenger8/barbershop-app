@@ -67,11 +67,7 @@ type Booking struct {
 	ReferralSource *string `json:"referral_source" db:"referral_source"`
 	UTMCampaign    *string `json:"utm_campaign" db:"utm_campaign"`
 
-	// ML and analytics metadata
-	MLPredictionScore *float64 `json:"ml_prediction_score" db:"ml_prediction_score"` // No-show prediction
-	CustomerSegment   *string  `json:"customer_segment" db:"customer_segment"`
-	BookingValueScore *float64 `json:"booking_value_score" db:"booking_value_score"`
-
+	
 	// Audit fields
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
