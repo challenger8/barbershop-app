@@ -24,31 +24,31 @@ func NewServiceRepository(db *sqlx.DB) *ServiceRepository {
 
 // ServiceFilters represents filter options for services
 type ServiceFilters struct {
-	CategoryID  int
-	ServiceType string
-	IsActive    *bool
-	IsApproved  *bool
-	Search      string
-	MinRating   float64
-	Complexity  int
+	CategoryID   int
+	ServiceType  string
+	IsActive     *bool
+	IsApproved   *bool
+	Search       string
+	MinRating    float64
+	Complexity   int
 	TargetGender string
-	SortBy      string
-	Limit       int
-	Offset      int
+	SortBy       string
+	Limit        int
+	Offset       int
 }
 
 // BarberServiceFilters represents filter options for barber services
 type BarberServiceFilters struct {
-	BarberID    int
-	ServiceID   int
-	IsActive    *bool
-	IsFeatured  *bool
-	MinPrice    float64
-	MaxPrice    float64
-	Search      string
-	SortBy      string
-	Limit       int
-	Offset      int
+	BarberID   int
+	ServiceID  int
+	IsActive   *bool
+	IsFeatured *bool
+	MinPrice   float64
+	MaxPrice   float64
+	Search     string
+	SortBy     string
+	Limit      int
+	Offset     int
 }
 
 // Custom errors
@@ -271,6 +271,15 @@ func (r *ServiceRepository) Create(ctx context.Context, service *models.Service)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, service)
 	if err != nil {
+		// Check for duplicate slug or name
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			if strings.Contains(strings.ToLower(err.Error()), "slug") {
+				return ErrDuplicateSlug
+			}
+			if strings.Contains(strings.ToLower(err.Error()), "name") {
+				return ErrDuplicateService
+			}
+		}
 		return fmt.Errorf("failed to create service: %w", err)
 	}
 	defer rows.Close()
@@ -440,6 +449,9 @@ func (r *ServiceRepository) CreateCategory(ctx context.Context, category *models
 
 	rows, err := r.db.NamedQueryContext(ctx, query, category)
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			return ErrDuplicateCategory
+		}
 		return fmt.Errorf("failed to create category: %w", err)
 	}
 	defer rows.Close()
@@ -676,6 +688,10 @@ func (r *ServiceRepository) CreateBarberService(ctx context.Context, bs *models.
 
 	rows, err := r.db.NamedQueryContext(ctx, query, bs)
 	if err != nil {
+		// Check for duplicate barber_id + service_id combination
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			return fmt.Errorf("barber already offers this service: %w", err)
+		}
 		return fmt.Errorf("failed to create barber service: %w", err)
 	}
 	defer rows.Close()

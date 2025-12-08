@@ -429,6 +429,12 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 
 	rows, err := r.db.NamedQueryContext(ctx, query, barber)
 	if err != nil {
+		// Check for duplicate user_id (one barber profile per user)
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			if strings.Contains(strings.ToLower(err.Error()), "user_id") {
+				return ErrDuplicateBarber
+			}
+		}
 		return fmt.Errorf("failed to create barber: %w", err)
 	}
 	defer rows.Close()

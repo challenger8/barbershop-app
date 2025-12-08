@@ -89,12 +89,7 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 	}
 
 	barber, err := h.barberService.GetBarberByID(c.Request.Context(), id)
-	if err != nil {
-		if err == repository.ErrBarberNotFound {
-			RespondNotFound(c, "Barber")
-			return
-		}
-		RespondInternalError(c, "fetch barber", err)
+	if HandleServiceError(c, err, "Barber", "fetch barber") {
 		return
 	}
 
@@ -120,8 +115,7 @@ func (h *BarberHandler) CreateBarber(c *gin.Context) {
 	}
 
 	barber, err := h.barberService.CreateBarber(c.Request.Context(), *req)
-	if err != nil {
-		RespondInternalError(c, "create barber", err)
+	if HandleServiceError(c, err, "Barber", "create barber") {
 		return
 	}
 
@@ -143,12 +137,7 @@ func (h *BarberHandler) GetBarberByUUID(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	barber, err := h.barberService.GetBarberByUUID(c.Request.Context(), uuid)
-	if err != nil {
-		if err == repository.ErrBarberNotFound {
-			RespondNotFound(c, "Barber")
-			return
-		}
-		RespondInternalError(c, "fetch barber", err)
+	if HandleServiceError(c, err, "Barber", "fetch barber") {
 		return
 	}
 
@@ -180,12 +169,7 @@ func (h *BarberHandler) UpdateBarber(c *gin.Context) {
 	}
 
 	barber, err := h.barberService.UpdateBarber(c.Request.Context(), id, *req)
-	if err != nil {
-		if err == repository.ErrBarberNotFound {
-			RespondNotFound(c, "Barber")
-			return
-		}
-		RespondInternalError(c, "update barber", err)
+	if HandleServiceError(c, err, "Barber", "update barber") {
 		return
 	}
 
@@ -215,12 +199,9 @@ func (h *BarberHandler) DeleteBarber(c *gin.Context) {
 	}
 
 	if err := h.barberService.DeleteBarber(c.Request.Context(), id); err != nil {
-		if err == repository.ErrBarberNotFound {
-			RespondNotFound(c, "Barber")
+		if HandleServiceError(c, err, "Barber", "delete barber") {
 			return
 		}
-		RespondInternalError(c, "delete barber", err)
-		return
 	}
 
 	RespondSuccessWithMessage(c, "Barber deleted successfully")
@@ -251,12 +232,9 @@ func (h *BarberHandler) UpdateBarberStatus(c *gin.Context) {
 	}
 
 	if err := h.barberService.UpdateBarberStatus(c.Request.Context(), id, req.Status); err != nil {
-		if err == repository.ErrBarberNotFound {
-			RespondNotFound(c, "Barber")
+		if HandleServiceError(c, err, "Barber", "update barber status") {
 			return
 		}
-		RespondBadRequest(c, "Failed to update status", err.Error())
-		return
 	}
 
 	RespondSuccessWithMessage(c, "Status updated successfully")
@@ -281,8 +259,7 @@ func (h *BarberHandler) GetBarberStatistics(c *gin.Context) {
 	}
 
 	stats, err := h.barberService.GetBarberStatistics(c.Request.Context(), id)
-	if err != nil {
-		RespondInternalError(c, "fetch barber statistics", err)
+	if HandleServiceError(c, err, "Barber", "fetch barber statistics") {
 		return
 	}
 

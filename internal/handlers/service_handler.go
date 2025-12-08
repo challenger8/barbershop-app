@@ -98,15 +98,9 @@ func (h *ServiceHandler) GetService(c *gin.Context) {
 	}
 
 	service, err := h.serviceService.GetServiceByID(c.Request.Context(), id)
-	if err != nil {
-		if err == repository.ErrServiceNotFound {
-			RespondNotFound(c, "Service")
-			return
-		}
-		RespondInternalError(c, "fetch service", err)
+	if HandleServiceError(c, err, "Service", "fetch service") {
 		return
 	}
-
 	RespondSuccess(c, service)
 }
 
@@ -125,12 +119,7 @@ func (h *ServiceHandler) GetServiceBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
 	service, err := h.serviceService.GetServiceBySlug(c.Request.Context(), slug)
-	if err != nil {
-		if err == repository.ErrServiceNotFound {
-			RespondNotFound(c, "Service")
-			return
-		}
-		RespondInternalError(c, "fetch service", err)
+	if HandleServiceError(c, err, "Service", "fetch service") {
 		return
 	}
 
@@ -202,15 +191,9 @@ func (h *ServiceHandler) UpdateService(c *gin.Context) {
 	}
 
 	service, err := h.serviceService.UpdateService(c.Request.Context(), id, *req)
-	if err != nil {
-		if err == repository.ErrServiceNotFound {
-			RespondNotFound(c, "Service")
-			return
-		}
-		RespondInternalError(c, "update service", err)
+	if HandleServiceError(c, err, "Service", "update service") {
 		return
 	}
-
 	c.JSON(http.StatusOK, SuccessResponse{
 		Success: true,
 		Data:    service,
@@ -237,12 +220,9 @@ func (h *ServiceHandler) DeleteService(c *gin.Context) {
 	}
 
 	if err := h.serviceService.DeleteService(c.Request.Context(), id); err != nil {
-		if err == repository.ErrServiceNotFound {
-			RespondNotFound(c, "Service")
+		if HandleServiceError(c, err, "Service", "delete service") {
 			return
 		}
-		RespondInternalError(c, "delete service", err)
-		return
 	}
 
 	RespondSuccessWithMessage(c, "Service deleted successfully")
@@ -325,12 +305,7 @@ func (h *ServiceHandler) GetCategory(c *gin.Context) {
 	}
 
 	category, err := h.serviceService.GetCategoryByID(c.Request.Context(), id)
-	if err != nil {
-		if err == repository.ErrCategoryNotFound {
-			RespondNotFound(c, "Category")
-			return
-		}
-		RespondInternalError(c, "fetch category", err)
+	if HandleServiceError(c, err, "Category", "fetch category") {
 		return
 	}
 
@@ -355,8 +330,7 @@ func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 	}
 
 	category, err := h.serviceService.CreateCategory(c.Request.Context(), *req)
-	if err != nil {
-		RespondInternalError(c, "create category", err)
+	if HandleServiceError(c, err, "Category", "create category") {
 		return
 	}
 
@@ -392,12 +366,7 @@ func (h *ServiceHandler) UpdateCategory(c *gin.Context) {
 	}
 
 	category, err := h.serviceService.UpdateCategory(c.Request.Context(), id, *req)
-	if err != nil {
-		if err == repository.ErrCategoryNotFound {
-			RespondNotFound(c, "Category")
-			return
-		}
-		RespondInternalError(c, "update category", err)
+	if HandleServiceError(c, err, "Category", "update category") {
 		return
 	}
 
@@ -427,12 +396,9 @@ func (h *ServiceHandler) DeleteCategory(c *gin.Context) {
 	}
 
 	if err := h.serviceService.DeleteCategory(c.Request.Context(), id); err != nil {
-		if err == repository.ErrCategoryNotFound {
-			RespondNotFound(c, "Category")
+		if HandleServiceError(c, err, "Category", "delete category") {
 			return
 		}
-		RespondInternalError(c, "delete category", err)
-		return
 	}
 
 	RespondSuccessWithMessage(c, "Category deleted successfully")
@@ -553,12 +519,7 @@ func (h *ServiceHandler) UpdateBarberService(c *gin.Context) {
 	}
 
 	barberService, err := h.serviceService.UpdateBarberService(c.Request.Context(), id, *req)
-	if err != nil {
-		if err == repository.ErrBarberServiceNotFound {
-			RespondNotFound(c, "Barber service")
-			return
-		}
-		RespondInternalError(c, "update barber service", err)
+	if HandleServiceError(c, err, "Barber service", "update barber service") {
 		return
 	}
 
@@ -588,12 +549,9 @@ func (h *ServiceHandler) RemoveServiceFromBarber(c *gin.Context) {
 	}
 
 	if err := h.serviceService.RemoveServiceFromBarber(c.Request.Context(), id); err != nil {
-		if err == repository.ErrBarberServiceNotFound {
-			RespondNotFound(c, "Barber service")
+		if HandleServiceError(c, err, "Barber service", "remove service from barber") {
 			return
 		}
-		RespondInternalError(c, "remove service from barber", err)
-		return
 	}
 
 	RespondSuccessWithMessage(c, "Service removed from barber successfully")
@@ -618,12 +576,7 @@ func (h *ServiceHandler) GetBarberServiceByID(c *gin.Context) {
 	}
 
 	barberService, err := h.serviceService.GetBarberServiceByID(c.Request.Context(), id)
-	if err != nil {
-		if err == repository.ErrBarberServiceNotFound {
-			RespondNotFound(c, "Barber service")
-			return
-		}
-		RespondInternalError(c, "fetch barber service", err)
+	if HandleServiceError(c, err, "Barber service", "fetch barber service") {
 		return
 	}
 

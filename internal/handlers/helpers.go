@@ -2,6 +2,8 @@
 package handlers
 
 import (
+	"barber-booking-system/internal/middleware"
+	"barber-booking-system/internal/repository"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -9,15 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"barber-booking-system/internal/middleware"
-
 	"github.com/gin-gonic/gin"
 )
 
 // ============================================================================
 // QUERY PARAMETER PARSING
 // ============================================================================
-
 // ParseIntQuery parses an integer from query string with default value
 func ParseIntQuery(c *gin.Context, key string, defaultValue int) int {
 	if value := c.Query(key); value != "" {
@@ -101,6 +100,56 @@ func RespondNotFound(c *gin.Context, entityName string) {
 	})
 }
 
+// ============================================================================
+// CONSOLIDATED ERROR HANDLING
+// ============================================================================
+
+// HandleServiceError handles common repository errors and responds appropriately.
+// Returns true if error was handled, false if err is nil.
+// This consolidates the repetitive error handling pattern across all handlers.
+//
+// Usage:
+//
+//	barber, err := h.barberService.GetBarberByID(ctx, id)
+//	if HandleServiceError(c, err, "Barber", "fetch barber") {
+//	    return
+//	}
+func HandleServiceError(c *gin.Context, err error, entityName, operation string) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for "not found" errors from repository
+	switch err {
+	case repository.ErrServiceNotFound,
+		repository.ErrBarberServiceNotFound,
+		repository.ErrCategoryNotFound:
+		RespondNotFound(c, entityName)
+		return true
+	}
+
+	// Check for other common repository errors by string matching
+	// (until we implement custom error types in Phase 1, Step 4)
+	errMsg := err.Error()
+
+	// Not found errors
+	if strings.Contains(errMsg, "not found") {
+		RespondNotFound(c, entityName)
+		return true
+	}
+
+	// Duplicate entry errors
+	if strings.Contains(errMsg, "duplicate") || strings.Contains(errMsg, "already exists") {
+		RespondBadRequest(c, "Duplicate entry",
+			fmt.Sprintf("This %s already exists", strings.ToLower(entityName)))
+		return true
+	}
+
+	// Default to internal server error
+	RespondInternalError(c, operation, err)
+	return true
+}
+
 // RespondInternalError sends a standardized 500 response
 func RespondInternalError(c *gin.Context, operation string, err error) {
 	c.JSON(http.StatusInternalServerError, middleware.ErrorResponse{
@@ -124,19 +173,21 @@ func RespondUnauthorized(c *gin.Context, message string) {
 		Message: message,
 	})
 }
+
 // ============================================================================
 // JSON/QUERY/URI BINDING HELPERS (Generic with Type Parameters)
 // ============================================================================
 
 // BindJSON is a generic helper that binds and validates JSON request body.
 // Returns the parsed struct and true on success, or sends error response and returns nil, false.
-// 
+//
 // Usage:
-//   req, ok := BindJSON[services.CreateServiceRequest](c)
-//   if !ok {
-//       return // Error response already sent
-//   }
-//   // Use req here...
+//
+//	req, ok := BindJSON[services.CreateServiceRequest](c)
+//	if !ok {
+//	    return // Error response already sent
+//	}
+//	// Use req here...
 func BindJSON[T any](c *gin.Context) (*T, bool) {
 	var req T
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -150,10 +201,11 @@ func BindJSON[T any](c *gin.Context) (*T, bool) {
 // Returns the parsed struct and true on success, or sends error response and returns nil, false.
 //
 // Usage:
-//   filters, ok := BindQuery[FilterParams](c)
-//   if !ok {
-//       return
-//   }
+//
+//	filters, ok := BindQuery[FilterParams](c)
+//	if !ok {
+//	    return
+//	}
 func BindQuery[T any](c *gin.Context) (*T, bool) {
 	var req T
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -167,10 +219,11 @@ func BindQuery[T any](c *gin.Context) (*T, bool) {
 // Returns the parsed struct and true on success, or sends error response and returns nil, false.
 //
 // Usage:
-//   params, ok := BindURI[URIParams](c)
-//   if !ok {
-//       return
-//   }
+//
+//	params, ok := BindURI[URIParams](c)
+//	if !ok {
+//	    return
+//	}
 func BindURI[T any](c *gin.Context) (*T, bool) {
 	var req T
 	if err := c.ShouldBindUri(&req); err != nil {
@@ -250,7 +303,6 @@ func HandleRepositoryError(c *gin.Context, err error, entityName string) bool {
 		return false
 	}
 }
-
 
 // PaginationMeta creates standardized pagination metadata
 func PaginationMeta(count, limit, offset int) map[string]interface{} {

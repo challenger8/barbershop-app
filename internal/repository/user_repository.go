@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -29,9 +30,9 @@ func (r *UserRepository) FindByID(ctx context.Context, id int) (*models.User, er
 	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found with id %d", id)
+			return nil, ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to find user by id: %w", err)
+		return nil, fmt.Errorf("failed to find user by id %d: %w", id, err)
 	}
 
 	return &user, nil
@@ -44,7 +45,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models
 	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found with email %s", email)
+			return nil, ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
@@ -69,7 +70,7 @@ func (r *UserRepository) FindByUUID(ctx context.Context, uuid string) (*models.U
 	err := r.db.GetContext(ctx, &user, query, uuid)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found with uuid %s", uuid)
+			return nil, ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to find user by uuid: %w", err)
 	}
@@ -106,6 +107,12 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
 	if err != nil {
+		// Check for duplicate email constraint violation
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			if strings.Contains(strings.ToLower(err.Error()), "email") {
+				return ErrDuplicateEmail
+			}
+		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	defer rows.Close()
@@ -145,6 +152,12 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 
 	result, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
+		// Check for duplicate email
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+			if strings.Contains(strings.ToLower(err.Error()), "email") {
+				return ErrDuplicateEmail
+			}
+		}
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
@@ -154,7 +167,7 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("user not found with id %d", user.ID)
+		return ErrUserNotFound
 	}
 
 	return nil
@@ -179,7 +192,7 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userID int, hashedP
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("user not found with id %d", userID)
+		return ErrUserNotFound
 	}
 
 	return nil
@@ -270,7 +283,7 @@ func (r *UserRepository) IsAccountLocked(ctx context.Context, userID int) (bool,
 	err := r.db.GetContext(ctx, &lockedUntil, query, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, fmt.Errorf("user not found with id %d", userID)
+			return false, ErrUserNotFound
 		}
 		return false, fmt.Errorf("failed to check account lock status: %w", err)
 	}
@@ -327,7 +340,7 @@ func (r *UserRepository) Delete(ctx context.Context, userID int) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("user not found with id %d", userID)
+		return ErrUserNotFound
 	}
 
 	return nil
