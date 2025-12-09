@@ -26,8 +26,8 @@ import (
 
 // @title Barbershop Booking API
 // @version 1.0.0
-// @description A production-ready RESTful API for barbershop booking system
-// @description Features: User authentication, Barber management, Service catalog, Booking system
+// @description A production-ready RESTful API for barbershop booking system.
+// @description Features include: User authentication, Barber management, Service catalog, Booking system, Review & Rating system, and Notification system.
 
 // @contact.name API Support
 // @contact.email support@barbershop.com
@@ -36,12 +36,33 @@ import (
 // @license.url https://opensource.org/licenses/MIT
 
 // @host localhost:8080
-// @BasePath /
+// @BasePath /api/v1
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token
+
+// @tag.name Authentication
+// @tag.description User registration, login, and authentication management
+
+// @tag.name Barbers
+// @tag.description Barber profile management and discovery
+
+// @tag.name Services
+// @tag.description Service catalog and category management
+
+// @tag.name Barber-Services
+// @tag.description Manage services offered by barbers
+
+// @tag.name Bookings
+// @tag.description Appointment booking and scheduling
+
+// @tag.name Reviews
+// @tag.description Customer reviews and ratings for barbers
+
+// @tag.name Notifications
+// @tag.description User notification management and delivery
 
 func main() {
 	// Print startup banner
