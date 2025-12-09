@@ -25,6 +25,9 @@ var (
 
 	// Review errors
 	ErrReviewNotFound = errors.New("review not found")
+
+	// Notification errors
+	ErrNotificationNotFound = errors.New("notification not found")
 )
 
 // ========================================================================
@@ -45,6 +48,10 @@ var (
 
 	// Booking conflicts
 	ErrBookingConflict = errors.New("time slot already booked")
+
+	// Review duplicates
+	ErrDuplicateReview     = errors.New("review already exists for this booking")
+	ErrReviewAlreadyExists = errors.New("a review already exists for this booking")
 )
 
 // ========================================================================
@@ -57,6 +64,18 @@ var (
 	ErrInvalidPassword  = errors.New("invalid password")
 	ErrInvalidTimeSlot  = errors.New("invalid time slot")
 	ErrInvalidDateRange = errors.New("invalid date range")
+
+	// Review validation
+	ErrInvalidRating       = errors.New("rating must be between 1 and 5")
+	ErrInvalidModeration   = errors.New("invalid moderation status")
+	ErrBookingNotCompleted = errors.New("can only review completed bookings")
+	ErrCannotModifyReview  = errors.New("review cannot be modified")
+
+	// Notification validation
+	ErrInvalidNotificationType   = errors.New("invalid notification type")
+	ErrInvalidNotificationStatus = errors.New("invalid notification status")
+	ErrNotificationExpired       = errors.New("notification has expired")
+	ErrNotificationAlreadySent   = errors.New("notification has already been sent")
 )
 
 // ========================================================================
