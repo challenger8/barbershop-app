@@ -91,7 +91,7 @@ func (h *BarberHandler) GetBarber(c *gin.Context) {
 		return
 	}
 
-	barber, err := h.barberService.GetBarberByID(c.Request.Context(), id)
+	barber, err := h.barberService.GetByID(c.Request.Context(), id)
 	if HandleServiceError(c, err, "Barber", "fetch barber") {
 		return
 	}

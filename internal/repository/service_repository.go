@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -216,13 +215,11 @@ func (r *ServiceRepository) Create(ctx context.Context, service *models.Service)
 	rows, err := r.db.NamedQueryContext(ctx, query, service)
 	if err != nil {
 		// Check for duplicate slug or name
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
-			if strings.Contains(strings.ToLower(err.Error()), "slug") {
-				return ErrDuplicateSlug
-			}
-			if strings.Contains(strings.ToLower(err.Error()), "name") {
-				return ErrDuplicateService
-			}
+		if IsFieldDuplicate(err, "slug") {
+			return ErrDuplicateSlug
+		}
+		if IsFieldDuplicate(err, "name") {
+			return ErrDuplicateService
 		}
 		return fmt.Errorf("failed to create service: %w", err)
 	}
@@ -290,16 +287,7 @@ func (r *ServiceRepository) Update(ctx context.Context, service *models.Service)
 		return fmt.Errorf("failed to update service: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrServiceNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrServiceNotFound)
 }
 
 // Delete deletes a service (soft delete by setting is_active = false)
@@ -315,16 +303,7 @@ func (r *ServiceRepository) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete service: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrServiceNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrServiceNotFound)
 }
 
 // ==================== Service Categories ====================
@@ -393,7 +372,7 @@ func (r *ServiceRepository) CreateCategory(ctx context.Context, category *models
 
 	rows, err := r.db.NamedQueryContext(ctx, query, category)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+		if IsDuplicateError(err) {
 			return ErrDuplicateCategory
 		}
 		return fmt.Errorf("failed to create category: %w", err)
@@ -439,16 +418,7 @@ func (r *ServiceRepository) UpdateCategory(ctx context.Context, category *models
 		return fmt.Errorf("failed to update category: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrCategoryNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrCategoryNotFound)
 }
 
 // DeleteCategory deletes a service category (soft delete)
@@ -464,16 +434,7 @@ func (r *ServiceRepository) DeleteCategory(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete category: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrCategoryNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrCategoryNotFound)
 }
 
 // ==================== Barber Services ====================
@@ -633,7 +594,7 @@ func (r *ServiceRepository) CreateBarberService(ctx context.Context, bs *models.
 	rows, err := r.db.NamedQueryContext(ctx, query, bs)
 	if err != nil {
 		// Check for duplicate barber_id + service_id combination
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
+		if IsDuplicateError(err) {
 			return fmt.Errorf("barber already offers this service: %w", err)
 		}
 		return fmt.Errorf("failed to create barber service: %w", err)
@@ -699,16 +660,7 @@ func (r *ServiceRepository) UpdateBarberService(ctx context.Context, bs *models.
 		return fmt.Errorf("failed to update barber service: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBarberServiceNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBarberServiceNotFound)
 }
 
 // DeleteBarberService deletes a barber service (soft delete)
@@ -724,16 +676,7 @@ func (r *ServiceRepository) DeleteBarberService(ctx context.Context, id int) err
 		return fmt.Errorf("failed to delete barber service: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBarberServiceNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBarberServiceNotFound)
 }
 
 // GetServicesByBarberID retrieves all services for a specific barber

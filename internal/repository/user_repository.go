@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -109,10 +108,8 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
 	if err != nil {
 		// Check for duplicate email constraint violation
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
-			if strings.Contains(strings.ToLower(err.Error()), "email") {
-				return ErrDuplicateEmail
-			}
+		if IsFieldDuplicate(err, "email") {
+			return ErrDuplicateEmail
 		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
@@ -154,24 +151,13 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 	result, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
 		// Check for duplicate email
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
-			if strings.Contains(strings.ToLower(err.Error()), "email") {
-				return ErrDuplicateEmail
-			}
+		if IsFieldDuplicate(err, "email") {
+			return ErrDuplicateEmail
 		}
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrUserNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound)
 }
 
 // UpdatePassword updates user password
@@ -187,36 +173,20 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userID int, hashedP
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrUserNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound)
 }
 
-// UpdateLastLogin updates the last login timestamp
 func (r *UserRepository) UpdateLastLogin(ctx context.Context, userID int) error {
-	query := `
-		UPDATE users
-		SET last_login_at = $1
-		WHERE id = $2 AND deleted_at IS NULL
-	`
+	query := `UPDATE users SET last_login_at = $1 WHERE id = $2 AND deleted_at IS NULL`
 
-	now := time.Now()
-	_, err := r.db.ExecContext(ctx, query, now, userID)
+	result, err := r.db.ExecContext(ctx, query, time.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("failed to update last login: %w", err)
 	}
 
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound)
 }
 
-// IncrementFailedLoginAttempts increments failed login attempts counter
 func (r *UserRepository) IncrementFailedLoginAttempts(ctx context.Context, userID int) error {
 	query := `
 		UPDATE users
@@ -225,15 +195,14 @@ func (r *UserRepository) IncrementFailedLoginAttempts(ctx context.Context, userI
 		WHERE id = $2 AND deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, query, time.Now(), userID)
+	result, err := r.db.ExecContext(ctx, query, time.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("failed to increment failed login attempts: %w", err)
 	}
 
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound)
 }
 
-// ResetFailedLoginAttempts resets failed login attempts counter
 func (r *UserRepository) ResetFailedLoginAttempts(ctx context.Context, userID int) error {
 	query := `
 		UPDATE users
@@ -242,16 +211,14 @@ func (r *UserRepository) ResetFailedLoginAttempts(ctx context.Context, userID in
 		    updated_at = $1
 		WHERE id = $2 AND deleted_at IS NULL
 	`
-
-	_, err := r.db.ExecContext(ctx, query, time.Now(), userID)
+	result, err := r.db.ExecContext(ctx, query, time.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("failed to reset failed login attempts: %w", err)
 	}
 
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound)
 }
 
-// LockAccount locks user account temporarily
 func (r *UserRepository) LockAccount(ctx context.Context, userID int, duration time.Duration) error {
 	lockedUntil := time.Now().Add(duration)
 
@@ -263,12 +230,12 @@ func (r *UserRepository) LockAccount(ctx context.Context, userID int, duration t
 		WHERE id = $3 AND deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, query, lockedUntil, time.Now(), userID)
+	result, err := r.db.ExecContext(ctx, query, lockedUntil, time.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("failed to lock account: %w", err)
 	}
 
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound) // ✅ Check if user exists
 }
 
 // IsAccountLocked checks if account is currently locked
@@ -335,14 +302,5 @@ func (r *UserRepository) Delete(ctx context.Context, userID int) error {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrUserNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrUserNotFound) // ✅ Use helper
 }

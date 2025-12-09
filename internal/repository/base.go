@@ -9,33 +9,7 @@ import (
 // COMMON REPOSITORY HELPERS - Reduce repetition across repositories
 // ========================================================================
 
-// SetCreateTimestamps sets CreatedAt and UpdatedAt to current time
-// Use this in all Create methods to eliminate repetition
-func SetCreateTimestamps(createdAt, updatedAt *time.Time) {
-	now := time.Now()
-	*createdAt = now
-	*updatedAt = now
-}
 
-// SetUpdateTimestamp sets UpdatedAt to current time
-// Use this in all Update methods
-func SetUpdateTimestamp(updatedAt *time.Time) {
-	*updatedAt = time.Now()
-}
-
-// SetDefaultString sets a default value if the field is empty
-func SetDefaultString(field *string, defaultValue string) {
-	if *field == "" {
-		*field = defaultValue
-	}
-}
-
-// SetDefaultInt sets a default value if the field is zero
-func SetDefaultInt(field *int, defaultValue int) {
-	if *field == 0 {
-		*field = defaultValue
-	}
-}
 
 // SetDefaultFloat sets a default value if the field is zero
 func SetDefaultFloat(field *float64, defaultValue float64) {

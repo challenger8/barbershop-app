@@ -56,14 +56,14 @@ func TestBarberService_WithCache(t *testing.T) {
 
 	// First call - should hit database
 	start := time.Now()
-	retrieved1, err := barberService.GetBarber(ctx, barber.ID)
+	retrieved1, err := barberService.GetByID(ctx, barber.ID)
 	dbDuration := time.Since(start)
 	require.NoError(t, err)
 	assert.Equal(t, barber.ShopName, retrieved1.ShopName)
 
 	// Second call - should hit cache (faster)
 	start = time.Now()
-	retrieved2, err := barberService.GetBarber(ctx, barber.ID)
+	retrieved2, err := barberService.GetByID(ctx, barber.ID)
 	cacheDuration := time.Since(start)
 	require.NoError(t, err)
 	assert.Equal(t, barber.ShopName, retrieved2.ShopName)
@@ -78,7 +78,7 @@ func TestBarberService_WithCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Next call should get updated data
-	retrieved3, err := barberService.GetBarber(ctx, barber.ID)
+	retrieved3, err := barberService.GetByID(ctx, barber.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Shop Name", retrieved3.ShopName)
 

@@ -54,11 +54,6 @@ func (s *BarberService) GetByID(ctx context.Context, id int) (*models.Barber, er
 	return barber, nil
 }
 
-// GetBarberByID is an alias for GetByID (for compatibility with handlers)
-func (s *BarberService) GetBarberByID(ctx context.Context, id int) (*models.Barber, error) {
-	return s.GetByID(ctx, id)
-}
-
 // Update updates a barber with caching
 func (s *BarberService) Update(ctx context.Context, barber *models.Barber) error {
 	// Update in database
@@ -333,11 +328,6 @@ func (s *BarberService) validateCreateRequest(req CreateBarberRequest) error {
 	}
 
 	return nil
-}
-
-// GetBarber is an alias for GetByID
-func (s *BarberService) GetBarber(ctx context.Context, id int) (*models.Barber, error) {
-	return s.GetByID(ctx, id)
 }
 
 // GetBarberByUUID retrieves a barber by UUID
