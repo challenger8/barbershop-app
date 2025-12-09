@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -394,10 +393,8 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 	rows, err := r.db.NamedQueryContext(ctx, query, barber)
 	if err != nil {
 		// Check for duplicate user_id (one barber profile per user)
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique constraint") {
-			if strings.Contains(strings.ToLower(err.Error()), "user_id") {
-				return ErrDuplicateBarber
-			}
+		if IsFieldDuplicate(err, "user_id") {
+			return ErrDuplicateBarber
 		}
 		return fmt.Errorf("failed to create barber: %w", err)
 	}
@@ -457,16 +454,7 @@ func (r *BarberRepository) Update(ctx context.Context, barber *models.Barber) er
 		return fmt.Errorf("failed to update barber: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBarberNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBarberNotFound)
 }
 
 // Delete soft deletes a barber
@@ -482,16 +470,7 @@ func (r *BarberRepository) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete barber: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBarberNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBarberNotFound)
 }
 
 // UpdateStatus updates barber status
@@ -507,23 +486,17 @@ func (r *BarberRepository) UpdateStatus(ctx context.Context, id int, status stri
 		return fmt.Errorf("failed to update status: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBarberNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBarberNotFound)
 }
 
 // UpdateLastActive updates last active timestamp
 func (r *BarberRepository) UpdateLastActive(ctx context.Context, id int) error {
 	query := `UPDATE barbers SET last_active_at = $1 WHERE id = $2`
-	_, err := r.db.ExecContext(ctx, query, time.Now(), id)
-	return err
+	result, err := r.db.ExecContext(ctx, query, time.Now(), id)
+	if err != nil {
+		return fmt.Errorf("failed to update last active: %w", err)
+	}
+	return CheckRowsAffected(result, ErrBarberNotFound)
 }
 
 // GetStatistics retrieves barber statistics

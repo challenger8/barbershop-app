@@ -201,7 +201,7 @@ func (h *BarberHandler) DeleteBarber(c *gin.Context) {
 		return
 	}
 
-	if err := h.barberService.DeleteBarber(c.Request.Context(), id); err != nil {
+	if err := h.barberService.Delete(c.Request.Context(), id); err != nil {
 		if HandleServiceError(c, err, "Barber", "delete barber") {
 			return
 		}

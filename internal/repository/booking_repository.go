@@ -467,16 +467,7 @@ func (r *BookingRepository) Update(ctx context.Context, booking *models.Booking)
 		return fmt.Errorf("failed to update booking: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBookingNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBookingNotFound)
 }
 
 // UpdateStatus updates only the status of a booking
@@ -509,12 +500,12 @@ func (r *BookingRepository) UpdateStatus(ctx context.Context, id int, newStatus 
 	argCount := 3
 
 	// Handle special status updates
-	switch{
-	case newStatus == "in_progress" :
+	switch {
+	case newStatus == "in_progress":
 		query += fmt.Sprintf(", actual_start_time = $%d", argCount)
 		args = append(args, now)
 		argCount++
-	case newStatus == "completed" :
+	case newStatus == "completed":
 		query += fmt.Sprintf(", actual_end_time = $%d", argCount)
 		args = append(args, now)
 		argCount++
@@ -528,16 +519,7 @@ func (r *BookingRepository) UpdateStatus(ctx context.Context, id int, newStatus 
 		return fmt.Errorf("failed to update booking status: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBookingNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBookingNotFound)
 }
 
 // ========================================================================
@@ -579,16 +561,7 @@ func (r *BookingRepository) Cancel(ctx context.Context, id int, cancelledBy int,
 		return fmt.Errorf("failed to cancel booking: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBookingNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBookingNotFound)
 }
 
 // ========================================================================
@@ -662,16 +635,7 @@ func (r *BookingRepository) UpdatePaymentStatus(ctx context.Context, id int, pay
 		return fmt.Errorf("failed to update payment status: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrBookingNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrBookingNotFound)
 }
 
 // ========================================================================

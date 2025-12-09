@@ -163,10 +163,7 @@ func (s *BarberService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// DeleteBarber is an alias for Delete
-func (s *BarberService) DeleteBarber(ctx context.Context, id int) error {
-	return s.Delete(ctx, id)
-}
+
 
 // UpdateStatus updates barber status with cache invalidation
 func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string) error {
