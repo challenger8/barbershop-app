@@ -267,7 +267,7 @@ func TestGetMyReviews_Success(t *testing.T) {
 		t.Fatalf("Failed to generate token: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/reviews/my", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/reviews/me", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	w := httptest.NewRecorder()
@@ -287,7 +287,7 @@ func TestCanReviewBooking_Success(t *testing.T) {
 		t.Fatalf("Failed to generate token: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/bookings/1/can-review", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/reviews/can-review/1", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	w := httptest.NewRecorder()
