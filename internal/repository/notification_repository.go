@@ -169,14 +169,10 @@ func (r *NotificationRepository) Create(ctx context.Context, notification *model
 		) RETURNING id
 	`
 
-	// Set defaults
+	// Set defaults using helpers
 	notification.CreatedAt = time.Now()
-	if notification.Status == "" {
-		notification.Status = "pending"
-	}
-	if notification.Priority == "" {
-		notification.Priority = "normal"
-	}
+	SetDefaultString(&notification.Status, "pending")
+	SetDefaultString(&notification.Priority, "normal")
 
 	rows, err := r.db.NamedQueryContext(ctx, query, notification)
 	if err != nil {
@@ -218,12 +214,8 @@ func (r *NotificationRepository) CreateBatch(ctx context.Context, notifications 
 	now := time.Now()
 	for _, n := range notifications {
 		n.CreatedAt = now
-		if n.Status == "" {
-			n.Status = "pending"
-		}
-		if n.Priority == "" {
-			n.Priority = "normal"
-		}
+		SetDefaultString(&n.Status, "pending")
+		SetDefaultString(&n.Priority, "normal")
 	}
 
 	_, err := r.db.NamedExecContext(ctx, query, notifications)

@@ -126,7 +126,7 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 
 // Update updates user information
 func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
-	user.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&user.UpdatedAt)
 
 	query := `
 		UPDATE users SET

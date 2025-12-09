@@ -167,24 +167,14 @@ func (r *BookingRepository) Create(ctx context.Context, booking *models.Booking)
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	booking.CreatedAt = now
-	booking.UpdatedAt = now
+	// Set timestamps using helper
+	SetCreateTimestamps(&booking.CreatedAt, &booking.UpdatedAt)
 
-	// Set defaults
-	if booking.Status == "" {
-		booking.Status = "pending"
-	}
-	if booking.PaymentStatus == "" {
-		booking.PaymentStatus = "pending"
-	}
-	if booking.Currency == "" {
-		booking.Currency = "USD"
-	}
-	if booking.BookingSource == "" {
-		booking.BookingSource = "web_app"
-	}
+	// Set defaults using helpers
+	SetDefaultString(&booking.Status, "pending")
+	SetDefaultString(&booking.PaymentStatus, "pending")
+	SetDefaultString(&booking.Currency, "USD")
+	SetDefaultString(&booking.BookingSource, "web_app")
 
 	rows, err := r.db.NamedQueryContext(ctx, query, booking)
 	if err != nil {
@@ -443,7 +433,7 @@ func (r *BookingRepository) GetTodayBookings(ctx context.Context, barberID int) 
 
 // Update updates a booking's basic information
 func (r *BookingRepository) Update(ctx context.Context, booking *models.Booking) error {
-	booking.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&booking.UpdatedAt)
 
 	query := `
 		UPDATE bookings SET

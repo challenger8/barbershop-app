@@ -165,19 +165,12 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	barber.CreatedAt = now
-	barber.UpdatedAt = now
-	barber.LastActiveAt = now
+	// Set timestamps using helper
+	SetCreateTimestamps(&barber.CreatedAt, &barber.UpdatedAt)
+	barber.LastActiveAt = barber.CreatedAt // Same as creation time initially
 
-	// Set default values
-	if barber.Status == "" {
-		barber.Status = config.BarberStatusPending
-	}
-	if barber.Rating == 0 {
-		barber.Rating = 0.0
-	}
+	// Set default values using helpers
+	SetDefaultString(&barber.Status, config.BarberStatusPending)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, barber)
 	if err != nil {
@@ -200,7 +193,7 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 
 // Update updates a barber
 func (r *BarberRepository) Update(ctx context.Context, barber *models.Barber) error {
-	barber.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&barber.UpdatedAt)
 
 	query := `
 		UPDATE barbers SET

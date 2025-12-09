@@ -139,14 +139,9 @@ func (r *ReviewRepository) Create(ctx context.Context, review *models.Review) er
 		) RETURNING id
 	`
 
-	// Set timestamps and defaults
-	now := time.Now()
-	review.CreatedAt = now
-	review.UpdatedAt = now
-
-	if review.ModerationStatus == "" {
-		review.ModerationStatus = "pending"
-	}
+	// Set timestamps and defaults using helpers
+	SetCreateTimestamps(&review.CreatedAt, &review.UpdatedAt)
+	SetDefaultString(&review.ModerationStatus, "pending")
 
 	rows, err := r.db.NamedQueryContext(ctx, query, review)
 	if err != nil {
@@ -414,7 +409,7 @@ func (r *ReviewRepository) GetPublishedReviews(ctx context.Context, barberID int
 
 // Update updates a review
 func (r *ReviewRepository) Update(ctx context.Context, review *models.Review) error {
-	review.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&review.UpdatedAt)
 
 	query := `
 		UPDATE reviews SET
