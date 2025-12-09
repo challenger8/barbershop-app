@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -89,12 +90,12 @@ type ReviewStats struct {
 // VALID STATUS VALUES
 // ========================================================================
 
-// ValidModerationStatuses defines allowed moderation statuses
+// ValidModerationStatuses defines allowed moderation statuses - using config constants
 var ValidModerationStatuses = []string{
-	"pending",
-	"approved",
-	"rejected",
-	"flagged",
+	config.ReviewModerationPending,
+	config.ReviewModerationApproved,
+	config.ReviewModerationRejected,
+	config.ReviewModerationFlagged,
 }
 
 // IsValidModerationStatus checks if a moderation status is valid
@@ -141,7 +142,7 @@ func (r *ReviewRepository) Create(ctx context.Context, review *models.Review) er
 
 	// Set timestamps and defaults using helpers
 	SetCreateTimestamps(&review.CreatedAt, &review.UpdatedAt)
-	SetDefaultString(&review.ModerationStatus, "pending")
+	SetDefaultString(&review.ModerationStatus, config.ReviewModerationPending)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, review)
 	if err != nil {

@@ -256,19 +256,22 @@ const (
 	BarberStatusRejected  = "rejected"
 
 	// Booking statuses
-	BookingStatusPending    = "pending"
-	BookingStatusConfirmed  = "confirmed"
-	BookingStatusInProgress = "in_progress"
-	BookingStatusCompleted  = "completed"
-	BookingStatusCancelled  = "cancelled"
-	BookingStatusNoShow     = "no_show"
+	BookingStatusPending             = "pending"
+	BookingStatusConfirmed           = "confirmed"
+	BookingStatusInProgress          = "in_progress"
+	BookingStatusCompleted           = "completed"
+	BookingStatusCancelled           = "cancelled"
+	BookingStatusCancelledByCustomer = "cancelled_by_customer"
+	BookingStatusCancelledByBarber   = "cancelled_by_barber"
+	BookingStatusNoShow              = "no_show"
 
 	// Payment statuses
-	PaymentStatusPending   = "pending"
-	PaymentStatusPaid      = "paid"
-	PaymentStatusFailed    = "failed"
-	PaymentStatusRefunded  = "refunded"
-	PaymentStatusCancelled = "cancelled"
+	PaymentStatusPending      = "pending"
+	PaymentStatusPaid         = "paid"
+	PaymentStatusPartiallyPaid = "partially_paid"
+	PaymentStatusFailed       = "failed"
+	PaymentStatusRefunded     = "refunded"
+	PaymentStatusCancelled    = "cancelled"
 )
 
 // ========================================================================
