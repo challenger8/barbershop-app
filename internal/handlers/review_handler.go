@@ -658,6 +658,11 @@ func (h *ReviewHandler) CanReviewBooking(c *gin.Context) {
 
 	canReview, reason, err := h.reviewService.CanReviewBooking(c.Request.Context(), bookingID, userID)
 	if err != nil {
+		// Check if it's a "not found" error
+		if err == repository.ErrBookingNotFound || containsAny(err.Error(), []string{"not found"}) {
+			RespondNotFound(c, "Booking")
+			return
+		}
 		RespondInternalError(c, "check review eligibility", err)
 		return
 	}

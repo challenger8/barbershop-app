@@ -24,10 +24,10 @@ func TestCreateReview_Success(t *testing.T) {
 	}
 
 	reviewData := map[string]interface{}{
-		"booking_id":     1,
-		"overall_rating": 5,
-		"title":          "Great haircut!",
-		"comment":        "The barber was very professional and skilled. Highly recommend!",
+		"booking_id":      1,
+		"overall_rating":  5,
+		"title":           "Great haircut!",
+		"comment":         "The barber was very professional and skilled. Highly recommend!",
 		"would_recommend": true,
 	}
 	body, _ := json.Marshal(reviewData)
