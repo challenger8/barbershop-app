@@ -266,12 +266,12 @@ const (
 	BookingStatusNoShow              = "no_show"
 
 	// Payment statuses
-	PaymentStatusPending      = "pending"
-	PaymentStatusPaid         = "paid"
+	PaymentStatusPending       = "pending"
+	PaymentStatusPaid          = "paid"
 	PaymentStatusPartiallyPaid = "partially_paid"
-	PaymentStatusFailed       = "failed"
-	PaymentStatusRefunded     = "refunded"
-	PaymentStatusCancelled    = "cancelled"
+	PaymentStatusFailed        = "failed"
+	PaymentStatusRefunded      = "refunded"
+	PaymentStatusCancelled     = "cancelled"
 )
 
 // ========================================================================

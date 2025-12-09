@@ -4,6 +4,7 @@ package handlers
 import (
 	"net/http"
 
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
@@ -490,9 +491,9 @@ func (h *NotificationHandler) DeliveryWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	switch status {
-	case "delivered":
+	case config.NotificationStatusDelivered:
 		err = h.notificationService.MarkAsDelivered(ctx, id)
-	case "failed":
+	case config.NotificationStatusFailed:
 		errorMsg := c.Query("error")
 		err = h.notificationService.MarkNotificationFailed(ctx, id, errorMsg)
 	default:

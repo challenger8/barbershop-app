@@ -148,7 +148,7 @@ func (s *UserService) Register(ctx context.Context, req RegisterRequest) (*AuthR
 		Name:                req.Name,
 		Phone:               req.Phone,
 		UserType:            userType,
-		Status:              "active",
+		Status:              config.UserStatusActive,
 		EmailVerified:       false,
 		PhoneVerified:       false,
 		TwoFactorEnabled:    false,
@@ -204,7 +204,7 @@ func (s *UserService) Login(ctx context.Context, req LoginRequest) (*AuthRespons
 	}
 
 	// Check if account is inactive
-	if user.Status != "active" {
+	if user.Status != config.UserStatusActive {
 		return nil, fmt.Errorf("account is %s. Please contact support", user.Status)
 	}
 

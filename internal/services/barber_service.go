@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 
@@ -163,8 +164,6 @@ func (s *BarberService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-
-
 // UpdateStatus updates barber status with cache invalidation
 func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string) error {
 	err := s.repo.UpdateStatus(ctx, id, status)
@@ -182,8 +181,14 @@ func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string)
 
 // UpdateBarberStatus is an alias for UpdateStatus with validation
 func (s *BarberService) UpdateBarberStatus(ctx context.Context, id int, status string) error {
-	// Validate status
-	validStatuses := []string{"pending", "active", "inactive", "suspended", "rejected"}
+	// Validate status using config constants
+	validStatuses := []string{
+		config.BarberStatusPending,
+		config.BarberStatusActive,
+		config.BarberStatusInactive,
+		config.BarberStatusSuspended,
+		config.BarberStatusRejected,
+	}
 	isValid := false
 	for _, validStatus := range validStatuses {
 		if status == validStatus {

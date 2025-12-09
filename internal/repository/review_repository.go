@@ -400,7 +400,7 @@ func (r *ReviewRepository) GetPublishedReviews(ctx context.Context, barberID int
 	isPublished := true
 	filters.BarberID = barberID
 	filters.IsPublished = &isPublished
-	filters.ModerationStatus = "approved"
+	filters.ModerationStatus = config.ReviewModerationApproved
 	return r.FindAll(ctx, filters)
 }
 

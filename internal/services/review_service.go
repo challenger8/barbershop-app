@@ -111,13 +111,13 @@ type VoteReviewRequest struct {
 // ReviewResponse wraps review with additional computed fields
 type ReviewResponse struct {
 	*models.Review
-	AverageRating     float64 `json:"average_rating"`
-	HelpfulnessRatio  float64 `json:"helpfulness_ratio"`
-	IsPositive        bool    `json:"is_positive"`
-	CanEdit           bool    `json:"can_edit"`
-	CanRespond        bool    `json:"can_respond"`
-	CustomerName      string  `json:"customer_name,omitempty"`
-	BarberName        string  `json:"barber_name,omitempty"`
+	AverageRating    float64 `json:"average_rating"`
+	HelpfulnessRatio float64 `json:"helpfulness_ratio"`
+	IsPositive       bool    `json:"is_positive"`
+	CanEdit          bool    `json:"can_edit"`
+	CanRespond       bool    `json:"can_respond"`
+	CustomerName     string  `json:"customer_name,omitempty"`
+	BarberName       string  `json:"barber_name,omitempty"`
 }
 
 // ReviewStatsResponse wraps stats with additional info
@@ -164,7 +164,7 @@ func (s *ReviewService) toReviewResponse(review *models.Review, userID *int) *Re
 
 	// Check if user can edit (only the review author within 24 hours)
 	if userID != nil && review.CustomerID != nil && *userID == *review.CustomerID {
-		response.CanEdit = review.ModerationStatus == "pending"
+		response.CanEdit = review.ModerationStatus == config.ReviewModerationPending
 	}
 
 	return response
@@ -238,7 +238,7 @@ func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewReques
 
 		IsVerified:       true, // Verified because it's linked to a completed booking
 		IsPublished:      false,
-		ModerationStatus: "pending",
+		ModerationStatus: config.ReviewModerationPending,
 	}
 
 	// Step 8: Save review
@@ -281,7 +281,7 @@ func (s *ReviewService) GetBarberReviews(ctx context.Context, barberID int, filt
 	// Only show published and approved reviews to the public
 	isPublished := true
 	filters.IsPublished = &isPublished
-	filters.ModerationStatus = "approved"
+	filters.ModerationStatus = config.ReviewModerationApproved
 
 	reviews, err := s.repo.FindByBarberID(ctx, barberID, filters)
 	if err != nil {
@@ -311,7 +311,7 @@ func (s *ReviewService) GetCustomerReviews(ctx context.Context, customerID int, 
 
 // GetPendingReviews retrieves reviews pending moderation (admin only)
 func (s *ReviewService) GetPendingReviews(ctx context.Context, filters repository.ReviewFilters) ([]ReviewResponse, error) {
-	filters.ModerationStatus = "pending"
+	filters.ModerationStatus = config.ReviewModerationPending
 
 	reviews, err := s.repo.FindAll(ctx, filters)
 	if err != nil {
@@ -343,7 +343,7 @@ func (s *ReviewService) UpdateReview(ctx context.Context, id int, req UpdateRevi
 	}
 
 	// Check if review can be edited
-	if review.ModerationStatus != "pending" {
+	if review.ModerationStatus != config.ReviewModerationPending {
 		return nil, repository.ErrCannotModifyReview
 	}
 
@@ -422,7 +422,7 @@ func (s *ReviewService) ModerateReview(ctx context.Context, id int, req Moderate
 	}
 
 	// Invalidate barber cache if review is now published
-	if req.Status == "approved" && s.cache != nil {
+	if req.Status == config.ReviewModerationApproved && s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, review.BarberID)
 	}
 

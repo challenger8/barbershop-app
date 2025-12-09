@@ -1,6 +1,7 @@
 package models
 
 import (
+	"barber-booking-system/internal/config"
 	"errors"
 	"time"
 )
@@ -85,22 +86,22 @@ type VerificationCode struct {
 
 // IsCustomer returns true if the user is a customer
 func (u *User) IsCustomer() bool {
-	return u.UserType == "customer"
+	return u.UserType == config.UserTypeCustomer
 }
 
 // IsBarber returns true if the user is a barber
 func (u *User) IsBarber() bool {
-	return u.UserType == "barber"
+	return u.UserType == config.UserTypeBarber
 }
 
 // IsAdmin returns true if the user is an admin
 func (u *User) IsAdmin() bool {
-	return u.UserType == "admin"
+	return u.UserType == config.UserTypeAdmin
 }
 
 // IsActive returns true if the user is active
 func (u *User) IsActive() bool {
-	return u.Status == "active"
+	return u.Status == config.UserStatusActive
 }
 
 // GetFullName returns the user's full name

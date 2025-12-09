@@ -619,7 +619,7 @@ func TestGetBookingHistory_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// May return 404 or 200 with empty history depending on implementation
-	assert.Contains(t, []int{http.StatusOK, http.StatusNotFound,http.StatusInternalServerError}, w.Code)
+	assert.Contains(t, []int{http.StatusOK, http.StatusNotFound, http.StatusInternalServerError}, w.Code)
 }
 
 // =============================================================================
@@ -711,7 +711,7 @@ func TestCreateBooking_ForSpecificBarber(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// Accept various valid responses (barber/service may not exist)
-	assert.Contains(t, []int{http.StatusCreated, http.StatusConflict, http.StatusNotFound, http.StatusInternalServerError,http.StatusBadRequest}, w.Code)
+	assert.Contains(t, []int{http.StatusCreated, http.StatusConflict, http.StatusNotFound, http.StatusInternalServerError, http.StatusBadRequest}, w.Code)
 }
 
 func TestCancelBooking_ByBarber(t *testing.T) {

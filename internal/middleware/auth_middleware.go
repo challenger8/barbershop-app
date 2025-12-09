@@ -12,12 +12,12 @@ import (
 
 // AuthConfig defines the configuration for authentication middleware
 type AuthConfig struct {
-	SecretKey       string
-	TokenLookup     string // "header:Authorization,cookie:token"
-	TokenHeadName   string // "Bearer"
-	SkipPaths       []string
-	RequiredRole    string // Optional: require specific role
-	AllowedRoles    []string
+	SecretKey     string
+	TokenLookup   string // "header:Authorization,cookie:token"
+	TokenHeadName string // "Bearer"
+	SkipPaths     []string
+	RequiredRole  string // Optional: require specific role
+	AllowedRoles  []string
 }
 
 // DefaultAuthConfig returns default authentication configuration
@@ -154,7 +154,7 @@ func OptionalAuth(secretKey string) gin.HandlerFunc {
 func extractToken(c *gin.Context, tokenLookup string, tokenHeadName string) (string, error) {
 	// Parse token lookup string (e.g., "header:Authorization,cookie:token")
 	parts := strings.Split(tokenLookup, ",")
-	
+
 	for _, part := range parts {
 		lookupParts := strings.Split(strings.TrimSpace(part), ":")
 		if len(lookupParts) != 2 {
@@ -265,7 +265,7 @@ func GetUserID(c *gin.Context) (int, bool) {
 	if !exists {
 		return 0, false
 	}
-	
+
 	id, ok := userID.(int)
 	return id, ok
 }
@@ -285,7 +285,7 @@ func GetUserEmail(c *gin.Context) (string, bool) {
 	if !exists {
 		return "", false
 	}
-	
+
 	e, ok := email.(string)
 	return e, ok
 }
@@ -296,7 +296,7 @@ func GetUserType(c *gin.Context) (string, bool) {
 	if !exists {
 		return "", false
 	}
-	
+
 	t, ok := userType.(string)
 	return t, ok
 }
@@ -307,7 +307,7 @@ func GetClaims(c *gin.Context) (*Claims, bool) {
 	if !exists {
 		return nil, false
 	}
-	
+
 	claims, ok := claimsVal.(*Claims)
 	return claims, ok
 }
