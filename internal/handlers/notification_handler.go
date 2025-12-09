@@ -169,7 +169,7 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 
 	notification, err := h.notificationService.GetNotificationByID(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || containsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -272,7 +272,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 
 	err := h.notificationService.MarkAsRead(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || containsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -348,7 +348,7 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 
 	err := h.notificationService.DeleteNotification(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || containsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -446,7 +446,7 @@ func (h *NotificationHandler) SendBookingNotification(c *gin.Context) {
 	}
 
 	if err != nil {
-		if containsAny(err.Error(), []string{"not found"}) {
+		if ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Booking")
 			return
 		}

@@ -99,12 +99,7 @@ var ValidModerationStatuses = []string{
 
 // IsValidModerationStatus checks if a moderation status is valid
 func IsValidModerationStatus(status string) bool {
-	for _, s := range ValidModerationStatuses {
-		if s == status {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(status, ValidModerationStatuses)
 }
 
 // ========================================================================

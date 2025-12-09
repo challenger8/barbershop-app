@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -76,4 +77,57 @@ type VerificationCode struct {
 	UsedAt    *time.Time `json:"used_at" db:"used_at"`
 	Attempts  int        `json:"attempts" db:"attempts"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+}
+
+// ========================================================================
+// USER HELPER METHODS
+// ========================================================================
+
+// IsCustomer returns true if the user is a customer
+func (u *User) IsCustomer() bool {
+	return u.UserType == "customer"
+}
+
+// IsBarber returns true if the user is a barber
+func (u *User) IsBarber() bool {
+	return u.UserType == "barber"
+}
+
+// IsAdmin returns true if the user is an admin
+func (u *User) IsAdmin() bool {
+	return u.UserType == "admin"
+}
+
+// IsActive returns true if the user is active
+func (u *User) IsActive() bool {
+	return u.Status == "active"
+}
+
+// GetFullName returns the user's full name
+func (u *User) GetFullName() string {
+	return u.Name
+}
+
+// GetDisplayLocation returns a formatted location string
+func (u *User) GetDisplayLocation() string {
+	if u.City != nil && u.State != nil {
+		return *u.City + ", " + *u.State
+	} else if u.City != nil {
+		return *u.City
+	}
+	return ""
+}
+
+// Validate validates user fields
+func (u *User) Validate() error {
+	if u.Name == "" {
+		return errors.New("name is required")
+	}
+	if u.Email == "" {
+		return errors.New("email is required")
+	}
+	if u.UserType == "" {
+		return errors.New("user type is required")
+	}
+	return nil
 }

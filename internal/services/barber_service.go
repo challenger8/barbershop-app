@@ -229,12 +229,12 @@ func (s *BarberService) GetBarberStatistics(ctx context.Context, id int) (*repos
 // SearchBarbers searches barbers by various criteria
 func (s *BarberService) SearchBarbers(ctx context.Context, query string, filters repository.BarberFilters) ([]models.Barber, error) {
 	filters.Search = query
-	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+	return s.repo.FindAll(ctx, filters)
 }
 
 // GetAllBarbers retrieves all barbers with filters
 func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.BarberFilters) ([]models.Barber, error) {
-	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+	return s.repo.FindAll(ctx, filters)
 }
 
 // CreateBarber creates a new barber (UPDATED to use DTO pattern)

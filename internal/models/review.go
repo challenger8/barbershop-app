@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 // Review represents customer reviews and ratings
 type Review struct {
@@ -55,4 +58,69 @@ type Review struct {
 	Customer *User    `json:"customer,omitempty"`
 	Barber   *Barber  `json:"barber,omitempty"`
 	Booking  *Booking `json:"booking,omitempty"`
+}
+
+// ========================================================================
+// REVIEW HELPER METHODS
+// ========================================================================
+
+// GetAverageRating calculates the average of all ratings
+func (r *Review) GetAverageRating() float64 {
+	ratings := []int{r.OverallRating}
+	count := 1
+
+	if r.ServiceQualityRating != nil {
+		ratings = append(ratings, *r.ServiceQualityRating)
+		count++
+	}
+	if r.PunctualityRating != nil {
+		ratings = append(ratings, *r.PunctualityRating)
+		count++
+	}
+	if r.CleanlinessRating != nil {
+		ratings = append(ratings, *r.CleanlinessRating)
+		count++
+	}
+	if r.ValueForMoneyRating != nil {
+		ratings = append(ratings, *r.ValueForMoneyRating)
+		count++
+	}
+	if r.ProfessionalismRating != nil {
+		ratings = append(ratings, *r.ProfessionalismRating)
+		count++
+	}
+
+	sum := 0
+	for _, rating := range ratings {
+		sum += rating
+	}
+
+	return float64(sum) / float64(count)
+}
+
+// IsPositive returns true if the review has a positive overall rating
+func (r *Review) IsPositive() bool {
+	return r.OverallRating >= 4
+}
+
+// GetHelpfulnessRatio returns the ratio of helpful votes to total votes
+func (r *Review) GetHelpfulnessRatio() float64 {
+	if r.TotalVotes == 0 {
+		return 0
+	}
+	return float64(r.HelpfulVotes) / float64(r.TotalVotes)
+}
+
+// Validate validates review fields
+func (r *Review) Validate() error {
+	if r.BookingID <= 0 {
+		return errors.New("valid booking ID is required")
+	}
+	if r.BarberID <= 0 {
+		return errors.New("valid barber ID is required")
+	}
+	if r.OverallRating < 1 || r.OverallRating > 5 {
+		return errors.New("overall rating must be between 1 and 5")
+	}
+	return nil
 }

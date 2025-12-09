@@ -139,22 +139,12 @@ var ValidNotificationChannels = []string{
 
 // IsValidNotificationStatus checks if a status is valid
 func IsValidNotificationStatus(status string) bool {
-	for _, s := range ValidNotificationStatuses {
-		if s == status {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(status, ValidNotificationStatuses)
 }
 
 // IsValidNotificationType checks if a type is valid
 func IsValidNotificationType(notifType string) bool {
-	for _, t := range ValidNotificationTypes {
-		if t == notifType {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(notifType, ValidNotificationTypes)
 }
 
 // ========================================================================
