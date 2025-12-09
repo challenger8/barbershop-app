@@ -280,3 +280,66 @@ const (
 	UserTypeBarber   = "barber"
 	UserTypeAdmin    = "admin"
 )
+
+// ========================================================================
+// REVIEW STATUS VALUES
+// ========================================================================
+
+const (
+	// Review moderation statuses
+	ReviewModerationPending  = "pending"
+	ReviewModerationApproved = "approved"
+	ReviewModerationRejected = "rejected"
+	ReviewModerationFlagged  = "flagged"
+)
+
+// ========================================================================
+// NOTIFICATION STATUS VALUES
+// ========================================================================
+
+const (
+	// Notification delivery statuses
+	NotificationStatusPending   = "pending"
+	NotificationStatusSent      = "sent"
+	NotificationStatusDelivered = "delivered"
+	NotificationStatusRead      = "read"
+	NotificationStatusFailed    = "failed"
+
+	// Notification priority levels
+	NotificationPriorityLow    = "low"
+	NotificationPriorityNormal = "normal"
+	NotificationPriorityHigh   = "high"
+	NotificationPriorityUrgent = "urgent"
+
+	// Notification types
+	NotificationTypeBookingConfirmation = "booking_confirmation"
+	NotificationTypeBookingReminder     = "booking_reminder"
+	NotificationTypeBookingCancelled    = "booking_cancelled"
+	NotificationTypeBookingRescheduled  = "booking_rescheduled"
+	NotificationTypeBookingCompleted    = "booking_completed"
+	NotificationTypeReviewRequest       = "review_request"
+	NotificationTypeReviewResponse      = "review_response"
+	NotificationTypePaymentReceived     = "payment_received"
+	NotificationTypePaymentFailed       = "payment_failed"
+	NotificationTypeAccountWelcome      = "account_welcome"
+	NotificationTypeAccountVerification = "account_verification"
+	NotificationTypePasswordReset       = "password_reset"
+	NotificationTypePromotion           = "promotion"
+	NotificationTypeSystemAlert         = "system_alert"
+
+	// Notification channels
+	NotificationChannelApp   = "app"
+	NotificationChannelEmail = "email"
+	NotificationChannelSMS   = "sms"
+	NotificationChannelPush  = "push"
+)
+
+// ========================================================================
+// RELATED ENTITY TYPES
+// ========================================================================
+
+const (
+	EntityTypeBooking = "booking"
+	EntityTypePayment = "payment"
+	EntityTypeReview  = "review"
+)

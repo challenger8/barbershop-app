@@ -82,7 +82,6 @@ type BookingHistoryFilters struct {
 // ========================================================================
 
 var (
-	
 	ErrInvalidStatusChange     = fmt.Errorf("invalid status transition")
 	ErrBookingAlreadyCancelled = fmt.Errorf("booking is already cancelled")
 	ErrCancellationNotAllowed  = fmt.Errorf("booking cannot be cancelled")
@@ -273,8 +272,6 @@ func (r *BookingRepository) FindAll(ctx context.Context, filters BookingFilters)
 	query := `SELECT * FROM bookings WHERE 1=1`
 	args := []interface{}{}
 	argCount := 1
-
-	
 
 	// Customer filter
 	if filters.CustomerID > 0 {

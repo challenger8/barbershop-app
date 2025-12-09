@@ -21,7 +21,9 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 	userRepo := repository.NewUserRepository(db)
 	barberRepo := repository.NewBarberRepository(db)
 	serviceRepo := repository.NewServiceRepository(db)
-	bookingRepo := repository.NewBookingRepository(db) // NEW
+	bookingRepo := repository.NewBookingRepository(db)
+	reviewRepo := repository.NewReviewRepository(db)
+	notificationRepo := repository.NewNotificationRepository(db)
 
 	// ========================================================================
 	// INITIALIZE SERVICES
@@ -29,7 +31,9 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 	userService := services.NewUserService(userRepo, jwtSecret, jwtExpiration)
 	barberService := services.NewBarberService(barberRepo, cacheService)
 	serviceService := services.NewServiceService(serviceRepo, cacheService)
-	bookingService := services.NewBookingService(bookingRepo, barberRepo, serviceRepo, cacheService) // NEW
+	bookingService := services.NewBookingService(bookingRepo, barberRepo, serviceRepo, cacheService)
+	reviewService := services.NewReviewService(reviewRepo, bookingRepo, barberRepo, cacheService)
+	notificationService := services.NewNotificationService(notificationRepo, userRepo, bookingRepo)
 
 	// ========================================================================
 	// INITIALIZE HANDLERS
@@ -37,7 +41,9 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 	authHandler := handlers.NewAuthHandler(userService)
 	barberHandler := handlers.NewBarberHandler(barberService)
 	serviceHandler := handlers.NewServiceHandler(serviceService)
-	bookingHandler := handlers.NewBookingHandler(bookingService) // NEW
+	bookingHandler := handlers.NewBookingHandler(bookingService)
+	reviewHandler := handlers.NewReviewHandler(reviewService)
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
 	// ========================================================================
 	// API v1 ROUTES
@@ -78,10 +84,14 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 			barbers.GET("/:id/statistics", barberHandler.GetBarberStatistics)
 			barbers.GET("/:id/services", serviceHandler.GetBarberServices)
 
-			// NEW: Barber booking routes (public - view bookings)
+			// Barber booking routes (public - view bookings)
 			barbers.GET("/:id/bookings", bookingHandler.GetBarberBookings)
 			barbers.GET("/:id/bookings/today", bookingHandler.GetTodayBookings)
 			barbers.GET("/:id/bookings/stats", bookingHandler.GetBarberBookingStats)
+
+			// Barber review routes (public - view reviews)
+			barbers.GET("/:id/reviews", reviewHandler.GetBarberReviews)
+			barbers.GET("/:id/reviews/stats", reviewHandler.GetBarberReviewStats)
 
 			// Protected barber routes
 			protected := barbers.Group("")
@@ -137,7 +147,7 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 		}
 
 		// ────────────────────────────────────────────────────────────────
-		// BOOKING ROUTES (NEW!)
+		// BOOKING ROUTES
 		// ────────────────────────────────────────────────────────────────
 		bookings := v1.Group("/bookings")
 		{
@@ -165,6 +175,70 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 
 				// Cancel booking
 				protected.DELETE("/:id", bookingHandler.CancelBooking)
+			}
+		}
+
+		// ────────────────────────────────────────────────────────────────
+		// REVIEW ROUTES
+		// ────────────────────────────────────────────────────────────────
+		reviews := v1.Group("/reviews")
+		{
+			// Public review routes
+			reviews.GET("/:id", reviewHandler.GetReview)
+			reviews.GET("/booking/:booking_id", reviewHandler.GetReviewByBooking)
+			reviews.POST("/:id/vote", reviewHandler.VoteReview)
+
+			// Protected review routes
+			protected := reviews.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
+			{
+				// Create and manage reviews
+				protected.POST("", reviewHandler.CreateReview)
+				protected.GET("/me", reviewHandler.GetMyReviews)
+				protected.PUT("/:id", reviewHandler.UpdateReview)
+				protected.DELETE("/:id", reviewHandler.DeleteReview)
+
+				// Check if can review
+				protected.GET("/can-review/:booking_id", reviewHandler.CanReviewBooking)
+
+				// Barber response
+				protected.POST("/:id/response", reviewHandler.AddBarberResponse)
+
+				// Admin moderation routes
+				protected.GET("/pending", reviewHandler.GetPendingReviews)
+				protected.PATCH("/:id/moderate", reviewHandler.ModerateReview)
+			}
+		}
+
+		// ────────────────────────────────────────────────────────────────
+		// NOTIFICATION ROUTES
+		// ────────────────────────────────────────────────────────────────
+		notifications := v1.Group("/notifications")
+		{
+			// Webhook endpoint (public - for push notification callbacks)
+			notifications.POST("/:id/webhook", notificationHandler.DeliveryWebhook)
+
+			// Protected notification routes
+			protected := notifications.Group("")
+			protected.Use(middleware.RequireAuth(jwtSecret))
+			{
+				// Get notifications
+				protected.GET("", notificationHandler.GetMyNotifications)
+				protected.GET("/unread", notificationHandler.GetUnreadNotifications)
+				protected.GET("/unread/count", notificationHandler.GetUnreadCount)
+				protected.GET("/stats", notificationHandler.GetNotificationStats)
+				protected.GET("/:id", notificationHandler.GetNotification)
+
+				// Mark as read
+				protected.PATCH("/:id/read", notificationHandler.MarkAsRead)
+				protected.PATCH("/read-all", notificationHandler.MarkAllAsRead)
+
+				// Delete
+				protected.DELETE("/:id", notificationHandler.DeleteNotification)
+
+				// Admin routes - create and send notifications
+				protected.POST("", notificationHandler.CreateNotification)
+				protected.POST("/booking", notificationHandler.SendBookingNotification)
 			}
 		}
 	}
