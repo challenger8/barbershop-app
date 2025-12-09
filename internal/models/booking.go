@@ -67,7 +67,6 @@ type Booking struct {
 	ReferralSource *string `json:"referral_source" db:"referral_source"`
 	UTMCampaign    *string `json:"utm_campaign" db:"utm_campaign"`
 
-	
 	// Audit fields
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
