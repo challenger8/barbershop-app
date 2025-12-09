@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"barber-booking-system/internal/config"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -73,12 +75,12 @@ func validateBookingNumber(fl validator.FieldLevel) bool {
 func validateBookingStatus(fl validator.FieldLevel) bool {
 	status := fl.Field().String()
 	validStatuses := map[string]bool{
-		"pending":     true,
-		"confirmed":   true,
-		"in_progress": true,
-		"completed":   true,
-		"cancelled":   true,
-		"no_show":     true,
+		config.BookingStatusPending:     true,
+		config.BookingStatusConfirmed:   true,
+		config.BookingStatusInProgress:  true,
+		config.BookingStatusCompleted:   true,
+		config.BookingStatusCancelled:   true,
+		config.BookingStatusNoShow:      true,
 	}
 	return validStatuses[status]
 }
@@ -87,11 +89,11 @@ func validateBookingStatus(fl validator.FieldLevel) bool {
 func validateBarberStatus(fl validator.FieldLevel) bool {
 	status := fl.Field().String()
 	validStatuses := map[string]bool{
-		"pending":   true,
-		"active":    true,
-		"inactive":  true,
-		"suspended": true,
-		"rejected":  true,
+		config.BarberStatusPending:   true,
+		config.BarberStatusActive:    true,
+		config.BarberStatusInactive:  true,
+		config.BarberStatusSuspended: true,
+		config.BarberStatusRejected:  true,
 	}
 	return validStatuses[status]
 }
@@ -100,11 +102,11 @@ func validateBarberStatus(fl validator.FieldLevel) bool {
 func validatePaymentStatus(fl validator.FieldLevel) bool {
 	status := fl.Field().String()
 	validStatuses := map[string]bool{
-		"pending":        true,
-		"paid":           true,
-		"partially_paid": true,
-		"refunded":       true,
-		"failed":         true,
+		config.PaymentStatusPending:       true,
+		config.PaymentStatusPaid:          true,
+		config.PaymentStatusPartiallyPaid: true,
+		config.PaymentStatusRefunded:      true,
+		config.PaymentStatusFailed:        true,
 	}
 	return validStatuses[status]
 }

@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -89,22 +90,17 @@ type ReviewStats struct {
 // VALID STATUS VALUES
 // ========================================================================
 
-// ValidModerationStatuses defines allowed moderation statuses
+// ValidModerationStatuses defines allowed moderation statuses - using config constants
 var ValidModerationStatuses = []string{
-	"pending",
-	"approved",
-	"rejected",
-	"flagged",
+	config.ReviewModerationPending,
+	config.ReviewModerationApproved,
+	config.ReviewModerationRejected,
+	config.ReviewModerationFlagged,
 }
 
 // IsValidModerationStatus checks if a moderation status is valid
 func IsValidModerationStatus(status string) bool {
-	for _, s := range ValidModerationStatuses {
-		if s == status {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(status, ValidModerationStatuses)
 }
 
 // ========================================================================
@@ -144,14 +140,9 @@ func (r *ReviewRepository) Create(ctx context.Context, review *models.Review) er
 		) RETURNING id
 	`
 
-	// Set timestamps and defaults
-	now := time.Now()
-	review.CreatedAt = now
-	review.UpdatedAt = now
-
-	if review.ModerationStatus == "" {
-		review.ModerationStatus = "pending"
-	}
+	// Set timestamps and defaults using helpers
+	SetCreateTimestamps(&review.CreatedAt, &review.UpdatedAt)
+	SetDefaultString(&review.ModerationStatus, config.ReviewModerationPending)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, review)
 	if err != nil {
@@ -409,7 +400,7 @@ func (r *ReviewRepository) GetPublishedReviews(ctx context.Context, barberID int
 	isPublished := true
 	filters.BarberID = barberID
 	filters.IsPublished = &isPublished
-	filters.ModerationStatus = "approved"
+	filters.ModerationStatus = config.ReviewModerationApproved
 	return r.FindAll(ctx, filters)
 }
 
@@ -419,7 +410,7 @@ func (r *ReviewRepository) GetPublishedReviews(ctx context.Context, barberID int
 
 // Update updates a review
 func (r *ReviewRepository) Update(ctx context.Context, review *models.Review) error {
-	review.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&review.UpdatedAt)
 
 	query := `
 		UPDATE reviews SET

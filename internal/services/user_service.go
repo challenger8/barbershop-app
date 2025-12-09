@@ -2,6 +2,7 @@
 package services
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
@@ -16,13 +17,8 @@ import (
 )
 
 const (
-	// Password policy
-	MinPasswordLength = 8
-	BcryptCost        = 10
-
-	// Account locking policy
-	MaxFailedLoginAttempts = 5
-	AccountLockDuration    = 30 * time.Minute
+	// BcryptCost is the bcrypt hashing cost (local constant as only used here)
+	BcryptCost = 10
 )
 
 // UserService handles user business logic
@@ -152,7 +148,7 @@ func (s *UserService) Register(ctx context.Context, req RegisterRequest) (*AuthR
 		Name:                req.Name,
 		Phone:               req.Phone,
 		UserType:            userType,
-		Status:              "active",
+		Status:              config.UserStatusActive,
 		EmailVerified:       false,
 		PhoneVerified:       false,
 		TwoFactorEnabled:    false,
@@ -208,7 +204,7 @@ func (s *UserService) Login(ctx context.Context, req LoginRequest) (*AuthRespons
 	}
 
 	// Check if account is inactive
-	if user.Status != "active" {
+	if user.Status != config.UserStatusActive {
 		return nil, fmt.Errorf("account is %s. Please contact support", user.Status)
 	}
 
@@ -405,8 +401,8 @@ func (s *UserService) ValidatePassword(password, hashedPassword string) error {
 
 // validatePassword validates password strength
 func (s *UserService) validatePassword(password string) error {
-	if len(password) < MinPasswordLength {
-		return fmt.Errorf("password must be at least %d characters long", MinPasswordLength)
+	if len(password) < config.MinPasswordLength {
+		return fmt.Errorf("password must be at least %d characters long", config.MinPasswordLength)
 	}
 
 	// Additional password policy checks can be added here
@@ -424,8 +420,8 @@ func (s *UserService) handleFailedLogin(ctx context.Context, user *models.User) 
 
 	// Check if we need to lock the account
 	newAttempts := user.FailedLoginAttempts + 1
-	if newAttempts >= MaxFailedLoginAttempts {
-		if err := s.userRepo.LockAccount(ctx, user.ID, AccountLockDuration); err != nil {
+	if newAttempts >= config.MaxFailedLoginAttempts {
+		if err := s.userRepo.LockAccount(ctx, user.ID, config.AccountLockDuration); err != nil {
 			return err
 		}
 	}

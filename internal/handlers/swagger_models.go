@@ -12,41 +12,41 @@ import "time"
 // ReviewCreateRequest represents a request to create a review
 // @Description Request body for creating a new review
 type ReviewCreateRequest struct {
-	BookingID             int    `json:"booking_id" example:"123" binding:"required"`
-	OverallRating         int    `json:"overall_rating" example:"5" binding:"required,min=1,max=5"`
-	ServiceQualityRating  *int   `json:"service_quality_rating,omitempty" example:"5"`
-	PunctualityRating     *int   `json:"punctuality_rating,omitempty" example:"4"`
-	CleanlinessRating     *int   `json:"cleanliness_rating,omitempty" example:"5"`
-	ValueForMoneyRating   *int   `json:"value_for_money_rating,omitempty" example:"4"`
-	ProfessionalismRating *int   `json:"professionalism_rating,omitempty" example:"5"`
-	Title                 string `json:"title,omitempty" example:"Great haircut!"`
-	Comment               string `json:"comment,omitempty" example:"The barber was very professional and skilled."`
-	Pros                  string `json:"pros,omitempty" example:"Friendly staff, clean environment"`
-	Cons                  string `json:"cons,omitempty" example:"Waiting time was a bit long"`
-	WouldRecommend        *bool  `json:"would_recommend,omitempty" example:"true"`
-	WouldBookAgain        *bool  `json:"would_book_again,omitempty" example:"true"`
-	ServiceAsExpected     *bool  `json:"service_as_expected,omitempty" example:"true"`
-	DurationAccurate      *bool  `json:"duration_accurate,omitempty" example:"true"`
+	BookingID             int      `json:"booking_id" example:"123" binding:"required"`
+	OverallRating         int      `json:"overall_rating" example:"5" binding:"required,min=1,max=5"`
+	ServiceQualityRating  *int     `json:"service_quality_rating,omitempty" example:"5"`
+	PunctualityRating     *int     `json:"punctuality_rating,omitempty" example:"4"`
+	CleanlinessRating     *int     `json:"cleanliness_rating,omitempty" example:"5"`
+	ValueForMoneyRating   *int     `json:"value_for_money_rating,omitempty" example:"4"`
+	ProfessionalismRating *int     `json:"professionalism_rating,omitempty" example:"5"`
+	Title                 string   `json:"title,omitempty" example:"Great haircut!"`
+	Comment               string   `json:"comment,omitempty" example:"The barber was very professional and skilled."`
+	Pros                  string   `json:"pros,omitempty" example:"Friendly staff, clean environment"`
+	Cons                  string   `json:"cons,omitempty" example:"Waiting time was a bit long"`
+	WouldRecommend        *bool    `json:"would_recommend,omitempty" example:"true"`
+	WouldBookAgain        *bool    `json:"would_book_again,omitempty" example:"true"`
+	ServiceAsExpected     *bool    `json:"service_as_expected,omitempty" example:"true"`
+	DurationAccurate      *bool    `json:"duration_accurate,omitempty" example:"true"`
 	Images                []string `json:"images,omitempty"`
 }
 
 // ReviewUpdateRequest represents a request to update a review
 // @Description Request body for updating an existing review
 type ReviewUpdateRequest struct {
-	OverallRating         *int   `json:"overall_rating,omitempty" example:"4"`
-	ServiceQualityRating  *int   `json:"service_quality_rating,omitempty" example:"4"`
-	PunctualityRating     *int   `json:"punctuality_rating,omitempty" example:"4"`
-	CleanlinessRating     *int   `json:"cleanliness_rating,omitempty" example:"5"`
-	ValueForMoneyRating   *int   `json:"value_for_money_rating,omitempty" example:"4"`
-	ProfessionalismRating *int   `json:"professionalism_rating,omitempty" example:"5"`
-	Title                 string `json:"title,omitempty" example:"Updated review title"`
-	Comment               string `json:"comment,omitempty" example:"Updated comment text"`
-	Pros                  string `json:"pros,omitempty" example:"Updated pros"`
-	Cons                  string `json:"cons,omitempty" example:"Updated cons"`
-	WouldRecommend        *bool  `json:"would_recommend,omitempty" example:"true"`
-	WouldBookAgain        *bool  `json:"would_book_again,omitempty" example:"true"`
-	ServiceAsExpected     *bool  `json:"service_as_expected,omitempty" example:"true"`
-	DurationAccurate      *bool  `json:"duration_accurate,omitempty" example:"true"`
+	OverallRating         *int     `json:"overall_rating,omitempty" example:"4"`
+	ServiceQualityRating  *int     `json:"service_quality_rating,omitempty" example:"4"`
+	PunctualityRating     *int     `json:"punctuality_rating,omitempty" example:"4"`
+	CleanlinessRating     *int     `json:"cleanliness_rating,omitempty" example:"5"`
+	ValueForMoneyRating   *int     `json:"value_for_money_rating,omitempty" example:"4"`
+	ProfessionalismRating *int     `json:"professionalism_rating,omitempty" example:"5"`
+	Title                 string   `json:"title,omitempty" example:"Updated review title"`
+	Comment               string   `json:"comment,omitempty" example:"Updated comment text"`
+	Pros                  string   `json:"pros,omitempty" example:"Updated pros"`
+	Cons                  string   `json:"cons,omitempty" example:"Updated cons"`
+	WouldRecommend        *bool    `json:"would_recommend,omitempty" example:"true"`
+	WouldBookAgain        *bool    `json:"would_book_again,omitempty" example:"true"`
+	ServiceAsExpected     *bool    `json:"service_as_expected,omitempty" example:"true"`
+	DurationAccurate      *bool    `json:"duration_accurate,omitempty" example:"true"`
 	Images                []string `json:"images,omitempty"`
 }
 
@@ -113,15 +113,15 @@ type ReviewResponse struct {
 // ReviewStatsResponse represents review statistics for a barber
 // @Description Statistics about reviews for a barber
 type ReviewStatsResponse struct {
-	TotalReviews       int            `json:"total_reviews" example:"150"`
-	AverageRating      float64        `json:"average_rating" example:"4.7"`
-	FiveStarCount      int            `json:"five_star_count" example:"100"`
-	FourStarCount      int            `json:"four_star_count" example:"35"`
-	ThreeStarCount     int            `json:"three_star_count" example:"10"`
-	TwoStarCount       int            `json:"two_star_count" example:"3"`
-	OneStarCount       int            `json:"one_star_count" example:"2"`
-	RecommendPercent   float64        `json:"recommend_percent" example:"95.5"`
-	RatingDistribution map[int]int    `json:"rating_distribution"`
+	TotalReviews       int         `json:"total_reviews" example:"150"`
+	AverageRating      float64     `json:"average_rating" example:"4.7"`
+	FiveStarCount      int         `json:"five_star_count" example:"100"`
+	FourStarCount      int         `json:"four_star_count" example:"35"`
+	ThreeStarCount     int         `json:"three_star_count" example:"10"`
+	TwoStarCount       int         `json:"two_star_count" example:"3"`
+	OneStarCount       int         `json:"one_star_count" example:"2"`
+	RecommendPercent   float64     `json:"recommend_percent" example:"95.5"`
+	RatingDistribution map[int]int `json:"rating_distribution"`
 }
 
 // CanReviewResponse represents the response for checking review eligibility

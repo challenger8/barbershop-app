@@ -110,20 +110,20 @@ func (s *NotificationService) toNotificationResponse(notification *models.Notifi
 // getDefaultChannels returns default notification channels based on type
 func getDefaultChannels(notifType string) []string {
 	switch notifType {
-	case "booking_confirmation", "booking_cancelled", "booking_rescheduled":
-		return []string{"app", "email"}
-	case "booking_reminder":
-		return []string{"app", "push"}
-	case "review_request":
-		return []string{"app", "email"}
-	case "payment_received", "payment_failed":
-		return []string{"app", "email"}
-	case "account_welcome", "account_verification", "password_reset":
-		return []string{"email"}
-	case "system_alert":
-		return []string{"app"}
+	case config.NotificationTypeBookingConfirmation, config.NotificationTypeBookingCancelled, config.NotificationTypeBookingRescheduled:
+		return []string{config.NotificationChannelApp, config.NotificationChannelEmail}
+	case config.NotificationTypeBookingReminder:
+		return []string{config.NotificationChannelApp, config.NotificationChannelPush}
+	case config.NotificationTypeReviewRequest:
+		return []string{config.NotificationChannelApp, config.NotificationChannelEmail}
+	case config.NotificationTypePaymentReceived, config.NotificationTypePaymentFailed:
+		return []string{config.NotificationChannelApp, config.NotificationChannelEmail}
+	case config.NotificationTypeAccountWelcome, config.NotificationTypeAccountVerification, config.NotificationTypePasswordReset:
+		return []string{config.NotificationChannelEmail}
+	case config.NotificationTypeSystemAlert:
+		return []string{config.NotificationChannelApp}
 	default:
-		return []string{"app"}
+		return []string{config.NotificationChannelApp}
 	}
 }
 
@@ -147,7 +147,7 @@ func (s *NotificationService) CreateNotification(ctx context.Context, req Create
 	// Set default priority
 	priority := req.Priority
 	if priority == "" {
-		priority = "normal"
+		priority = config.NotificationPriorityNormal
 	}
 
 	// Build notification model
@@ -157,7 +157,7 @@ func (s *NotificationService) CreateNotification(ctx context.Context, req Create
 		Message:  req.Message,
 		Type:     req.Type,
 		Channels: channels,
-		Status:   "pending",
+		Status:   config.NotificationStatusPending,
 		Priority: priority,
 		Data:     req.Data,
 	}
@@ -204,13 +204,13 @@ func (s *NotificationService) SendBookingConfirmation(ctx context.Context, booki
 		booking.BookingNumber,
 		booking.ScheduledStartTime.Format("Monday, January 2 at 3:04 PM"))
 
-	entityType := "booking"
+	entityType := config.EntityTypeBooking
 	req := CreateNotificationRequest{
 		UserID:            *booking.CustomerID,
 		Title:             title,
 		Message:           message,
-		Type:              "booking_confirmation",
-		Priority:          "normal",
+		Type:              config.NotificationTypeBookingConfirmation,
+		Priority:          config.NotificationPriorityNormal,
 		RelatedEntityType: &entityType,
 		RelatedEntityID:   &bookingID,
 		Data: map[string]interface{}{
@@ -239,13 +239,13 @@ func (s *NotificationService) SendBookingReminder(ctx context.Context, bookingID
 	message := fmt.Sprintf("Reminder: Your appointment is scheduled for %s",
 		booking.ScheduledStartTime.Format("Monday, January 2 at 3:04 PM"))
 
-	entityType := "booking"
+	entityType := config.EntityTypeBooking
 	req := CreateNotificationRequest{
 		UserID:            *booking.CustomerID,
 		Title:             title,
 		Message:           message,
-		Type:              "booking_reminder",
-		Priority:          "high",
+		Type:              config.NotificationTypeBookingReminder,
+		Priority:          config.NotificationPriorityHigh,
 		RelatedEntityType: &entityType,
 		RelatedEntityID:   &bookingID,
 		Data: map[string]interface{}{
@@ -275,13 +275,13 @@ func (s *NotificationService) SendBookingCancellation(ctx context.Context, booki
 		message += fmt.Sprintf(". Reason: %s", reason)
 	}
 
-	entityType := "booking"
+	entityType := config.EntityTypeBooking
 	req := CreateNotificationRequest{
 		UserID:            *booking.CustomerID,
 		Title:             title,
 		Message:           message,
-		Type:              "booking_cancelled",
-		Priority:          "high",
+		Type:              config.NotificationTypeBookingCancelled,
+		Priority:          config.NotificationPriorityHigh,
 		RelatedEntityType: &entityType,
 		RelatedEntityID:   &bookingID,
 		Data: map[string]interface{}{
@@ -311,13 +311,13 @@ func (s *NotificationService) SendBookingRescheduled(ctx context.Context, bookin
 		oldTime.Format("Monday, January 2 at 3:04 PM"),
 		newTime.Format("Monday, January 2 at 3:04 PM"))
 
-	entityType := "booking"
+	entityType := config.EntityTypeBooking
 	req := CreateNotificationRequest{
 		UserID:            *booking.CustomerID,
 		Title:             title,
 		Message:           message,
-		Type:              "booking_rescheduled",
-		Priority:          "high",
+		Type:              config.NotificationTypeBookingRescheduled,
+		Priority:          config.NotificationPriorityHigh,
 		RelatedEntityType: &entityType,
 		RelatedEntityID:   &bookingID,
 		Data: map[string]interface{}{
@@ -348,13 +348,13 @@ func (s *NotificationService) SendReviewRequest(ctx context.Context, bookingID i
 	// Set expiration for review request (e.g., 7 days)
 	expiresAt := time.Now().Add(7 * 24 * time.Hour)
 
-	entityType := "booking"
+	entityType := config.EntityTypeBooking
 	req := CreateNotificationRequest{
 		UserID:            *booking.CustomerID,
 		Title:             title,
 		Message:           message,
-		Type:              "review_request",
-		Priority:          "normal",
+		Type:              config.NotificationTypeReviewRequest,
+		Priority:          config.NotificationPriorityNormal,
 		RelatedEntityType: &entityType,
 		RelatedEntityID:   &bookingID,
 		ExpiresAt:         &expiresAt,
@@ -530,8 +530,8 @@ func (s *NotificationService) SendBulkNotification(ctx context.Context, userIDs 
 			Message:  message,
 			Type:     notifType,
 			Channels: getDefaultChannels(notifType),
-			Status:   "pending",
-			Priority: "normal",
+			Status:   config.NotificationStatusPending,
+			Priority: config.NotificationPriorityNormal,
 		}
 	}
 
@@ -556,14 +556,14 @@ func (s *NotificationService) ScheduleBookingReminders(ctx context.Context, hour
 
 	for _, booking := range bookings {
 		// Check if reminder already sent
-		existingNotifs, err := s.repo.GetByRelatedEntity(ctx, "booking", booking.ID)
+		existingNotifs, err := s.repo.GetByRelatedEntity(ctx, config.EntityTypeBooking, booking.ID)
 		if err != nil {
 			continue
 		}
 
 		reminderExists := false
 		for _, n := range existingNotifs {
-			if n.Type == "booking_reminder" {
+			if n.Type == config.NotificationTypeBookingReminder {
 				reminderExists = true
 				break
 			}

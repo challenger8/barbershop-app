@@ -9,8 +9,6 @@ import (
 // COMMON REPOSITORY HELPERS - Reduce repetition across repositories
 // ========================================================================
 
-
-
 // SetDefaultFloat sets a default value if the field is zero
 func SetDefaultFloat(field *float64, defaultValue float64) {
 	if *field == 0 {

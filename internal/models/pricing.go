@@ -23,8 +23,8 @@ type PricingBreakdown struct {
 	DiscountAmount float64 `json:"discount_amount"`
 	TaxAmount      float64 `json:"tax_amount"`
 	TaxRate        float64 `json:"tax_rate"`
-	SubTotal       float64 `json:"sub_total"`      // ServicePrice - DiscountAmount
-	TotalPrice     float64 `json:"total_price"`    // SubTotal + TaxAmount
+	SubTotal       float64 `json:"sub_total"`   // ServicePrice - DiscountAmount
+	TotalPrice     float64 `json:"total_price"` // SubTotal + TaxAmount
 	Currency       string  `json:"currency"`
 }
 

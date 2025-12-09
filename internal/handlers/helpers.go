@@ -4,7 +4,6 @@ package handlers
 import (
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -280,29 +279,9 @@ func RespondCreated(c *gin.Context, data interface{}, message string) {
 	})
 }
 
-// ADD THESE TO YOUR EXISTING helpers.go FILE:
-
 // ============================================================================
-// ADDITIONAL HELPERS - Add these to existing file
+// PAGINATION HELPERS
 // ============================================================================
-
-// HandleRepositoryError intelligently maps repository errors to HTTP responses
-// Returns true if error was handled, false if not recognized
-func HandleRepositoryError(c *gin.Context, err error, entityName string) bool {
-	switch {
-	case err == sql.ErrNoRows:
-		RespondNotFound(c, entityName)
-		return true
-	case strings.Contains(err.Error(), "not found"):
-		RespondNotFound(c, entityName)
-		return true
-	case strings.Contains(err.Error(), "duplicate"):
-		RespondBadRequest(c, "Duplicate entry", "This "+strings.ToLower(entityName)+" already exists")
-		return true
-	default:
-		return false
-	}
-}
 
 // PaginationMeta creates standardized pagination metadata
 func PaginationMeta(count, limit, offset int) map[string]interface{} {
@@ -312,4 +291,22 @@ func PaginationMeta(count, limit, offset int) map[string]interface{} {
 		"offset":   offset,
 		"has_more": count >= limit,
 	}
+}
+
+// ============================================================================
+// STRING HELPERS
+// ============================================================================
+
+// ContainsAny checks if string contains any of the substrings
+func ContainsAny(s string, substrings []string) bool {
+	for _, sub := range substrings {
+		if len(s) >= len(sub) {
+			for i := 0; i <= len(s)-len(sub); i++ {
+				if s[i:i+len(sub)] == sub {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

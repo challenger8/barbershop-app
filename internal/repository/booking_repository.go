@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -91,36 +92,36 @@ var (
 // VALID STATUS VALUES
 // ========================================================================
 
-// Valid booking statuses
+// Valid booking statuses - using config constants
 var ValidBookingStatuses = []string{
-	"pending",
-	"confirmed",
-	"in_progress",
-	"completed",
-	"cancelled_by_customer",
-	"cancelled_by_barber",
-	"no_show",
+	config.BookingStatusPending,
+	config.BookingStatusConfirmed,
+	config.BookingStatusInProgress,
+	config.BookingStatusCompleted,
+	config.BookingStatusCancelledByCustomer,
+	config.BookingStatusCancelledByBarber,
+	config.BookingStatusNoShow,
 }
 
-// Valid payment statuses
+// Valid payment statuses - using config constants
 var ValidPaymentStatuses = []string{
-	"pending",
-	"paid",
-	"partially_paid",
-	"refunded",
-	"failed",
+	config.PaymentStatusPending,
+	config.PaymentStatusPaid,
+	config.PaymentStatusPartiallyPaid,
+	config.PaymentStatusRefunded,
+	config.PaymentStatusFailed,
 }
 
 // ValidStatusTransitions defines allowed status changes
 // Key: current status, Value: allowed next statuses
 var ValidStatusTransitions = map[string][]string{
-	"pending":               {"confirmed", "cancelled_by_customer", "cancelled_by_barber"},
-	"confirmed":             {"in_progress", "cancelled_by_customer", "cancelled_by_barber", "no_show"},
-	"in_progress":           {"completed"},
-	"completed":             {}, // Terminal state
-	"cancelled_by_customer": {}, // Terminal state
-	"cancelled_by_barber":   {}, // Terminal state
-	"no_show":               {}, // Terminal state
+	config.BookingStatusPending:             {config.BookingStatusConfirmed, config.BookingStatusCancelledByCustomer, config.BookingStatusCancelledByBarber},
+	config.BookingStatusConfirmed:           {config.BookingStatusInProgress, config.BookingStatusCancelledByCustomer, config.BookingStatusCancelledByBarber, config.BookingStatusNoShow},
+	config.BookingStatusInProgress:          {config.BookingStatusCompleted},
+	config.BookingStatusCompleted:           {}, // Terminal state
+	config.BookingStatusCancelledByCustomer: {}, // Terminal state
+	config.BookingStatusCancelledByBarber:   {}, // Terminal state
+	config.BookingStatusNoShow:              {}, // Terminal state
 }
 
 // IsValidStatusTransition checks if a status change is allowed
@@ -167,24 +168,14 @@ func (r *BookingRepository) Create(ctx context.Context, booking *models.Booking)
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	booking.CreatedAt = now
-	booking.UpdatedAt = now
+	// Set timestamps using helper
+	SetCreateTimestamps(&booking.CreatedAt, &booking.UpdatedAt)
 
-	// Set defaults
-	if booking.Status == "" {
-		booking.Status = "pending"
-	}
-	if booking.PaymentStatus == "" {
-		booking.PaymentStatus = "pending"
-	}
-	if booking.Currency == "" {
-		booking.Currency = "USD"
-	}
-	if booking.BookingSource == "" {
-		booking.BookingSource = "web_app"
-	}
+	// Set defaults using helpers
+	SetDefaultString(&booking.Status, config.BookingStatusPending)
+	SetDefaultString(&booking.PaymentStatus, config.PaymentStatusPending)
+	SetDefaultString(&booking.Currency, config.DefaultCurrency)
+	SetDefaultString(&booking.BookingSource, "web_app")
 
 	rows, err := r.db.NamedQueryContext(ctx, query, booking)
 	if err != nil {
@@ -413,7 +404,7 @@ func (r *BookingRepository) FindByBarberID(ctx context.Context, barberID int, fi
 // GetUpcomingBookings retrieves upcoming bookings for a barber or customer
 func (r *BookingRepository) GetUpcomingBookings(ctx context.Context, filters BookingFilters) ([]models.Booking, error) {
 	filters.StartDateFrom = time.Now()
-	filters.Statuses = []string{"pending", "confirmed"}
+	filters.Statuses = []string{config.BookingStatusPending, config.BookingStatusConfirmed}
 	filters.SortBy = "scheduled_start_time"
 	filters.Order = "ASC"
 	return r.FindAll(ctx, filters)
@@ -429,7 +420,7 @@ func (r *BookingRepository) GetTodayBookings(ctx context.Context, barberID int) 
 		BarberID:      barberID,
 		StartDateFrom: startOfDay,
 		StartDateTo:   endOfDay,
-		Statuses:      []string{"pending", "confirmed", "in_progress"},
+		Statuses:      []string{config.BookingStatusPending, config.BookingStatusConfirmed, config.BookingStatusInProgress},
 		SortBy:        "scheduled_start_time",
 		Order:         "ASC",
 	}
@@ -443,7 +434,7 @@ func (r *BookingRepository) GetTodayBookings(ctx context.Context, barberID int) 
 
 // Update updates a booking's basic information
 func (r *BookingRepository) Update(ctx context.Context, booking *models.Booking) error {
-	booking.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&booking.UpdatedAt)
 
 	query := `
 		UPDATE bookings SET
@@ -501,11 +492,11 @@ func (r *BookingRepository) UpdateStatus(ctx context.Context, id int, newStatus 
 
 	// Handle special status updates
 	switch {
-	case newStatus == "in_progress":
+	case newStatus == config.BookingStatusInProgress:
 		query += fmt.Sprintf(", actual_start_time = $%d", argCount)
 		args = append(args, now)
 		argCount++
-	case newStatus == "completed":
+	case newStatus == config.BookingStatusCompleted:
 		query += fmt.Sprintf(", actual_end_time = $%d", argCount)
 		args = append(args, now)
 		argCount++

@@ -22,121 +22,6 @@ func NewBarberRepository(db *sqlx.DB) *BarberRepository {
 	return &BarberRepository{db: db}
 }
 
-// FindAllWithEnhancedSearch - Enhanced search with proper JSONB handling
-func (r *BarberRepository) FindAllWithEnhancedSearch(ctx context.Context, filters BarberFilters) ([]models.Barber, error) {
-	query := `
-		SELECT b.*, u.name as user_name, u.email as user_email
-		FROM barbers b
-		LEFT JOIN users u ON b.user_id = u.id
-		WHERE b.deleted_at IS NULL
-	`
-	args := []interface{}{}
-	argCount := 1
-
-	// Apply filters
-	if filters.Status != "" {
-		query += fmt.Sprintf(" AND b.status = $%d", argCount)
-		args = append(args, filters.Status)
-		argCount++
-	}
-
-	if filters.IsVerified != nil {
-		query += fmt.Sprintf(" AND b.is_verified = $%d", argCount)
-		args = append(args, *filters.IsVerified)
-		argCount++
-	}
-
-	if filters.City != "" {
-		query += fmt.Sprintf(" AND b.city ILIKE $%d", argCount)
-		args = append(args, filters.City)
-		argCount++
-	}
-
-	if filters.State != "" {
-		query += fmt.Sprintf(" AND b.state ILIKE $%d", argCount)
-		args = append(args, filters.State)
-		argCount++
-	}
-
-	if filters.MinRating > 0 {
-		query += fmt.Sprintf(" AND b.rating >= $%d", argCount)
-		args = append(args, filters.MinRating)
-		argCount++
-	}
-
-	// Enhanced search with proper JSONB handling
-	if filters.Search != "" {
-		searchTerm := "%" + filters.Search + "%"
-		query += fmt.Sprintf(` AND (
-			b.shop_name ILIKE $%d OR 
-			b.description ILIKE $%d OR 
-			u.name ILIKE $%d OR
-			b.address ILIKE $%d OR
-			b.city ILIKE $%d OR
-			b.state ILIKE $%d OR
-			EXISTS (
-				SELECT 1 FROM jsonb_array_elements_text(b.specialties) AS specialty 
-				WHERE specialty ILIKE $%d
-			) OR
-			EXISTS (
-				SELECT 1 FROM jsonb_array_elements_text(b.certifications) AS cert 
-				WHERE cert ILIKE $%d
-			) OR
-			EXISTS (
-				SELECT 1 FROM jsonb_array_elements_text(b.languages_spoken) AS lang 
-				WHERE lang ILIKE $%d
-			)
-		)`, argCount, argCount, argCount, argCount, argCount, argCount, argCount, argCount, argCount)
-
-		args = append(args, searchTerm)
-		argCount++
-	}
-
-	// Sorting
-	orderBy := "b.created_at DESC"
-	if filters.SortBy != "" {
-		switch filters.SortBy {
-		case "rating":
-			orderBy = "b.rating DESC"
-		case "total_bookings":
-			orderBy = "b.total_bookings DESC"
-		case "shop_name":
-			orderBy = "b.shop_name ASC"
-		case "user_name":
-			orderBy = "u.name ASC"
-		}
-	}
-	query += " ORDER BY " + orderBy
-
-	// Pagination
-	limit := config.DefaultPageLimit
-	offset := 0
-	if filters.Limit > 0 {
-		limit = filters.Limit
-	}
-	if filters.Offset > 0 {
-		offset = filters.Offset
-	}
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, limit, offset)
-
-	var barbers []models.Barber
-	err := r.db.SelectContext(ctx, &barbers, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch barbers: %w", err)
-	}
-
-	return barbers, nil
-}
-
-// ========================================================================
-// FIXED: barber_repository.go FindAll Method
-// ========================================================================
-//
-// Issue: Nil pointer dereference when filters.IsVerified is nil
-// Fix: Create helper variables to safely handle pointer dereferencing
-// ========================================================================
-
 // FindAll retrieves all barbers with optional filters
 func (r *BarberRepository) FindAll(ctx context.Context, filters BarberFilters) ([]models.Barber, error) {
 	// Define sort column mappings
@@ -182,102 +67,6 @@ func (r *BarberRepository) FindAll(ctx context.Context, filters BarberFilters) (
 		Build()
 
 	// Execute query
-	var barbers []models.Barber
-	err := r.db.SelectContext(ctx, &barbers, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch barbers: %w", err)
-	}
-
-	return barbers, nil
-}
-
-// Alternative simpler search implementation using ILIKE (PostgreSQL specific)
-func (r *BarberRepository) FindAllWithSimpleSearch(ctx context.Context, filters BarberFilters) ([]models.Barber, error) {
-	query := `
-		SELECT b.*, u.name as user_name, u.email as user_email
-		FROM barbers b
-		LEFT JOIN users u ON b.user_id = u.id
-		WHERE b.deleted_at IS NULL
-	`
-	args := []interface{}{}
-	argCount := 1
-
-	// Apply filters
-	if filters.Status != "" {
-		query += fmt.Sprintf(" AND b.status = $%d", argCount)
-		args = append(args, filters.Status)
-		argCount++
-	}
-
-	if filters.IsVerified != nil {
-		query += fmt.Sprintf(" AND b.is_verified = $%d", argCount)
-		args = append(args, *filters.IsVerified)
-		argCount++
-	}
-
-	if filters.City != "" {
-		query += fmt.Sprintf(" AND b.city ILIKE $%d", argCount)
-		args = append(args, filters.City)
-		argCount++
-	}
-
-	if filters.State != "" {
-		query += fmt.Sprintf(" AND b.state ILIKE $%d", argCount)
-		args = append(args, filters.State)
-		argCount++
-	}
-
-	if filters.MinRating > 0 {
-		query += fmt.Sprintf(" AND b.rating >= $%d", argCount)
-		args = append(args, filters.MinRating)
-		argCount++
-	}
-
-	// Simplified search using ILIKE (case-insensitive LIKE)
-	if filters.Search != "" {
-		searchTerm := "%" + filters.Search + "%"
-		query += fmt.Sprintf(` AND (
-			b.shop_name ILIKE $%d OR 
-			b.description ILIKE $%d OR 
-			u.name ILIKE $%d OR
-			b.address ILIKE $%d OR
-			b.city ILIKE $%d OR
-			b.state ILIKE $%d OR
-			b.specialties::text ILIKE $%d
-		)`, argCount, argCount, argCount, argCount, argCount, argCount, argCount)
-
-		args = append(args, searchTerm)
-		argCount++
-	}
-
-	// Sorting
-	orderBy := "b.created_at DESC"
-	if filters.SortBy != "" {
-		switch filters.SortBy {
-		case "rating":
-			orderBy = "b.rating DESC"
-		case "total_bookings":
-			orderBy = "b.total_bookings DESC"
-		case "shop_name":
-			orderBy = "b.shop_name ASC"
-		case "user_name":
-			orderBy = "u.name ASC"
-		}
-	}
-	query += " ORDER BY " + orderBy
-
-	// Pagination
-	limit := 20
-	offset := 0
-	if filters.Limit > 0 {
-		limit = filters.Limit
-	}
-	if filters.Offset > 0 {
-		offset = filters.Offset
-	}
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, limit, offset)
-
 	var barbers []models.Barber
 	err := r.db.SelectContext(ctx, &barbers, query, args...)
 	if err != nil {
@@ -376,19 +165,12 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	barber.CreatedAt = now
-	barber.UpdatedAt = now
-	barber.LastActiveAt = now
+	// Set timestamps using helper
+	SetCreateTimestamps(&barber.CreatedAt, &barber.UpdatedAt)
+	barber.LastActiveAt = barber.CreatedAt // Same as creation time initially
 
-	// Set default values
-	if barber.Status == "" {
-		barber.Status = config.BarberStatusPending
-	}
-	if barber.Rating == 0 {
-		barber.Rating = 0.0
-	}
+	// Set default values using helpers
+	SetDefaultString(&barber.Status, config.BarberStatusPending)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, barber)
 	if err != nil {
@@ -411,7 +193,7 @@ func (r *BarberRepository) Create(ctx context.Context, barber *models.Barber) er
 
 // Update updates a barber
 func (r *BarberRepository) Update(ctx context.Context, barber *models.Barber) error {
-	barber.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&barber.UpdatedAt)
 
 	query := `
 		UPDATE barbers SET

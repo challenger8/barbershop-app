@@ -50,20 +50,6 @@ func buildBookingFilters(c *gin.Context) repository.BookingFilters {
 	}
 }
 
-// containsAny checks if string contains any of the substrings
-func containsAny(s string, substrings []string) bool {
-	for _, sub := range substrings {
-		if len(s) >= len(sub) {
-			for i := 0; i <= len(s)-len(sub); i++ {
-				if s[i:i+len(sub)] == sub {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
 // ========================================================================
 // CREATE BOOKING
 // ========================================================================
@@ -105,7 +91,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		statusCode := http.StatusInternalServerError
 		if err.Error() == "time slot is not available, please choose another time" {
 			statusCode = http.StatusConflict
-		} else if containsAny(err.Error(), []string{"not found", "required", "must be", "cannot"}) {
+		} else if ContainsAny(err.Error(), []string{"not found", "required", "must be", "cannot"}) {
 			statusCode = http.StatusBadRequest
 		}
 
@@ -436,7 +422,7 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 			return
 		}
 		// Check for invalid status transition
-		if containsAny(err.Error(), []string{"invalid status", "cannot change"}) {
+		if ContainsAny(err.Error(), []string{"invalid status", "cannot change"}) {
 			c.JSON(http.StatusUnprocessableEntity, middleware.ErrorResponse{
 				Error:   "Invalid status transition",
 				Message: err.Error(),
@@ -497,7 +483,7 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 			RespondNotFound(c, "Booking")
 			return
 		}
-		if containsAny(err.Error(), []string{"not available", "conflict"}) {
+		if ContainsAny(err.Error(), []string{"not available", "conflict"}) {
 			c.JSON(http.StatusConflict, middleware.ErrorResponse{
 				Error:   "Time slot not available",
 				Message: err.Error(),

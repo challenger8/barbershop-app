@@ -173,18 +173,18 @@ func RecoveryHandler() gin.HandlerFunc {
 
 // AbortWithError is a helper to abort with an AppError
 func AbortWithError(c *gin.Context, err *AppError) {
-    response := ErrorResponse{
-        Error:   http.StatusText(err.StatusCode),
-        Message: err.Message,
-        Code:    err.Code,
-        Details: err.Details,
-    }
+	response := ErrorResponse{
+		Error:   http.StatusText(err.StatusCode),
+		Message: err.Message,
+		Code:    err.Code,
+		Details: err.Details,
+	}
 
-    if err.StatusCode >= 500 && err.Err != nil {
-        c.Set("error", err.Err)
-    }
+	if err.StatusCode >= 500 && err.Err != nil {
+		c.Set("error", err.Err)
+	}
 
-    c.AbortWithStatusJSON(err.StatusCode, response)
+	c.AbortWithStatusJSON(err.StatusCode, response)
 }
 
 // RespondWithError is a helper to respond with an AppError directly

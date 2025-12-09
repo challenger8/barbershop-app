@@ -199,18 +199,12 @@ func (r *ServiceRepository) Create(ctx context.Context, service *models.Service)
 		) RETURNING id
 	`
 
-	// Set timestamps
-	now := time.Now()
-	service.CreatedAt = now
-	service.UpdatedAt = now
+	// Set timestamps using helper
+	SetCreateTimestamps(&service.CreatedAt, &service.UpdatedAt)
 
-	// Set defaults
-	if service.Currency == "" {
-		service.Currency = config.DefaultCurrency
-	}
-	if service.Version == 0 {
-		service.Version = 1
-	}
+	// Set defaults using helpers
+	SetDefaultString(&service.Currency, config.DefaultCurrency)
+	SetDefaultInt(&service.Version, 1)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, service)
 	if err != nil {
@@ -236,7 +230,7 @@ func (r *ServiceRepository) Create(ctx context.Context, service *models.Service)
 
 // Update updates a service
 func (r *ServiceRepository) Update(ctx context.Context, service *models.Service) error {
-	service.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&service.UpdatedAt)
 	service.Version++
 
 	query := `
@@ -366,9 +360,7 @@ func (r *ServiceRepository) CreateCategory(ctx context.Context, category *models
 		) RETURNING id
 	`
 
-	now := time.Now()
-	category.CreatedAt = now
-	category.UpdatedAt = now
+	SetCreateTimestamps(&category.CreatedAt, &category.UpdatedAt)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, category)
 	if err != nil {
@@ -390,7 +382,7 @@ func (r *ServiceRepository) CreateCategory(ctx context.Context, category *models
 
 // UpdateCategory updates a service category
 func (r *ServiceRepository) UpdateCategory(ctx context.Context, category *models.ServiceCategory) error {
-	category.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&category.UpdatedAt)
 
 	query := `
 		UPDATE service_categories SET
@@ -583,13 +575,8 @@ func (r *ServiceRepository) CreateBarberService(ctx context.Context, bs *models.
 		) RETURNING id
 	`
 
-	now := time.Now()
-	bs.CreatedAt = now
-	bs.UpdatedAt = now
-
-	if bs.Currency == "" {
-		bs.Currency = config.DefaultCurrency
-	}
+	SetCreateTimestamps(&bs.CreatedAt, &bs.UpdatedAt)
+	SetDefaultString(&bs.Currency, config.DefaultCurrency)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, bs)
 	if err != nil {
@@ -612,7 +599,7 @@ func (r *ServiceRepository) CreateBarberService(ctx context.Context, bs *models.
 
 // UpdateBarberService updates a barber service
 func (r *ServiceRepository) UpdateBarberService(ctx context.Context, bs *models.BarberService) error {
-	bs.UpdatedAt = time.Now()
+	SetUpdateTimestamp(&bs.UpdatedAt)
 
 	query := `
 		UPDATE barber_services SET

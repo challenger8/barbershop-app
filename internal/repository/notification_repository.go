@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"context"
 	"database/sql"
@@ -94,67 +95,57 @@ type NotificationStats struct {
 // VALID STATUS VALUES
 // ========================================================================
 
-// ValidNotificationStatuses defines allowed notification statuses
+// ValidNotificationStatuses defines allowed notification statuses - using config constants
 var ValidNotificationStatuses = []string{
-	"pending",
-	"sent",
-	"delivered",
-	"read",
-	"failed",
+	config.NotificationStatusPending,
+	config.NotificationStatusSent,
+	config.NotificationStatusDelivered,
+	config.NotificationStatusRead,
+	config.NotificationStatusFailed,
 }
 
-// ValidNotificationTypes defines allowed notification types
+// ValidNotificationTypes defines allowed notification types - using config constants
 var ValidNotificationTypes = []string{
-	"booking_confirmation",
-	"booking_reminder",
-	"booking_cancelled",
-	"booking_rescheduled",
-	"booking_completed",
-	"review_request",
-	"review_response",
-	"payment_received",
-	"payment_failed",
-	"account_welcome",
-	"account_verification",
-	"password_reset",
-	"promotion",
-	"system_alert",
+	config.NotificationTypeBookingConfirmation,
+	config.NotificationTypeBookingReminder,
+	config.NotificationTypeBookingCancelled,
+	config.NotificationTypeBookingRescheduled,
+	config.NotificationTypeBookingCompleted,
+	config.NotificationTypeReviewRequest,
+	config.NotificationTypeReviewResponse,
+	config.NotificationTypePaymentReceived,
+	config.NotificationTypePaymentFailed,
+	config.NotificationTypeAccountWelcome,
+	config.NotificationTypeAccountVerification,
+	config.NotificationTypePasswordReset,
+	config.NotificationTypePromotion,
+	config.NotificationTypeSystemAlert,
 }
 
-// ValidNotificationPriorities defines allowed priority levels
+// ValidNotificationPriorities defines allowed priority levels - using config constants
 var ValidNotificationPriorities = []string{
-	"low",
-	"normal",
-	"high",
-	"urgent",
+	config.NotificationPriorityLow,
+	config.NotificationPriorityNormal,
+	config.NotificationPriorityHigh,
+	config.NotificationPriorityUrgent,
 }
 
-// ValidNotificationChannels defines allowed delivery channels
+// ValidNotificationChannels defines allowed delivery channels - using config constants
 var ValidNotificationChannels = []string{
-	"app",
-	"email",
-	"sms",
-	"push",
+	config.NotificationChannelApp,
+	config.NotificationChannelEmail,
+	config.NotificationChannelSMS,
+	config.NotificationChannelPush,
 }
 
 // IsValidNotificationStatus checks if a status is valid
 func IsValidNotificationStatus(status string) bool {
-	for _, s := range ValidNotificationStatuses {
-		if s == status {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(status, ValidNotificationStatuses)
 }
 
 // IsValidNotificationType checks if a type is valid
 func IsValidNotificationType(notifType string) bool {
-	for _, t := range ValidNotificationTypes {
-		if t == notifType {
-			return true
-		}
-	}
-	return false
+	return IsValidValue(notifType, ValidNotificationTypes)
 }
 
 // ========================================================================
@@ -179,14 +170,10 @@ func (r *NotificationRepository) Create(ctx context.Context, notification *model
 		) RETURNING id
 	`
 
-	// Set defaults
+	// Set defaults using helpers
 	notification.CreatedAt = time.Now()
-	if notification.Status == "" {
-		notification.Status = "pending"
-	}
-	if notification.Priority == "" {
-		notification.Priority = "normal"
-	}
+	SetDefaultString(&notification.Status, config.NotificationStatusPending)
+	SetDefaultString(&notification.Priority, config.NotificationPriorityNormal)
 
 	rows, err := r.db.NamedQueryContext(ctx, query, notification)
 	if err != nil {
@@ -228,12 +215,8 @@ func (r *NotificationRepository) CreateBatch(ctx context.Context, notifications 
 	now := time.Now()
 	for _, n := range notifications {
 		n.CreatedAt = now
-		if n.Status == "" {
-			n.Status = "pending"
-		}
-		if n.Priority == "" {
-			n.Priority = "normal"
-		}
+		SetDefaultString(&n.Status, config.NotificationStatusPending)
+		SetDefaultString(&n.Priority, config.NotificationPriorityNormal)
 	}
 
 	_, err := r.db.NamedExecContext(ctx, query, notifications)

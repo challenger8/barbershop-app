@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"barber-booking-system/internal/config"
+	"errors"
+	"time"
+)
 
 // Booking represents a booking/appointment
 type Booking struct {
@@ -90,4 +94,79 @@ type BookingHistory struct {
 	IPAddress    *string   `json:"ip_address" db:"ip_address"`
 	UserAgent    *string   `json:"user_agent" db:"user_agent"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+}
+
+// ========================================================================
+// BOOKING HELPER METHODS
+// ========================================================================
+
+// IsPending returns true if the booking is pending
+func (b *Booking) IsPending() bool {
+	return b.Status == config.BookingStatusPending
+}
+
+// IsConfirmed returns true if the booking is confirmed
+func (b *Booking) IsConfirmed() bool {
+	return b.Status == config.BookingStatusConfirmed
+}
+
+// IsCompleted returns true if the booking is completed
+func (b *Booking) IsCompleted() bool {
+	return b.Status == config.BookingStatusCompleted
+}
+
+// IsCancelled returns true if the booking was cancelled
+func (b *Booking) IsCancelled() bool {
+	return b.Status == config.BookingStatusCancelledByCustomer || b.Status == config.BookingStatusCancelledByBarber
+}
+
+// CanBeCancelled returns true if the booking can still be cancelled
+func (b *Booking) CanBeCancelled() bool {
+	return b.Status == config.BookingStatusPending || b.Status == config.BookingStatusConfirmed
+}
+
+// GetCustomerInfo returns customer name, email, and phone
+func (b *Booking) GetCustomerInfo() (string, string, string) {
+	name := ""
+	email := ""
+	phone := ""
+
+	if b.CustomerName != nil {
+		name = *b.CustomerName
+	}
+	if b.CustomerEmail != nil {
+		email = *b.CustomerEmail
+	}
+	if b.CustomerPhone != nil {
+		phone = *b.CustomerPhone
+	}
+
+	return name, email, phone
+}
+
+// GetDuration returns the scheduled duration of the booking
+func (b *Booking) GetDuration() time.Duration {
+	return b.ScheduledEndTime.Sub(b.ScheduledStartTime)
+}
+
+// IsUpcoming returns true if the booking is scheduled for the future
+func (b *Booking) IsUpcoming() bool {
+	return b.ScheduledStartTime.After(time.Now()) && (b.Status == config.BookingStatusPending || b.Status == config.BookingStatusConfirmed)
+}
+
+// Validate validates booking fields
+func (b *Booking) Validate() error {
+	if b.BarberID <= 0 {
+		return errors.New("valid barber ID is required")
+	}
+	if b.TimeSlotID <= 0 {
+		return errors.New("valid time slot ID is required")
+	}
+	if b.ServiceName == "" {
+		return errors.New("service name is required")
+	}
+	if b.TotalPrice < 0 {
+		return errors.New("total price cannot be negative")
+	}
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 
@@ -163,8 +164,6 @@ func (s *BarberService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-
-
 // UpdateStatus updates barber status with cache invalidation
 func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string) error {
 	err := s.repo.UpdateStatus(ctx, id, status)
@@ -182,8 +181,14 @@ func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string)
 
 // UpdateBarberStatus is an alias for UpdateStatus with validation
 func (s *BarberService) UpdateBarberStatus(ctx context.Context, id int, status string) error {
-	// Validate status
-	validStatuses := []string{"pending", "active", "inactive", "suspended", "rejected"}
+	// Validate status using config constants
+	validStatuses := []string{
+		config.BarberStatusPending,
+		config.BarberStatusActive,
+		config.BarberStatusInactive,
+		config.BarberStatusSuspended,
+		config.BarberStatusRejected,
+	}
 	isValid := false
 	for _, validStatus := range validStatuses {
 		if status == validStatus {
@@ -229,12 +234,12 @@ func (s *BarberService) GetBarberStatistics(ctx context.Context, id int) (*repos
 // SearchBarbers searches barbers by various criteria
 func (s *BarberService) SearchBarbers(ctx context.Context, query string, filters repository.BarberFilters) ([]models.Barber, error) {
 	filters.Search = query
-	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+	return s.repo.FindAll(ctx, filters)
 }
 
 // GetAllBarbers retrieves all barbers with filters
 func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.BarberFilters) ([]models.Barber, error) {
-	return s.repo.FindAllWithEnhancedSearch(ctx, filters)
+	return s.repo.FindAll(ctx, filters)
 }
 
 // CreateBarber creates a new barber (UPDATED to use DTO pattern)

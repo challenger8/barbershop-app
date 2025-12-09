@@ -121,3 +121,20 @@ func SetDefaultInt(target *int, defaultValue int) {
 		*target = defaultValue
 	}
 }
+
+// IsValidValue checks if a value is present in a list of valid values.
+// This is a generic helper to eliminate duplicate IsValid* pattern functions.
+//
+// Usage:
+//
+//	if !IsValidValue(status, ValidNotificationStatuses) {
+//	    return ErrInvalidStatus
+//	}
+func IsValidValue(value string, validValues []string) bool {
+	for _, v := range validValues {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
