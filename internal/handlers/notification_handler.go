@@ -90,9 +90,8 @@ func buildNotificationFilters(c *gin.Context) repository.NotificationFilters {
 // @Security BearerAuth
 // @Router /api/v1/notifications [get]
 func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view notifications")
+	userID, ok := RequireAuth(c, "view notifications")
+	if !ok {
 		return
 	}
 
@@ -120,9 +119,8 @@ func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/unread [get]
 func (h *NotificationHandler) GetUnreadNotifications(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view notifications")
+	userID, ok := RequireAuth(c, "view notifications")
+	if !ok {
 		return
 	}
 
@@ -163,9 +161,8 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view notifications")
+	userID, ok := RequireAuth(c, "view notifications")
+	if !ok {
 		return
 	}
 
@@ -198,9 +195,8 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/stats [get]
 func (h *NotificationHandler) GetNotificationStats(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view notification stats")
+	userID, ok := RequireAuth(c, "view notification stats")
+	if !ok {
 		return
 	}
 
@@ -225,9 +221,8 @@ func (h *NotificationHandler) GetNotificationStats(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/unread/count [get]
 func (h *NotificationHandler) GetUnreadCount(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view notification count")
+	userID, ok := RequireAuth(c, "view notification count")
+	if !ok {
 		return
 	}
 
@@ -266,9 +261,8 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to mark notifications as read")
+	userID, ok := RequireAuth(c, "mark notifications as read")
+	if !ok {
 		return
 	}
 
@@ -297,9 +291,8 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/read-all [patch]
 func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to mark notifications as read")
+	userID, ok := RequireAuth(c, "mark notifications as read")
+	if !ok {
 		return
 	}
 
@@ -338,9 +331,8 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to delete notifications")
+	userID, ok := RequireAuth(c, "delete notifications")
+	if !ok {
 		return
 	}
 

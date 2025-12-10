@@ -438,16 +438,7 @@ func (r *ReviewRepository) Update(ctx context.Context, review *models.Review) er
 		return fmt.Errorf("failed to update review: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // UpdateModerationStatus updates the moderation status of a review
@@ -476,16 +467,7 @@ func (r *ReviewRepository) UpdateModerationStatus(ctx context.Context, id int, s
 		return fmt.Errorf("failed to update moderation status: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // AddBarberResponse adds a barber's response to a review
@@ -504,16 +486,7 @@ func (r *ReviewRepository) AddBarberResponse(ctx context.Context, id int, respon
 		return fmt.Errorf("failed to add barber response: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // IncrementHelpfulVotes increments the helpful votes counter
@@ -530,16 +503,7 @@ func (r *ReviewRepository) IncrementHelpfulVotes(ctx context.Context, id int, is
 		return fmt.Errorf("failed to increment votes: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // ========================================================================
@@ -561,16 +525,7 @@ func (r *ReviewRepository) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete review: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // HardDelete permanently removes a review
@@ -582,16 +537,7 @@ func (r *ReviewRepository) HardDelete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to hard delete review: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrReviewNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrReviewNotFound)
 }
 
 // ========================================================================

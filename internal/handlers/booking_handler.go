@@ -220,9 +220,8 @@ func (h *BookingHandler) GetBookingByNumber(c *gin.Context) {
 // @Router /api/v1/bookings/me [get]
 func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 	// Get authenticated user ID
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view your bookings")
+	userID, ok := RequireAuth(c, "view your bookings")
+	if !ok {
 		return
 	}
 
@@ -521,9 +520,8 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 
 	// Get user ID from auth context
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to cancel a booking")
+	userID, ok := RequireAuth(c, "cancel a booking")
+	if !ok {
 		return
 	}
 
