@@ -76,12 +76,12 @@ func validateBookingNumber(fl validator.FieldLevel) bool {
 func validateBookingStatus(fl validator.FieldLevel) bool {
 	status := fl.Field().String()
 	validStatuses := map[string]bool{
-		config.BookingStatusPending:     true,
-		config.BookingStatusConfirmed:   true,
-		config.BookingStatusInProgress:  true,
-		config.BookingStatusCompleted:   true,
-		config.BookingStatusCancelled:   true,
-		config.BookingStatusNoShow:      true,
+		config.BookingStatusPending:    true,
+		config.BookingStatusConfirmed:  true,
+		config.BookingStatusInProgress: true,
+		config.BookingStatusCompleted:  true,
+		config.BookingStatusCancelled:  true,
+		config.BookingStatusNoShow:     true,
 	}
 	return validStatuses[status]
 }
