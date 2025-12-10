@@ -371,11 +371,7 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking updated successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking updated successfully")
 }
 
 // ========================================================================
@@ -433,11 +429,7 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking status updated successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking status updated successfully")
 }
 
 // ========================================================================
@@ -494,11 +486,7 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking rescheduled successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking rescheduled successfully")
 }
 
 // ========================================================================

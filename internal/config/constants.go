@@ -346,3 +346,19 @@ const (
 	EntityTypePayment = "payment"
 	EntityTypeReview  = "review"
 )
+
+// ========================================================================
+// MIDDLEWARE CONSTANTS
+// ========================================================================
+
+// DefaultSkipPaths are paths that should be skipped by middleware
+// (logging, rate limiting, auth, etc.)
+var DefaultSkipPaths = []string{"/health", "/metrics"}
+
+// DefaultAuthSkipPaths are paths that should skip authentication
+var DefaultAuthSkipPaths = []string{
+	"/health",
+	"/metrics",
+	"/api/v1/auth/login",
+	"/api/v1/auth/register",
+}

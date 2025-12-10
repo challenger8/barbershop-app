@@ -155,11 +155,7 @@ func (h *ServiceHandler) CreateService(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, SuccessResponse{
-		Success: true,
-		Data:    service,
-		Message: "Service created successfully",
-	})
+	RespondCreated(c, service, "Service created successfully")
 }
 
 // UpdateService godoc
@@ -195,11 +191,7 @@ func (h *ServiceHandler) UpdateService(c *gin.Context) {
 	if HandleServiceError(c, err, "Service", "update service") {
 		return
 	}
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    service,
-		Message: "Service updated successfully",
-	})
+	RespondSuccessWithData(c, service, "Service updated successfully")
 }
 
 // DeleteService godoc
@@ -360,11 +352,7 @@ func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, SuccessResponse{
-		Success: true,
-		Data:    category,
-		Message: "Category created successfully",
-	})
+	RespondCreated(c, category, "Category created successfully")
 }
 
 // UpdateCategory godoc
@@ -513,11 +501,7 @@ func (h *ServiceHandler) AddServiceToBarber(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, SuccessResponse{
-		Success: true,
-		Data:    barberService,
-		Message: "Service added to barber successfully",
-	})
+	RespondCreated(c, barberService, "Service added to barber successfully")
 }
 
 // UpdateBarberService godoc

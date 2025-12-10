@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -105,7 +107,7 @@ func DefaultRateLimitConfig() RateLimitConfig {
 		Limit:      100,
 		Window:     1 * time.Minute,
 		KeyFunc:    IPKeyFunc,
-		SkipPaths:  []string{"/health", "/metrics"},
+		SkipPaths:  config.DefaultSkipPaths,
 		Message:    "Too many requests. Please try again later.",
 		StatusCode: http.StatusTooManyRequests,
 	}
@@ -117,7 +119,7 @@ func StrictRateLimitConfig() RateLimitConfig {
 		Limit:      50,
 		Window:     1 * time.Minute,
 		KeyFunc:    IPKeyFunc,
-		SkipPaths:  []string{"/health", "/metrics"},
+		SkipPaths:  config.DefaultSkipPaths,
 		Message:    "Too many requests. Please try again later.",
 		StatusCode: http.StatusTooManyRequests,
 	}
@@ -222,14 +224,11 @@ func (rl *inMemoryRateLimiter) cleanup() {
 }
 
 // RateLimitMiddleware creates an in-memory rate limiting middleware
-func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
-	limiter := newInMemoryRateLimiter(config)
+func RateLimitMiddleware(cfg RateLimitConfig) gin.HandlerFunc {
+	limiter := newInMemoryRateLimiter(cfg)
 
 	// Create skip paths map for O(1) lookup
-	skipPaths := make(map[string]bool)
-	for _, path := range config.SkipPaths {
-		skipPaths[path] = true
-	}
+	skipPaths := utils.BuildStringSet(cfg.SkipPaths)
 
 	return func(c *gin.Context) {
 		// Skip rate limiting for certain paths
@@ -239,21 +238,21 @@ func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
 		}
 
 		// Get rate limit key
-		key := config.KeyFunc(c)
+		key := cfg.KeyFunc(c)
 
 		// Check if request is allowed
 		allowed, remaining, resetIn := limiter.allow(key)
 
 		// Set rate limit headers
-		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", config.Limit))
+		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", cfg.Limit))
 		c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
 		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(resetIn).Unix()))
 
 		if !allowed {
 			RespondWithError(c, &AppError{
 				Code:       "RATE_LIMIT_EXCEEDED",
-				Message:    config.Message,
-				StatusCode: config.StatusCode,
+				Message:    cfg.Message,
+				StatusCode: cfg.StatusCode,
 			})
 			c.Abort()
 			return

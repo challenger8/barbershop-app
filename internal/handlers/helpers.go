@@ -270,6 +270,15 @@ func RespondSuccessWithMessage(c *gin.Context, message string) {
 	})
 }
 
+// RespondSuccessWithData sends a success response with data and a message
+func RespondSuccessWithData(c *gin.Context, data interface{}, message string) {
+	c.JSON(http.StatusOK, SuccessResponse{
+		Success: true,
+		Data:    data,
+		Message: message,
+	})
+}
+
 // RespondCreated sends a 201 response for created resources
 func RespondCreated(c *gin.Context, data interface{}, message string) {
 	c.JSON(http.StatusCreated, SuccessResponse{

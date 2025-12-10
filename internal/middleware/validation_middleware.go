@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
+
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -156,7 +157,7 @@ func formatValidationErrors(errs validator.ValidationErrors) []validationError {
 		param := err.Param()
 
 		// Convert field name to snake_case for JSON
-		jsonField := toSnakeCase(field)
+		jsonField := utils.ToSnakeCase(field)
 
 		// Create user-friendly message
 		message := getValidationMessage(field, tag, param)
@@ -204,17 +205,7 @@ func getValidationMessage(field, tag, param string) string {
 	return fmt.Sprintf("%s failed validation for tag: %s", field, tag)
 }
 
-// toSnakeCase converts camelCase to snake_case
-func toSnakeCase(str string) string {
-	var result strings.Builder
-	for i, r := range str {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
-}
+// Note: toSnakeCase moved to internal/utils/strings.go as utils.ToSnakeCase
 
 // GetValidatedBody retrieves the validated body from context
 func GetValidatedBody(c *gin.Context) (interface{}, bool) {
@@ -252,42 +243,9 @@ func MustGetValidatedBody(c *gin.Context, target interface{}) {
 	targetValue.Elem().Set(sourceValue)
 }
 
-// Custom validation functions
-
-// RegisterCustomValidations registers custom validation functions
-func RegisterCustomValidations(v *validator.Validate) {
-	// Example: Custom validation for phone numbers
-	v.RegisterValidation("phone", validatePhone)
-
-	// Example: Custom validation for username
-	v.RegisterValidation("username", validateUsername)
-}
-
-// validatePhone validates phone numbers (simple example)
-func validatePhone(fl validator.FieldLevel) bool {
-	phone := fl.Field().String()
-	// Simple validation: must be 10-15 digits, may start with +
-	if len(phone) < 10 || len(phone) > 15 {
-		return false
-	}
-	return true
-}
-
-// validateUsername validates usernames
-func validateUsername(fl validator.FieldLevel) bool {
-	username := fl.Field().String()
-	// Username must be 3-20 characters, alphanumeric and underscore
-	if len(username) < 3 || len(username) > 20 {
-		return false
-	}
-	for _, r := range username {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') || r == '_') {
-			return false
-		}
-	}
-	return true
-}
+// Note: Custom validation functions (validatePhone, validateUsername) have been
+// consolidated into internal/validation/validator.go to avoid duplication.
+// Use validation.Initialize() to register all custom validators.
 
 // SanitizeInput sanitizes string input to prevent XSS
 func SanitizeInput() gin.HandlerFunc {
