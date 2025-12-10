@@ -492,16 +492,7 @@ func (r *NotificationRepository) UpdateStatus(ctx context.Context, id int, statu
 		return fmt.Errorf("failed to update notification status: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotificationNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrNotificationNotFound)
 }
 
 // MarkAsSent marks a notification as sent
@@ -519,16 +510,7 @@ func (r *NotificationRepository) MarkAsSent(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to mark notification as sent: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotificationAlreadySent
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrNotificationAlreadySent)
 }
 
 // MarkAsDelivered marks a notification as delivered
@@ -546,16 +528,7 @@ func (r *NotificationRepository) MarkAsDelivered(ctx context.Context, id int) er
 		return fmt.Errorf("failed to mark notification as delivered: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotificationNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrNotificationNotFound)
 }
 
 // MarkAsRead marks a notification as read
@@ -568,21 +541,12 @@ func (r *NotificationRepository) MarkAsRead(ctx context.Context, id int) error {
 		WHERE id = $2 AND read_at IS NULL
 	`
 
-	result, err := r.db.ExecContext(ctx, query, now, id)
+	_, err := r.db.ExecContext(ctx, query, now, id)
 	if err != nil {
 		return fmt.Errorf("failed to mark notification as read: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		// Either not found or already read - not an error
-		return nil
-	}
-
+	// Either not found or already read - not an error
 	return nil
 }
 
@@ -623,16 +587,7 @@ func (r *NotificationRepository) MarkAsFailed(ctx context.Context, id int, error
 		return fmt.Errorf("failed to mark notification as failed: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotificationNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrNotificationNotFound)
 }
 
 // ========================================================================
@@ -648,16 +603,7 @@ func (r *NotificationRepository) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete notification: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotificationNotFound
-	}
-
-	return nil
+	return CheckRowsAffected(result, ErrNotificationNotFound)
 }
 
 // DeleteOldNotifications removes notifications older than specified duration

@@ -88,6 +88,28 @@ func RequireIntParam(c *gin.Context, paramName string, entityName string) (int, 
 }
 
 // ============================================================================
+// AUTHENTICATION HELPERS
+// ============================================================================
+
+// RequireAuth extracts and validates the authenticated user ID from context.
+// Returns the user ID and true if authenticated, or sends 401 response and returns 0, false.
+//
+// Usage:
+//
+//	userID, ok := RequireAuth(c, "view your bookings")
+//	if !ok {
+//	    return
+//	}
+func RequireAuth(c *gin.Context, action string) (int, bool) {
+	userID, exists := middleware.GetUserID(c)
+	if !exists {
+		RespondUnauthorized(c, fmt.Sprintf("You must be logged in to %s", action))
+		return 0, false
+	}
+	return userID, true
+}
+
+// ============================================================================
 // ERROR RESPONSE HELPERS
 // ============================================================================
 

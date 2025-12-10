@@ -95,9 +95,8 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 	}
 
 	// Get authenticated user
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to create a review")
+	userID, ok := RequireAuth(c, "create a review")
+	if !ok {
 		return
 	}
 
@@ -297,9 +296,8 @@ func (h *ReviewHandler) GetBarberReviewStats(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/reviews/me [get]
 func (h *ReviewHandler) GetMyReviews(c *gin.Context) {
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to view your reviews")
+	userID, ok := RequireAuth(c, "view your reviews")
+	if !ok {
 		return
 	}
 
@@ -345,9 +343,8 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to update a review")
+	userID, ok := RequireAuth(c, "update a review")
+	if !ok {
 		return
 	}
 
@@ -409,9 +406,8 @@ func (h *ReviewHandler) ModerateReview(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to moderate reviews")
+	userID, ok := RequireAuth(c, "moderate reviews")
+	if !ok {
 		return
 	}
 
@@ -496,9 +492,8 @@ func (h *ReviewHandler) AddBarberResponse(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to respond to reviews")
+	userID, ok := RequireAuth(c, "respond to reviews")
+	if !ok {
 		return
 	}
 
@@ -587,9 +582,8 @@ func (h *ReviewHandler) DeleteReview(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to delete a review")
+	userID, ok := RequireAuth(c, "delete a review")
+	if !ok {
 		return
 	}
 
@@ -639,9 +633,8 @@ func (h *ReviewHandler) CanReviewBooking(c *gin.Context) {
 		return
 	}
 
-	userID, exists := middleware.GetUserID(c)
-	if !exists {
-		RespondUnauthorized(c, "You must be logged in to check review eligibility")
+	userID, ok := RequireAuth(c, "check review eligibility")
+	if !ok {
 		return
 	}
 
