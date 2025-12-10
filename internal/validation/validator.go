@@ -156,51 +156,10 @@ func FormatValidationErrors(err error) error {
 }
 
 // formatFieldError creates a user-friendly error message for a field
+// Uses the shared utils.GetValidationMessage for consistent error messages
 func formatFieldError(e validator.FieldError) string {
 	field := utils.ToSnakeCase(e.Field())
-
-	switch e.Tag() {
-	case "required":
-		return fmt.Sprintf("%s is required", field)
-	case "email":
-		return fmt.Sprintf("%s must be a valid email address", field)
-	case "phone":
-		return fmt.Sprintf("%s must be a valid phone number (E.164 format: +[country code][number])", field)
-	case "min":
-		return fmt.Sprintf("%s must be at least %s", field, e.Param())
-	case "max":
-		return fmt.Sprintf("%s must be at most %s", field, e.Param())
-	case "len":
-		return fmt.Sprintf("%s must be exactly %s characters", field, e.Param())
-	case "gt":
-		return fmt.Sprintf("%s must be greater than %s", field, e.Param())
-	case "gte":
-		return fmt.Sprintf("%s must be greater than or equal to %s", field, e.Param())
-	case "lt":
-		return fmt.Sprintf("%s must be less than %s", field, e.Param())
-	case "lte":
-		return fmt.Sprintf("%s must be less than or equal to %s", field, e.Param())
-	case "url":
-		return fmt.Sprintf("%s must be a valid URL", field)
-	case "uuid":
-		return fmt.Sprintf("%s must be a valid UUID", field)
-	case "oneof":
-		return fmt.Sprintf("%s must be one of: %s", field, e.Param())
-	case "booking_number":
-		return fmt.Sprintf("%s must be in format BK-YYYYMMDD-XXXX", field)
-	case "booking_status":
-		return fmt.Sprintf("%s must be a valid booking status", field)
-	case "barber_status":
-		return fmt.Sprintf("%s must be a valid barber status", field)
-	case "payment_status":
-		return fmt.Sprintf("%s must be a valid payment status", field)
-	case "not_future":
-		return fmt.Sprintf("%s cannot be in the future", field)
-	case "not_past":
-		return fmt.Sprintf("%s cannot be in the past", field)
-	default:
-		return fmt.Sprintf("%s is invalid", field)
-	}
+	return utils.GetValidationMessage(field, e.Tag(), e.Param())
 }
 
 // Note: toSnakeCase moved to internal/utils/strings.go as utils.ToSnakeCase
