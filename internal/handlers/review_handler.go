@@ -374,11 +374,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    review,
-		Message: "Review updated successfully",
-	})
+	RespondSuccessWithData(c, review, "Review updated successfully")
 }
 
 // ========================================================================
@@ -439,11 +435,7 @@ func (h *ReviewHandler) ModerateReview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    review,
-		Message: "Review moderation updated successfully",
-	})
+	RespondSuccessWithData(c, review, "Review moderation updated successfully")
 }
 
 // GetPendingReviews godoc
@@ -526,11 +518,7 @@ func (h *ReviewHandler) AddBarberResponse(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    review,
-		Message: "Response added successfully",
-	})
+	RespondSuccessWithData(c, review, "Response added successfully")
 }
 
 // ========================================================================

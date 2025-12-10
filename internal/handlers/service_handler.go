@@ -2,11 +2,11 @@
 package handlers
 
 import (
+	"strings"
+
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -384,11 +384,7 @@ func (h *ServiceHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    category,
-		Message: "Category updated successfully",
-	})
+	RespondSuccessWithData(c, category, "Category updated successfully")
 }
 
 // DeleteCategory godoc
@@ -533,11 +529,7 @@ func (h *ServiceHandler) UpdateBarberService(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barberService,
-		Message: "Barber service updated successfully",
-	})
+	RespondSuccessWithData(c, barberService, "Barber service updated successfully")
 }
 
 // RemoveServiceFromBarber godoc

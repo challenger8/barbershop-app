@@ -308,13 +308,9 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data: map[string]interface{}{
-			"marked_count": count,
-		},
-		Message: "All notifications marked as read",
-	})
+	RespondSuccessWithData(c, map[string]interface{}{
+		"marked_count": count,
+	}, "All notifications marked as read")
 }
 
 // ========================================================================

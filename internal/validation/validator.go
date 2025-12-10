@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -156,7 +157,7 @@ func FormatValidationErrors(err error) error {
 
 // formatFieldError creates a user-friendly error message for a field
 func formatFieldError(e validator.FieldError) string {
-	field := toSnakeCase(e.Field())
+	field := utils.ToSnakeCase(e.Field())
 
 	switch e.Tag() {
 	case "required":
@@ -202,17 +203,7 @@ func formatFieldError(e validator.FieldError) string {
 	}
 }
 
-// toSnakeCase converts camelCase to snake_case
-func toSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
-}
+// Note: toSnakeCase moved to internal/utils/strings.go as utils.ToSnakeCase
 
 // ========================================================================
 // CONVENIENCE FUNCTIONS

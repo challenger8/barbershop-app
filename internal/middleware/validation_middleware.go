@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ type ValidationConfig struct {
 // DefaultValidationConfig returns default validation configuration
 func DefaultValidationConfig() ValidationConfig {
 	return ValidationConfig{
-		SkipPaths: []string{"/health", "/metrics"},
+		SkipPaths: config.DefaultSkipPaths,
 		CustomMessages: map[string]string{
 			"required": "%s is required",
 			"email":    "%s must be a valid email address",
