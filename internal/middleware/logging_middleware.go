@@ -8,6 +8,9 @@ import (
 	"io"
 	"time"
 
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -33,7 +36,7 @@ type LoggerConfig struct {
 func DefaultLoggerConfig() LoggerConfig {
 	return LoggerConfig{
 		Format:          JSONFormat,
-		SkipPaths:       []string{"/health", "/metrics"},
+		SkipPaths:       config.DefaultSkipPaths,
 		LogRequestBody:  false,
 		LogResponseBody: false,
 		MaxBodySize:     1024, // 1KB
@@ -69,11 +72,8 @@ func (w responseBodyWriter) Write(b []byte) (int, error) {
 }
 
 // Logger creates a logger middleware with custom configuration
-func Logger(config LoggerConfig) gin.HandlerFunc {
-	skipPaths := make(map[string]bool)
-	for _, path := range config.SkipPaths {
-		skipPaths[path] = true
-	}
+func Logger(cfg LoggerConfig) gin.HandlerFunc {
+	skipPaths := utils.BuildStringSet(cfg.SkipPaths)
 
 	return func(c *gin.Context) {
 		// Skip logging for certain paths
@@ -82,19 +82,23 @@ func Logger(config LoggerConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Generate request ID
-		requestID := uuid.New().String()
-		c.Set("request_id", requestID)
-		c.Header("X-Request-ID", requestID)
+		// Use existing request ID or generate a new one
+		// (RequestIDMiddleware may have already set this)
+		requestID := GetRequestID(c)
+		if requestID == "" {
+			requestID = uuid.New().String()
+			c.Set("request_id", requestID)
+			c.Header("X-Request-ID", requestID)
+		}
 
 		// Start timer
 		start := time.Now()
 
 		// Capture request body if configured
 		var requestBody string
-		if config.LogRequestBody && c.Request.Body != nil {
+		if cfg.LogRequestBody && c.Request.Body != nil {
 			bodyBytes, err := io.ReadAll(c.Request.Body)
-			if err == nil && len(bodyBytes) <= config.MaxBodySize {
+			if err == nil && len(bodyBytes) <= cfg.MaxBodySize {
 				requestBody = string(bodyBytes)
 				// Restore body for further reading
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -104,7 +108,7 @@ func Logger(config LoggerConfig) gin.HandlerFunc {
 		// Capture response body if configured
 		var responseBody string
 		var blw *responseBodyWriter
-		if config.LogResponseBody {
+		if cfg.LogResponseBody {
 			blw = &responseBodyWriter{
 				ResponseWriter: c.Writer,
 				body:           bytes.NewBufferString(""),
@@ -119,9 +123,9 @@ func Logger(config LoggerConfig) gin.HandlerFunc {
 		latency := time.Since(start)
 
 		// Get response body if captured
-		if config.LogResponseBody && blw != nil {
+		if cfg.LogResponseBody && blw != nil {
 			responseBytes := blw.body.Bytes()
-			if len(responseBytes) <= config.MaxBodySize {
+			if len(responseBytes) <= cfg.MaxBodySize {
 				responseBody = blw.body.String()
 			}
 		}
@@ -159,7 +163,7 @@ func Logger(config LoggerConfig) gin.HandlerFunc {
 		}
 
 		// Output log based on format
-		switch config.Format {
+		switch cfg.Format {
 		case JSONFormat:
 			logJSON(entry)
 		case TextFormat:

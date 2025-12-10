@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
 
 	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/middleware"
@@ -176,11 +175,7 @@ func (h *BarberHandler) UpdateBarber(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    barber,
-		Message: "Barber updated successfully",
-	})
+	RespondSuccessWithData(c, barber, "Barber updated successfully")
 }
 
 // DeleteBarber godoc

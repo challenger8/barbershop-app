@@ -8,6 +8,7 @@ import (
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -91,7 +92,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		statusCode := http.StatusInternalServerError
 		if err.Error() == "time slot is not available, please choose another time" {
 			statusCode = http.StatusConflict
-		} else if ContainsAny(err.Error(), []string{"not found", "required", "must be", "cannot"}) {
+		} else if utils.ContainsAny(err.Error(), []string{"not found", "required", "must be", "cannot"}) {
 			statusCode = http.StatusBadRequest
 		}
 
@@ -371,11 +372,7 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking updated successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking updated successfully")
 }
 
 // ========================================================================
@@ -422,7 +419,7 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 			return
 		}
 		// Check for invalid status transition
-		if ContainsAny(err.Error(), []string{"invalid status", "cannot change"}) {
+		if utils.ContainsAny(err.Error(), []string{"invalid status", "cannot change"}) {
 			c.JSON(http.StatusUnprocessableEntity, middleware.ErrorResponse{
 				Error:   "Invalid status transition",
 				Message: err.Error(),
@@ -433,11 +430,7 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking status updated successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking status updated successfully")
 }
 
 // ========================================================================
@@ -483,7 +476,7 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 			RespondNotFound(c, "Booking")
 			return
 		}
-		if ContainsAny(err.Error(), []string{"not available", "conflict"}) {
+		if utils.ContainsAny(err.Error(), []string{"not available", "conflict"}) {
 			c.JSON(http.StatusConflict, middleware.ErrorResponse{
 				Error:   "Time slot not available",
 				Message: err.Error(),
@@ -494,11 +487,7 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    booking,
-		Message: "Booking rescheduled successfully",
-	})
+	RespondSuccessWithData(c, booking, "Booking rescheduled successfully")
 }
 
 // ========================================================================

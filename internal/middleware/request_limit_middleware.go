@@ -4,6 +4,9 @@ package middleware
 import (
 	"net/http"
 
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +22,7 @@ type RequestBodyLimitConfig struct {
 func DefaultRequestBodyLimitConfig(maxSize int64) RequestBodyLimitConfig {
 	return RequestBodyLimitConfig{
 		MaxSize:       maxSize,
-		SkipPaths:     []string{"/health", "/metrics"},
+		SkipPaths:     config.DefaultSkipPaths,
 		SkipMethods:   []string{http.MethodGet, http.MethodHead, http.MethodOptions},
 		CustomMessage: "Request body exceeds maximum allowed size",
 	}
@@ -31,16 +34,9 @@ func DefaultRequestBodyLimit(maxSize int64) gin.HandlerFunc {
 }
 
 // LimitRequestBody creates a middleware that limits request body size
-func LimitRequestBody(config RequestBodyLimitConfig) gin.HandlerFunc {
-	skipPaths := make(map[string]bool)
-	for _, path := range config.SkipPaths {
-		skipPaths[path] = true
-	}
-
-	skipMethods := make(map[string]bool)
-	for _, method := range config.SkipMethods {
-		skipMethods[method] = true
-	}
+func LimitRequestBody(cfg RequestBodyLimitConfig) gin.HandlerFunc {
+	skipPaths := utils.BuildStringSet(cfg.SkipPaths)
+	skipMethods := utils.BuildStringSet(cfg.SkipMethods)
 
 	return func(c *gin.Context) {
 		if skipPaths[c.Request.URL.Path] || skipMethods[c.Request.Method] {
@@ -48,14 +44,14 @@ func LimitRequestBody(config RequestBodyLimitConfig) gin.HandlerFunc {
 			return
 		}
 
-		if c.Request.ContentLength > config.MaxSize {
+		if c.Request.ContentLength > cfg.MaxSize {
 			RespondWithError(c, &AppError{
 				StatusCode: http.StatusRequestEntityTooLarge,
 				Code:       "REQUEST_TOO_LARGE",
-				Message:    config.CustomMessage,
+				Message:    cfg.CustomMessage,
 				Details: map[string]interface{}{
-					"max_size_bytes": config.MaxSize,
-					"max_size_mb":    float64(config.MaxSize) / (1024 * 1024),
+					"max_size_bytes": cfg.MaxSize,
+					"max_size_mb":    float64(cfg.MaxSize) / (1024 * 1024),
 					"received_bytes": c.Request.ContentLength,
 				},
 			})
@@ -63,7 +59,7 @@ func LimitRequestBody(config RequestBodyLimitConfig) gin.HandlerFunc {
 			return
 		}
 
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, config.MaxSize)
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, cfg.MaxSize)
 		c.Next()
 	}
 }

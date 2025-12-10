@@ -105,11 +105,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    authResponse,
-		Message: "Login successful",
-	})
+	RespondSuccessWithData(c, authResponse, "Login successful")
 }
 
 // RefreshToken godoc
@@ -149,11 +145,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    authResponse,
-		Message: "Token refreshed successfully",
-	})
+	RespondSuccessWithData(c, authResponse, "Token refreshed successfully")
 }
 
 // GetMe godoc
@@ -233,11 +225,7 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Success: true,
-		Data:    profile,
-		Message: "Profile updated successfully",
-	})
+	RespondSuccessWithData(c, profile, "Profile updated successfully")
 }
 
 // ChangePassword godoc

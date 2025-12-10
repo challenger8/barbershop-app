@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -26,7 +29,7 @@ func DefaultAuthConfig(secretKey string) AuthConfig {
 		SecretKey:     secretKey,
 		TokenLookup:   "header:Authorization",
 		TokenHeadName: "Bearer",
-		SkipPaths:     []string{"/health", "/metrics", "/api/v1/auth/login", "/api/v1/auth/register"},
+		SkipPaths:     config.DefaultAuthSkipPaths,
 	}
 }
 
@@ -39,12 +42,9 @@ type Claims struct {
 }
 
 // AuthMiddleware creates an authentication middleware
-func AuthMiddleware(config AuthConfig) gin.HandlerFunc {
+func AuthMiddleware(cfg AuthConfig) gin.HandlerFunc {
 	// Create skip paths map for O(1) lookup
-	skipPaths := make(map[string]bool)
-	for _, path := range config.SkipPaths {
-		skipPaths[path] = true
-	}
+	skipPaths := utils.BuildStringSet(cfg.SkipPaths)
 
 	return func(c *gin.Context) {
 		// Skip authentication for certain paths
@@ -54,7 +54,7 @@ func AuthMiddleware(config AuthConfig) gin.HandlerFunc {
 		}
 
 		// Extract token from request
-		token, err := extractToken(c, config.TokenLookup, config.TokenHeadName)
+		token, err := extractToken(c, cfg.TokenLookup, cfg.TokenHeadName)
 		if err != nil {
 			RespondWithError(c, NewUnauthorizedError("Missing or invalid authorization token"))
 			c.Abort()
@@ -62,7 +62,7 @@ func AuthMiddleware(config AuthConfig) gin.HandlerFunc {
 		}
 
 		// Parse and validate token
-		claims, err := parseToken(token, config.SecretKey)
+		claims, err := parseToken(token, cfg.SecretKey)
 		if err != nil {
 			RespondWithError(c, NewUnauthorizedError("Invalid or expired token"))
 			c.Abort()
@@ -70,16 +70,16 @@ func AuthMiddleware(config AuthConfig) gin.HandlerFunc {
 		}
 
 		// Check role if required
-		if config.RequiredRole != "" && claims.UserType != config.RequiredRole {
+		if cfg.RequiredRole != "" && claims.UserType != cfg.RequiredRole {
 			RespondWithError(c, NewForbiddenError("Insufficient permissions"))
 			c.Abort()
 			return
 		}
 
 		// Check allowed roles
-		if len(config.AllowedRoles) > 0 {
+		if len(cfg.AllowedRoles) > 0 {
 			allowed := false
-			for _, role := range config.AllowedRoles {
+			for _, role := range cfg.AllowedRoles {
 				if claims.UserType == role {
 					allowed = true
 					break

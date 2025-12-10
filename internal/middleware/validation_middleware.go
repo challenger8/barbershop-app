@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
+
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -21,7 +23,7 @@ type ValidationConfig struct {
 // DefaultValidationConfig returns default validation configuration
 func DefaultValidationConfig() ValidationConfig {
 	return ValidationConfig{
-		SkipPaths: []string{"/health", "/metrics"},
+		SkipPaths: config.DefaultSkipPaths,
 		CustomMessages: map[string]string{
 			"required": "%s is required",
 			"email":    "%s must be a valid email address",
@@ -156,10 +158,10 @@ func formatValidationErrors(errs validator.ValidationErrors) []validationError {
 		param := err.Param()
 
 		// Convert field name to snake_case for JSON
-		jsonField := toSnakeCase(field)
+		jsonField := utils.ToSnakeCase(field)
 
 		// Create user-friendly message
-		message := getValidationMessage(field, tag, param)
+		message := utils.GetValidationMessage(field, tag, param)
 
 		errors = append(errors, validationError{
 			Field:   jsonField,
@@ -172,49 +174,8 @@ func formatValidationErrors(errs validator.ValidationErrors) []validationError {
 	return errors
 }
 
-// getValidationMessage returns a user-friendly validation message
-func getValidationMessage(field, tag, param string) string {
-	messages := map[string]string{
-		"required": fmt.Sprintf("%s is required", field),
-		"email":    fmt.Sprintf("%s must be a valid email address", field),
-		"min":      fmt.Sprintf("%s must be at least %s characters", field, param),
-		"max":      fmt.Sprintf("%s must be at most %s characters", field, param),
-		"len":      fmt.Sprintf("%s must be exactly %s characters", field, param),
-		"gt":       fmt.Sprintf("%s must be greater than %s", field, param),
-		"gte":      fmt.Sprintf("%s must be greater than or equal to %s", field, param),
-		"lt":       fmt.Sprintf("%s must be less than %s", field, param),
-		"lte":      fmt.Sprintf("%s must be less than or equal to %s", field, param),
-		"alpha":    fmt.Sprintf("%s must contain only alphabetic characters", field),
-		"alphanum": fmt.Sprintf("%s must contain only alphanumeric characters", field),
-		"numeric":  fmt.Sprintf("%s must be a number", field),
-		"url":      fmt.Sprintf("%s must be a valid URL", field),
-		"uri":      fmt.Sprintf("%s must be a valid URI", field),
-		"uuid":     fmt.Sprintf("%s must be a valid UUID", field),
-		"uuid4":    fmt.Sprintf("%s must be a valid UUID v4", field),
-		"oneof":    fmt.Sprintf("%s must be one of: %s", field, param),
-		"eqfield":  fmt.Sprintf("%s must equal %s", field, param),
-		"nefield":  fmt.Sprintf("%s must not equal %s", field, param),
-		"datetime": fmt.Sprintf("%s must be a valid date/time in format: %s", field, param),
-	}
-
-	if msg, ok := messages[tag]; ok {
-		return msg
-	}
-
-	return fmt.Sprintf("%s failed validation for tag: %s", field, tag)
-}
-
-// toSnakeCase converts camelCase to snake_case
-func toSnakeCase(str string) string {
-	var result strings.Builder
-	for i, r := range str {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
-}
+// Note: getValidationMessage moved to internal/utils/validation_messages.go as utils.GetValidationMessage
+// Note: toSnakeCase moved to internal/utils/strings.go as utils.ToSnakeCase
 
 // GetValidatedBody retrieves the validated body from context
 func GetValidatedBody(c *gin.Context) (interface{}, bool) {
@@ -252,42 +213,9 @@ func MustGetValidatedBody(c *gin.Context, target interface{}) {
 	targetValue.Elem().Set(sourceValue)
 }
 
-// Custom validation functions
-
-// RegisterCustomValidations registers custom validation functions
-func RegisterCustomValidations(v *validator.Validate) {
-	// Example: Custom validation for phone numbers
-	v.RegisterValidation("phone", validatePhone)
-
-	// Example: Custom validation for username
-	v.RegisterValidation("username", validateUsername)
-}
-
-// validatePhone validates phone numbers (simple example)
-func validatePhone(fl validator.FieldLevel) bool {
-	phone := fl.Field().String()
-	// Simple validation: must be 10-15 digits, may start with +
-	if len(phone) < 10 || len(phone) > 15 {
-		return false
-	}
-	return true
-}
-
-// validateUsername validates usernames
-func validateUsername(fl validator.FieldLevel) bool {
-	username := fl.Field().String()
-	// Username must be 3-20 characters, alphanumeric and underscore
-	if len(username) < 3 || len(username) > 20 {
-		return false
-	}
-	for _, r := range username {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') || r == '_') {
-			return false
-		}
-	}
-	return true
-}
+// Note: Custom validation functions (validatePhone, validateUsername) have been
+// consolidated into internal/validation/validator.go to avoid duplication.
+// Use validation.Initialize() to register all custom validators.
 
 // SanitizeInput sanitizes string input to prevent XSS
 func SanitizeInput() gin.HandlerFunc {

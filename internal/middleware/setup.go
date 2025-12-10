@@ -71,7 +71,7 @@ func setupCORS(router *gin.Engine, cfg *appConfig.Config) {
 func setupLogging(router *gin.Engine, cfg *appConfig.Config) {
 	logConfig := LoggerConfig{
 		Format:          getLogFormat(cfg),
-		SkipPaths:       []string{"/health", "/metrics"},
+		SkipPaths:       appConfig.DefaultSkipPaths,
 		LogRequestBody:  cfg.IsDevelopment(),
 		LogResponseBody: false,
 		MaxBodySize:     1024,

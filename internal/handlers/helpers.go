@@ -270,6 +270,15 @@ func RespondSuccessWithMessage(c *gin.Context, message string) {
 	})
 }
 
+// RespondSuccessWithData sends a success response with data and a message
+func RespondSuccessWithData(c *gin.Context, data interface{}, message string) {
+	c.JSON(http.StatusOK, SuccessResponse{
+		Success: true,
+		Data:    data,
+		Message: message,
+	})
+}
+
 // RespondCreated sends a 201 response for created resources
 func RespondCreated(c *gin.Context, data interface{}, message string) {
 	c.JSON(http.StatusCreated, SuccessResponse{
@@ -293,20 +302,4 @@ func PaginationMeta(count, limit, offset int) map[string]interface{} {
 	}
 }
 
-// ============================================================================
-// STRING HELPERS
-// ============================================================================
-
-// ContainsAny checks if string contains any of the substrings
-func ContainsAny(s string, substrings []string) bool {
-	for _, sub := range substrings {
-		if len(s) >= len(sub) {
-			for i := 0; i <= len(s)-len(sub); i++ {
-				if s[i:i+len(sub)] == sub {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
+// Note: ContainsAny moved to internal/utils/strings.go as utils.ContainsAny
