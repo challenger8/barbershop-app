@@ -8,6 +8,7 @@ import (
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -170,7 +171,7 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 
 	notification, err := h.notificationService.GetNotificationByID(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -273,7 +274,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 
 	err := h.notificationService.MarkAsRead(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -345,7 +346,7 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 
 	err := h.notificationService.DeleteNotification(c.Request.Context(), id, userID)
 	if err != nil {
-		if err == repository.ErrNotificationNotFound || ContainsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Notification")
 			return
 		}
@@ -443,7 +444,7 @@ func (h *NotificationHandler) SendBookingNotification(c *gin.Context) {
 	}
 
 	if err != nil {
-		if ContainsAny(err.Error(), []string{"not found"}) {
+		if utils.ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Booking")
 			return
 		}

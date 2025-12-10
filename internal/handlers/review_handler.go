@@ -7,6 +7,7 @@ import (
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
+	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -110,7 +111,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		case repository.ErrReviewAlreadyExists, repository.ErrDuplicateReview:
 			statusCode = http.StatusConflict
 		default:
-			if ContainsAny(err.Error(), []string{"not found", "required", "must be", "only review"}) {
+			if utils.ContainsAny(err.Error(), []string{"not found", "required", "must be", "only review"}) {
 				statusCode = http.StatusBadRequest
 			}
 		}
@@ -363,7 +364,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 			})
 			return
 		}
-		if ContainsAny(err.Error(), []string{"only edit your own"}) {
+		if utils.ContainsAny(err.Error(), []string{"only edit your own"}) {
 			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
 				Error:   "Forbidden",
 				Message: err.Error(),
@@ -507,7 +508,7 @@ func (h *ReviewHandler) AddBarberResponse(c *gin.Context) {
 			RespondNotFound(c, "Review")
 			return
 		}
-		if ContainsAny(err.Error(), []string{"only respond to your own", "already responded"}) {
+		if utils.ContainsAny(err.Error(), []string{"only respond to your own", "already responded"}) {
 			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
 				Error:   "Cannot respond",
 				Message: err.Error(),
@@ -601,7 +602,7 @@ func (h *ReviewHandler) DeleteReview(c *gin.Context) {
 			RespondNotFound(c, "Review")
 			return
 		}
-		if ContainsAny(err.Error(), []string{"only delete your own"}) {
+		if utils.ContainsAny(err.Error(), []string{"only delete your own"}) {
 			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
 				Error:   "Forbidden",
 				Message: err.Error(),
@@ -647,7 +648,7 @@ func (h *ReviewHandler) CanReviewBooking(c *gin.Context) {
 	canReview, reason, err := h.reviewService.CanReviewBooking(c.Request.Context(), bookingID, userID)
 	if err != nil {
 		// Check if it's a "not found" error
-		if err == repository.ErrBookingNotFound || ContainsAny(err.Error(), []string{"not found"}) {
+		if err == repository.ErrBookingNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
 			RespondNotFound(c, "Booking")
 			return
 		}
