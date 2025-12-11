@@ -1,6 +1,17 @@
-basePath: /api/v1
 definitions:
-  barber-booking-system_internal_middleware.ErrorResponse:
+  handlers.SuccessResponse:
+    description: Standard success response wrapper
+    properties:
+      data: {}
+      message:
+        example: Operation completed successfully
+        type: string
+      meta: {}
+      success:
+        example: true
+        type: boolean
+    type: object
+  middleware.ErrorResponse:
     properties:
       code:
         type: string
@@ -12,19 +23,19 @@ definitions:
       message:
         type: string
     type: object
-  barber-booking-system_internal_models.JSONMap:
+  models.JSONMap:
     additionalProperties: true
     type: object
-  barber-booking-system_internal_services.AuthResponse:
+  services.AuthResponse:
     properties:
       expires_at:
         type: string
       token:
         type: string
       user:
-        $ref: '#/definitions/barber-booking-system_internal_services.UserProfileResponse'
+        $ref: '#/definitions/services.UserProfileResponse'
     type: object
-  barber-booking-system_internal_services.BarberResponseRequest:
+  services.BarberResponseRequest:
     properties:
       response:
         maxLength: 1000
@@ -33,14 +44,14 @@ definitions:
     required:
     - response
     type: object
-  barber-booking-system_internal_services.CancelBookingRequest:
+  services.CancelBookingRequest:
     properties:
       is_by_customer:
         type: boolean
       reason:
         type: string
     type: object
-  barber-booking-system_internal_services.ChangePasswordRequest:
+  services.ChangePasswordRequest:
     properties:
       confirm_password:
         type: string
@@ -54,7 +65,7 @@ definitions:
     - new_password
     - old_password
     type: object
-  barber-booking-system_internal_services.CreateBarberRequest:
+  services.CreateBarberRequest:
     properties:
       address:
         type: string
@@ -103,7 +114,7 @@ definitions:
       website_url:
         type: string
       working_hours:
-        $ref: '#/definitions/barber-booking-system_internal_models.JSONMap'
+        $ref: '#/definitions/models.JSONMap'
       years_experience:
         type: integer
     required:
@@ -115,7 +126,7 @@ definitions:
     - state
     - user_id
     type: object
-  barber-booking-system_internal_services.CreateBarberServiceRequest:
+  services.CreateBarberServiceRequest:
     properties:
       advance_notice_hours:
         type: integer
@@ -124,7 +135,7 @@ definitions:
           type: string
         type: array
       available_time_slots:
-        $ref: '#/definitions/barber-booking-system_internal_models.JSONMap'
+        $ref: '#/definitions/models.JSONMap'
       barber_id:
         type: integer
       before_after_images:
@@ -197,7 +208,7 @@ definitions:
     - price
     - service_id
     type: object
-  barber-booking-system_internal_services.CreateBookingRequest:
+  services.CreateBookingRequest:
     properties:
       barber_id:
         description: Required fields
@@ -238,7 +249,7 @@ definitions:
     - service_id
     - start_time
     type: object
-  barber-booking-system_internal_services.CreateNotificationRequest:
+  services.CreateNotificationRequest:
     properties:
       channels:
         description: Optional fields
@@ -281,7 +292,7 @@ definitions:
     - type
     - user_id
     type: object
-  barber-booking-system_internal_services.CreateReviewRequest:
+  services.CreateReviewRequest:
     properties:
       booking_id:
         type: integer
@@ -341,7 +352,7 @@ definitions:
     - booking_id
     - overall_rating
     type: object
-  barber-booking-system_internal_services.CreateServiceRequest:
+  services.CreateServiceRequest:
     properties:
       allergen_warnings:
         items:
@@ -437,7 +448,7 @@ definitions:
     - service_type
     - short_description
     type: object
-  barber-booking-system_internal_services.LoginRequest:
+  services.LoginRequest:
     properties:
       email:
         type: string
@@ -447,7 +458,7 @@ definitions:
     - email
     - password
     type: object
-  barber-booking-system_internal_services.ModerateReviewRequest:
+  services.ModerateReviewRequest:
     properties:
       notes:
         type: string
@@ -461,7 +472,7 @@ definitions:
     required:
     - status
     type: object
-  barber-booking-system_internal_services.RegisterRequest:
+  services.RegisterRequest:
     properties:
       email:
         type: string
@@ -485,7 +496,7 @@ definitions:
     - name
     - password
     type: object
-  barber-booking-system_internal_services.RescheduleBookingRequest:
+  services.RescheduleBookingRequest:
     properties:
       duration_minutes:
         type: integer
@@ -496,7 +507,7 @@ definitions:
     required:
     - new_start_time
     type: object
-  barber-booking-system_internal_services.SendBookingNotificationRequest:
+  services.SendBookingNotificationRequest:
     properties:
       booking_id:
         type: integer
@@ -508,7 +519,7 @@ definitions:
     - booking_id
     - notification_type
     type: object
-  barber-booking-system_internal_services.UpdateBarberRequest:
+  services.UpdateBarberRequest:
     properties:
       address:
         type: string
@@ -555,11 +566,11 @@ definitions:
       website_url:
         type: string
       working_hours:
-        $ref: '#/definitions/barber-booking-system_internal_models.JSONMap'
+        $ref: '#/definitions/models.JSONMap'
       years_experience:
         type: integer
     type: object
-  barber-booking-system_internal_services.UpdateBarberServiceRequest:
+  services.UpdateBarberServiceRequest:
     properties:
       advance_notice_hours:
         type: integer
@@ -606,7 +617,7 @@ definitions:
       service_note:
         type: string
     type: object
-  barber-booking-system_internal_services.UpdateBookingRequest:
+  services.UpdateBookingRequest:
     properties:
       customer_email:
         type: string
@@ -621,7 +632,7 @@ definitions:
       special_requests:
         type: string
     type: object
-  barber-booking-system_internal_services.UpdateCategoryRequest:
+  services.UpdateCategoryRequest:
     properties:
       color_hex:
         type: string
@@ -642,7 +653,7 @@ definitions:
       sort_order:
         type: integer
     type: object
-  barber-booking-system_internal_services.UpdateProfileRequest:
+  services.UpdateProfileRequest:
     properties:
       address:
         type: string
@@ -675,7 +686,7 @@ definitions:
       state:
         type: string
     type: object
-  barber-booking-system_internal_services.UpdateReviewRequest:
+  services.UpdateReviewRequest:
     properties:
       cleanliness_rating:
         maximum: 5
@@ -722,7 +733,7 @@ definitions:
       would_recommend:
         type: boolean
     type: object
-  barber-booking-system_internal_services.UpdateServiceRequest:
+  services.UpdateServiceRequest:
     properties:
       allows_add_ons:
         type: boolean
@@ -789,14 +800,14 @@ definitions:
       target_gender:
         type: string
     type: object
-  barber-booking-system_internal_services.UpdateStatusRequest:
+  services.UpdateStatusRequest:
     properties:
       status:
         type: string
     required:
     - status
     type: object
-  barber-booking-system_internal_services.UserProfileResponse:
+  services.UserProfileResponse:
     properties:
       address:
         type: string
@@ -840,21 +851,9 @@ definitions:
       uuid:
         type: string
     type: object
-  barber-booking-system_internal_services.VoteReviewRequest:
+  services.VoteReviewRequest:
     properties:
       is_helpful:
-        type: boolean
-    type: object
-  internal_handlers.SuccessResponse:
-    description: Standard success response wrapper
-    properties:
-      data: {}
-      message:
-        example: Operation completed successfully
-        type: string
-      meta: {}
-      success:
-        example: true
         type: boolean
     type: object
 host: localhost:8080
@@ -882,30 +881,30 @@ paths:
         name: password
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.ChangePasswordRequest'
+          $ref: '#/definitions/services.ChangePasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change user password
@@ -922,7 +921,7 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.LoginRequest'
+          $ref: '#/definitions/services.LoginRequest'
       produces:
       - application/json
       responses:
@@ -930,27 +929,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handlers.SuccessResponse'
+            - $ref: '#/definitions/handlers.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/barber-booking-system_internal_services.AuthResponse'
+                  $ref: '#/definitions/services.AuthResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: User login
       tags:
       - auth
@@ -965,11 +964,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: User logout
@@ -987,23 +986,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handlers.SuccessResponse'
+            - $ref: '#/definitions/handlers.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/barber-booking-system_internal_services.UserProfileResponse'
+                  $ref: '#/definitions/services.UserProfileResponse'
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get current user profile
@@ -1020,7 +1019,7 @@ paths:
         name: profile
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateProfileRequest'
+          $ref: '#/definitions/services.UpdateProfileRequest'
       produces:
       - application/json
       responses:
@@ -1028,27 +1027,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handlers.SuccessResponse'
+            - $ref: '#/definitions/handlers.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/barber-booking-system_internal_services.UserProfileResponse'
+                  $ref: '#/definitions/services.UserProfileResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update user profile
@@ -1066,19 +1065,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handlers.SuccessResponse'
+            - $ref: '#/definitions/handlers.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/barber-booking-system_internal_services.AuthResponse'
+                  $ref: '#/definitions/services.AuthResponse'
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Refresh JWT token
@@ -1095,7 +1094,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.RegisterRequest'
+          $ref: '#/definitions/services.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -1103,23 +1102,23 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handlers.SuccessResponse'
+            - $ref: '#/definitions/handlers.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/barber-booking-system_internal_services.AuthResponse'
+                  $ref: '#/definitions/services.AuthResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Register a new user
       tags:
       - auth
@@ -1134,22 +1133,22 @@ paths:
         name: barber_service
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateBarberServiceRequest'
+          $ref: '#/definitions/services.CreateBarberServiceRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Add service to barber
       tags:
       - services
@@ -1170,19 +1169,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Remove service from barber
       tags:
       - services
@@ -1202,19 +1201,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber service by ID
       tags:
       - services
@@ -1233,26 +1232,26 @@ paths:
         name: barber_service
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateBarberServiceRequest'
+          $ref: '#/definitions/services.UpdateBarberServiceRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Update barber service
       tags:
       - services
@@ -1302,11 +1301,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get all barbers
       tags:
       - barbers
@@ -1320,22 +1319,22 @@ paths:
         name: barber
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateBarberRequest'
+          $ref: '#/definitions/services.CreateBarberRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create new barber
@@ -1358,15 +1357,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber's services
       tags:
       - services
@@ -1387,19 +1386,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Delete barber
       tags:
       - barbers
@@ -1419,19 +1418,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber by ID
       tags:
       - barbers
@@ -1450,26 +1449,26 @@ paths:
         name: barber
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateBarberRequest'
+          $ref: '#/definitions/services.UpdateBarberRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Update barber
       tags:
       - barbers
@@ -1526,15 +1525,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber's bookings
       tags:
       - bookings
@@ -1566,15 +1565,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get booking statistics for a barber
       tags:
       - bookings
@@ -1595,15 +1594,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get today's bookings for a barber
       tags:
       - bookings
@@ -1660,15 +1659,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber's reviews
       tags:
       - reviews
@@ -1689,15 +1688,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber's review statistics
       tags:
       - reviews
@@ -1718,19 +1717,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber statistics
       tags:
       - barbers
@@ -1759,11 +1758,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Search barbers
       tags:
       - barbers
@@ -1784,15 +1783,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barber by UUID
       tags:
       - barbers
@@ -1807,30 +1806,30 @@ paths:
         name: booking
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateBookingRequest'
+          $ref: '#/definitions/services.CreateBookingRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "409":
           description: Time slot conflict
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new booking
@@ -1851,30 +1850,30 @@ paths:
         in: body
         name: cancel
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CancelBookingRequest'
+          $ref: '#/definitions/services.CancelBookingRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Cannot cancel booking
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Cancel a booking
@@ -1896,19 +1895,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get booking by ID
       tags:
       - bookings
@@ -1927,26 +1926,26 @@ paths:
         name: booking
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateBookingRequest'
+          $ref: '#/definitions/services.UpdateBookingRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update booking details
@@ -1969,19 +1968,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking history
@@ -2003,30 +2002,30 @@ paths:
         name: reschedule
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.RescheduleBookingRequest'
+          $ref: '#/definitions/services.RescheduleBookingRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "409":
           description: Time slot conflict
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Reschedule a booking
@@ -2049,30 +2048,30 @@ paths:
         name: status
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateStatusRequest'
+          $ref: '#/definitions/services.UpdateStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "422":
           description: Invalid status transition
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update booking status
@@ -2105,15 +2104,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Check time slot availability
       tags:
       - bookings
@@ -2165,15 +2164,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get my bookings
@@ -2197,15 +2196,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get booking by booking number
       tags:
       - bookings
@@ -2226,15 +2225,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get booking by UUID
       tags:
       - bookings
@@ -2290,15 +2289,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get my notifications
@@ -2314,30 +2313,30 @@ paths:
         name: notification
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateNotificationRequest'
+          $ref: '#/definitions/services.CreateNotificationRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a notification
@@ -2360,23 +2359,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a notification
@@ -2398,23 +2397,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get notification by ID
@@ -2437,23 +2436,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark notification as read
@@ -2481,19 +2480,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Notification delivery webhook
       tags:
       - notifications
@@ -2508,30 +2507,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.SendBookingNotificationRequest'
+          $ref: '#/definitions/services.SendBookingNotificationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Send booking notification
@@ -2548,15 +2547,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark all notifications as read
@@ -2573,15 +2572,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get notification statistics
@@ -2604,15 +2603,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get unread notifications
@@ -2629,15 +2628,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get unread notification count
@@ -2654,30 +2653,30 @@ paths:
         name: review
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateReviewRequest'
+          $ref: '#/definitions/services.CreateReviewRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "409":
           description: Review already exists
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new review
@@ -2700,23 +2699,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a review
@@ -2738,19 +2737,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get review by ID
       tags:
       - reviews
@@ -2769,34 +2768,34 @@ paths:
         name: review
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateReviewRequest'
+          $ref: '#/definitions/services.UpdateReviewRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update a review
@@ -2818,34 +2817,34 @@ paths:
         name: moderation
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.ModerateReviewRequest'
+          $ref: '#/definitions/services.ModerateReviewRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Moderate a review
@@ -2867,34 +2866,34 @@ paths:
         name: response
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.BarberResponseRequest'
+          $ref: '#/definitions/services.BarberResponseRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Add barber response to a review
@@ -2916,26 +2915,26 @@ paths:
         name: vote
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.VoteReviewRequest'
+          $ref: '#/definitions/services.VoteReviewRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Vote on review helpfulness
       tags:
       - reviews
@@ -2956,19 +2955,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get review by booking ID
       tags:
       - reviews
@@ -2989,19 +2988,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Check if booking can be reviewed
@@ -3043,15 +3042,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get my reviews
@@ -3079,19 +3078,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get pending reviews
@@ -3151,11 +3150,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get all services
       tags:
       - services
@@ -3169,22 +3168,22 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.CreateServiceRequest'
+          $ref: '#/definitions/services.CreateServiceRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Create new service
       tags:
       - services
@@ -3205,19 +3204,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Delete service
       tags:
       - services
@@ -3237,19 +3236,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get service by ID
       tags:
       - services
@@ -3268,26 +3267,26 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateServiceRequest'
+          $ref: '#/definitions/services.UpdateServiceRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Update service
       tags:
       - services
@@ -3308,15 +3307,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get barbers offering a service
       tags:
       - services
@@ -3337,11 +3336,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get all service categories
       tags:
       - services
@@ -3362,19 +3361,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Delete category
       tags:
       - services
@@ -3394,19 +3393,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get category by ID
       tags:
       - services
@@ -3425,26 +3424,26 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/barber-booking-system_internal_services.UpdateCategoryRequest'
+          $ref: '#/definitions/services.UpdateCategoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Update category
       tags:
       - services
@@ -3469,11 +3468,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Search services
       tags:
       - services
@@ -3494,15 +3493,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.SuccessResponse'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/barber-booking-system_internal_middleware.ErrorResponse'
+            $ref: '#/definitions/middleware.ErrorResponse'
       summary: Get service by slug
       tags:
       - services

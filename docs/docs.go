@@ -47,7 +47,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.ChangePasswordRequest"
+                            "$ref": "#/definitions/services.ChangePasswordRequest"
                         }
                     }
                 ],
@@ -55,31 +55,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -105,7 +105,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.LoginRequest"
+                            "$ref": "#/definitions/services.LoginRequest"
                         }
                     }
                 ],
@@ -115,13 +115,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                                    "$ref": "#/definitions/handlers.SuccessResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/barber-booking-system_internal_services.AuthResponse"
+                                            "$ref": "#/definitions/services.AuthResponse"
                                         }
                                     }
                                 }
@@ -131,25 +131,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -177,13 +177,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -213,13 +213,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                                    "$ref": "#/definitions/handlers.SuccessResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/barber-booking-system_internal_services.UserProfileResponse"
+                                            "$ref": "#/definitions/services.UserProfileResponse"
                                         }
                                     }
                                 }
@@ -229,19 +229,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -272,7 +272,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateProfileRequest"
+                            "$ref": "#/definitions/services.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -282,13 +282,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                                    "$ref": "#/definitions/handlers.SuccessResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/barber-booking-system_internal_services.UserProfileResponse"
+                                            "$ref": "#/definitions/services.UserProfileResponse"
                                         }
                                     }
                                 }
@@ -298,25 +298,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -346,13 +346,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                                    "$ref": "#/definitions/handlers.SuccessResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/barber-booking-system_internal_services.AuthResponse"
+                                            "$ref": "#/definitions/services.AuthResponse"
                                         }
                                     }
                                 }
@@ -362,13 +362,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -394,7 +394,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.RegisterRequest"
+                            "$ref": "#/definitions/services.RegisterRequest"
                         }
                     }
                 ],
@@ -404,13 +404,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                                    "$ref": "#/definitions/handlers.SuccessResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/barber-booking-system_internal_services.AuthResponse"
+                                            "$ref": "#/definitions/services.AuthResponse"
                                         }
                                     }
                                 }
@@ -420,19 +420,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -458,7 +458,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateBarberServiceRequest"
+                            "$ref": "#/definitions/services.CreateBarberServiceRequest"
                         }
                     }
                 ],
@@ -466,19 +466,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -510,25 +510,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -559,7 +559,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateBarberServiceRequest"
+                            "$ref": "#/definitions/services.UpdateBarberServiceRequest"
                         }
                     }
                 ],
@@ -567,25 +567,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -615,25 +615,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -708,13 +708,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -743,7 +743,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateBarberRequest"
+                            "$ref": "#/definitions/services.CreateBarberRequest"
                         }
                     }
                 ],
@@ -751,19 +751,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -807,13 +807,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -845,19 +845,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -889,19 +889,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -933,25 +933,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -982,7 +982,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateBarberRequest"
+                            "$ref": "#/definitions/services.UpdateBarberRequest"
                         }
                     }
                 ],
@@ -990,25 +990,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1038,25 +1038,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1140,19 +1140,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1198,19 +1198,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1242,19 +1242,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1338,19 +1338,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1382,19 +1382,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1426,25 +1426,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1475,7 +1475,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateBookingRequest"
+                            "$ref": "#/definitions/services.CreateBookingRequest"
                         }
                     }
                 ],
@@ -1483,31 +1483,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Time slot conflict",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1553,19 +1553,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1647,19 +1647,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1691,19 +1691,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1735,19 +1735,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1779,25 +1779,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1833,7 +1833,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateBookingRequest"
+                            "$ref": "#/definitions/services.UpdateBookingRequest"
                         }
                     }
                 ],
@@ -1841,25 +1841,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1894,7 +1894,7 @@ const docTemplate = `{
                         "name": "cancel",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CancelBookingRequest"
+                            "$ref": "#/definitions/services.CancelBookingRequest"
                         }
                     }
                 ],
@@ -1902,31 +1902,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Cannot cancel booking",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -1963,25 +1963,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2019,7 +2019,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.RescheduleBookingRequest"
+                            "$ref": "#/definitions/services.RescheduleBookingRequest"
                         }
                     }
                 ],
@@ -2027,31 +2027,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Time slot conflict",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2089,7 +2089,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateStatusRequest"
+                            "$ref": "#/definitions/services.UpdateStatusRequest"
                         }
                     }
                 ],
@@ -2097,31 +2097,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Invalid status transition",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2209,19 +2209,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2250,7 +2250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateNotificationRequest"
+                            "$ref": "#/definitions/services.CreateNotificationRequest"
                         }
                     }
                 ],
@@ -2258,31 +2258,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2313,7 +2313,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.SendBookingNotificationRequest"
+                            "$ref": "#/definitions/services.SendBookingNotificationRequest"
                         }
                     }
                 ],
@@ -2321,31 +2321,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2373,19 +2373,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2413,19 +2413,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2462,19 +2462,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2502,19 +2502,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2551,31 +2551,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2610,31 +2610,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2671,31 +2671,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2734,25 +2734,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2783,7 +2783,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateReviewRequest"
+                            "$ref": "#/definitions/services.CreateReviewRequest"
                         }
                     }
                 ],
@@ -2791,31 +2791,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Review already exists",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2847,25 +2847,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2902,25 +2902,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -2984,19 +2984,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3040,25 +3040,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3090,25 +3090,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3144,7 +3144,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateReviewRequest"
+                            "$ref": "#/definitions/services.UpdateReviewRequest"
                         }
                     }
                 ],
@@ -3152,37 +3152,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3217,31 +3217,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3279,7 +3279,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.ModerateReviewRequest"
+                            "$ref": "#/definitions/services.ModerateReviewRequest"
                         }
                     }
                 ],
@@ -3287,37 +3287,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3355,7 +3355,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.BarberResponseRequest"
+                            "$ref": "#/definitions/services.BarberResponseRequest"
                         }
                     }
                 ],
@@ -3363,37 +3363,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3426,7 +3426,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.VoteReviewRequest"
+                            "$ref": "#/definitions/services.VoteReviewRequest"
                         }
                     }
                 ],
@@ -3434,25 +3434,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3539,13 +3539,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3569,7 +3569,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.CreateServiceRequest"
+                            "$ref": "#/definitions/services.CreateServiceRequest"
                         }
                     }
                 ],
@@ -3577,19 +3577,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3621,13 +3621,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3659,25 +3659,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3708,7 +3708,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateCategoryRequest"
+                            "$ref": "#/definitions/services.UpdateCategoryRequest"
                         }
                     }
                 ],
@@ -3716,25 +3716,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3764,25 +3764,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3820,13 +3820,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3858,19 +3858,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3902,25 +3902,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -3951,7 +3951,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_services.UpdateServiceRequest"
+                            "$ref": "#/definitions/services.UpdateServiceRequest"
                         }
                     }
                 ],
@@ -3959,25 +3959,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -4007,25 +4007,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -4057,19 +4057,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SuccessResponse"
+                            "$ref": "#/definitions/handlers.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/barber-booking-system_internal_middleware.ErrorResponse"
+                            "$ref": "#/definitions/middleware.ErrorResponse"
                         }
                     }
                 }
@@ -4077,7 +4077,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "barber-booking-system_internal_middleware.ErrorResponse": {
+        "handlers.SuccessResponse": {
+            "description": "Standard success response wrapper",
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string",
+                    "example": "Operation completed successfully"
+                },
+                "meta": {},
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "middleware.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4095,11 +4111,11 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_models.JSONMap": {
+        "models.JSONMap": {
             "type": "object",
             "additionalProperties": true
         },
-        "barber-booking-system_internal_services.AuthResponse": {
+        "services.AuthResponse": {
             "type": "object",
             "properties": {
                 "expires_at": {
@@ -4109,11 +4125,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/barber-booking-system_internal_services.UserProfileResponse"
+                    "$ref": "#/definitions/services.UserProfileResponse"
                 }
             }
         },
-        "barber-booking-system_internal_services.BarberResponseRequest": {
+        "services.BarberResponseRequest": {
             "type": "object",
             "required": [
                 "response"
@@ -4126,7 +4142,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CancelBookingRequest": {
+        "services.CancelBookingRequest": {
             "type": "object",
             "properties": {
                 "is_by_customer": {
@@ -4137,7 +4153,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.ChangePasswordRequest": {
+        "services.ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "confirm_password",
@@ -4157,7 +4173,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateBarberRequest": {
+        "services.CreateBarberRequest": {
             "type": "object",
             "required": [
                 "address",
@@ -4239,14 +4255,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "working_hours": {
-                    "$ref": "#/definitions/barber-booking-system_internal_models.JSONMap"
+                    "$ref": "#/definitions/models.JSONMap"
                 },
                 "years_experience": {
                     "type": "integer"
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateBarberServiceRequest": {
+        "services.CreateBarberServiceRequest": {
             "type": "object",
             "required": [
                 "barber_id",
@@ -4265,7 +4281,7 @@ const docTemplate = `{
                     }
                 },
                 "available_time_slots": {
-                    "$ref": "#/definitions/barber-booking-system_internal_models.JSONMap"
+                    "$ref": "#/definitions/models.JSONMap"
                 },
                 "barber_id": {
                     "type": "integer"
@@ -4368,7 +4384,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateBookingRequest": {
+        "services.CreateBookingRequest": {
             "type": "object",
             "required": [
                 "barber_id",
@@ -4425,7 +4441,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateNotificationRequest": {
+        "services.CreateNotificationRequest": {
             "type": "object",
             "required": [
                 "message",
@@ -4484,7 +4500,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateReviewRequest": {
+        "services.CreateReviewRequest": {
             "type": "object",
             "required": [
                 "booking_id",
@@ -4564,7 +4580,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.CreateServiceRequest": {
+        "services.CreateServiceRequest": {
             "type": "object",
             "required": [
                 "category_id",
@@ -4705,7 +4721,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.LoginRequest": {
+        "services.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -4720,7 +4736,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.ModerateReviewRequest": {
+        "services.ModerateReviewRequest": {
             "type": "object",
             "required": [
                 "status"
@@ -4740,7 +4756,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.RegisterRequest": {
+        "services.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -4773,7 +4789,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.RescheduleBookingRequest": {
+        "services.RescheduleBookingRequest": {
             "type": "object",
             "required": [
                 "new_start_time"
@@ -4790,7 +4806,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.SendBookingNotificationRequest": {
+        "services.SendBookingNotificationRequest": {
             "type": "object",
             "required": [
                 "booking_id",
@@ -4808,7 +4824,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateBarberRequest": {
+        "services.UpdateBarberRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -4878,14 +4894,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "working_hours": {
-                    "$ref": "#/definitions/barber-booking-system_internal_models.JSONMap"
+                    "$ref": "#/definitions/models.JSONMap"
                 },
                 "years_experience": {
                     "type": "integer"
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateBarberServiceRequest": {
+        "services.UpdateBarberServiceRequest": {
             "type": "object",
             "properties": {
                 "advance_notice_hours": {
@@ -4956,7 +4972,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateBookingRequest": {
+        "services.UpdateBookingRequest": {
             "type": "object",
             "properties": {
                 "customer_email": {
@@ -4979,7 +4995,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateCategoryRequest": {
+        "services.UpdateCategoryRequest": {
             "type": "object",
             "properties": {
                 "color_hex": {
@@ -5011,7 +5027,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateProfileRequest": {
+        "services.UpdateProfileRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -5058,7 +5074,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateReviewRequest": {
+        "services.UpdateReviewRequest": {
             "type": "object",
             "properties": {
                 "cleanliness_rating": {
@@ -5123,7 +5139,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateServiceRequest": {
+        "services.UpdateServiceRequest": {
             "type": "object",
             "properties": {
                 "allows_add_ons": {
@@ -5224,7 +5240,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UpdateStatusRequest": {
+        "services.UpdateStatusRequest": {
             "type": "object",
             "required": [
                 "status"
@@ -5235,7 +5251,7 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.UserProfileResponse": {
+        "services.UserProfileResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -5301,27 +5317,11 @@ const docTemplate = `{
                 }
             }
         },
-        "barber-booking-system_internal_services.VoteReviewRequest": {
+        "services.VoteReviewRequest": {
             "type": "object",
             "properties": {
                 "is_helpful": {
                     "type": "boolean"
-                }
-            }
-        },
-        "internal_handlers.SuccessResponse": {
-            "description": "Standard success response wrapper",
-            "type": "object",
-            "properties": {
-                "data": {},
-                "message": {
-                    "type": "string",
-                    "example": "Operation completed successfully"
-                },
-                "meta": {},
-                "success": {
-                    "type": "boolean",
-                    "example": true
                 }
             }
         }
@@ -5370,7 +5370,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Barbershop Booking API",
 	Description:      "A production-ready RESTful API for barbershop booking system.\nFeatures include: User authentication, Barber management, Service catalog, Booking system, Review & Rating system, and Notification system.",
