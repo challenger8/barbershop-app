@@ -16,7 +16,7 @@ barbershop-app
 .env.production
 barbershop-api
 docker-compose.env
-
+server
 # IDE and editor files
 .vscode/
 .idea/
