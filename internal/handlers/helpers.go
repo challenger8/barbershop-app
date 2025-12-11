@@ -140,26 +140,45 @@ func HandleServiceError(c *gin.Context, err error, entityName, operation string)
 		return false
 	}
 
-	// Check for "not found" errors from repository
+	// Check for "not found" errors from repository (all entity types)
 	switch err {
-	case repository.ErrServiceNotFound,
+	case repository.ErrUserNotFound,
+		repository.ErrBarberNotFound,
+		repository.ErrServiceNotFound,
+		repository.ErrCategoryNotFound,
 		repository.ErrBarberServiceNotFound,
-		repository.ErrCategoryNotFound:
+		repository.ErrBookingNotFound,
+		repository.ErrTimeSlotNotFound,
+		repository.ErrReviewNotFound,
+		repository.ErrNotificationNotFound:
 		RespondNotFound(c, entityName)
 		return true
 	}
 
-	// Check for other common repository errors by string matching
-	// (until we implement custom error types in Phase 1, Step 4)
+	// Check for duplicate/conflict errors from repository
+	switch err {
+	case repository.ErrDuplicateEmail,
+		repository.ErrDuplicateBarber,
+		repository.ErrDuplicateSlug,
+		repository.ErrDuplicateService,
+		repository.ErrDuplicateCategory,
+		repository.ErrBookingConflict,
+		repository.ErrDuplicateReview:
+		RespondBadRequest(c, "Duplicate entry",
+			fmt.Sprintf("This %s already exists", strings.ToLower(entityName)))
+		return true
+	}
+
+	// Fallback: Check by string matching for wrapped errors
 	errMsg := err.Error()
 
-	// Not found errors
+	// Not found errors (for wrapped errors)
 	if strings.Contains(errMsg, "not found") {
 		RespondNotFound(c, entityName)
 		return true
 	}
 
-	// Duplicate entry errors
+	// Duplicate entry errors (for wrapped errors)
 	if strings.Contains(errMsg, "duplicate") || strings.Contains(errMsg, "already exists") {
 		RespondBadRequest(c, "Duplicate entry",
 			fmt.Sprintf("This %s already exists", strings.ToLower(entityName)))

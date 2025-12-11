@@ -330,3 +330,39 @@ type BarberStatistics struct {
 	AverageRating     float64 `db:"average_rating" json:"average_rating"`
 	TotalRevenue      float64 `db:"total_revenue" json:"total_revenue"`
 }
+
+// ========================================================================
+// TRANSACTION SUPPORT
+// ========================================================================
+
+// UpdateRatingStatsTx recalculates and updates barber rating stats within a transaction
+// This should be called after creating/updating/deleting a review
+func (r *BarberRepository) UpdateRatingStatsTx(ctx context.Context, tx *sqlx.Tx, barberID int) error {
+	// Calculate new rating stats from all published/approved reviews
+	query := `
+		UPDATE barbers SET
+			rating = COALESCE((
+				SELECT AVG(overall_rating)::NUMERIC(3,2)
+				FROM reviews
+				WHERE barber_id = $1
+				AND is_published = true
+				AND moderation_status = 'approved'
+			), 0),
+			total_reviews = (
+				SELECT COUNT(*)
+				FROM reviews
+				WHERE barber_id = $1
+				AND is_published = true
+				AND moderation_status = 'approved'
+			),
+			updated_at = $2
+		WHERE id = $1
+	`
+
+	result, err := tx.ExecContext(ctx, query, barberID, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to update barber rating stats: %w", err)
+	}
+
+	return CheckRowsAffected(result, ErrBarberNotFound)
+}

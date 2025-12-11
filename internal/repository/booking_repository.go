@@ -33,38 +33,21 @@ func NewBookingRepository(db *sqlx.DB) *BookingRepository {
 
 // BookingFilters represents filter options for booking queries
 type BookingFilters struct {
-	// Identity filters
-	CustomerID int
-	BarberID   int
-	TimeSlotID int
-
-	// Status filters
-	Status        string   // Single status
-	Statuses      []string // Multiple statuses (OR)
-	PaymentStatus string
-
-	// Date range filters
-	StartDateFrom time.Time // Bookings starting after this time
-	StartDateTo   time.Time // Bookings starting before this time
-	CreatedFrom   time.Time // Created after this time
-	CreatedTo     time.Time // Created before this time
-
-	// Search
-	Search string // Search in booking_number, customer_name, customer_email
-
-	// Booking source
-	BookingSource string // mobile_app, web_app, phone, walk_in, admin
-
-	// Sorting and pagination
-	SortBy string // created_at, scheduled_start_time, total_price
-	Order  string // ASC or DESC
-	Limit  int
-	Offset int
-
-	// Include relations
-	IncludeCustomer bool
-	IncludeBarber   bool
-	IncludeTimeSlot bool
+	CustomerID    int       `form:"customer_id"`
+	BarberID      int       `form:"barber_id"`
+	Status        string    `form:"status"`
+	Statuses      []string  `form:"statuses"`
+	PaymentStatus string    `form:"payment_status"`
+	BookingSource string    `form:"booking_source"`
+	StartDateFrom time.Time `form:"start_date_from" time_format:"2006-01-02"`
+	StartDateTo   time.Time `form:"start_date_to" time_format:"2006-01-02"`
+	CreatedFrom   time.Time `form:"created_from" time_format:"2006-01-02T15:04:05Z07:00"`
+	CreatedTo     time.Time `form:"created_to" time_format:"2006-01-02T15:04:05Z07:00"`
+	Search        string    `form:"search"`
+	SortBy        string    `form:"sort_by"`
+	Order         string    `form:"order"`
+	Limit         int       `form:"limit,default=50"`
+	Offset        int       `form:"offset,default=0"`
 }
 
 // BookingHistoryFilters for audit trail queries
@@ -561,22 +544,6 @@ func (r *BookingRepository) Cancel(ctx context.Context, id int, cancelledBy int,
 
 // CheckConflict checks if there's a conflicting booking for a barber at the given time
 func (r *BookingRepository) CheckConflict(ctx context.Context, barberID int, startTime, endTime time.Time, excludeBookingID int) (bool, error) {
-	// ─────────────────────────────────────────────────────────────────
-	// TODO: YOUR TASK #3 - Implement conflict checking
-	// ─────────────────────────────────────────────────────────────────
-	// Check if any existing booking overlaps with the proposed time slot
-	//
-	// Two time ranges overlap if:
-	// existing.start < proposed.end AND existing.end > proposed.start
-	//
-	// Query should:
-	// 1. Filter by barber_id
-	// 2. Exclude cancelled/no_show bookings
-	// 3. Exclude the booking being rescheduled (excludeBookingID)
-	// 4. Check for time overlap
-	// 5. Return true if conflict exists, false otherwise
-	// ─────────────────────────────────────────────────────────────────
-
 	query := `
 		SELECT COUNT(*) FROM bookings
 		WHERE barber_id = $1
@@ -591,8 +558,123 @@ func (r *BookingRepository) CheckConflict(ctx context.Context, barberID int, sta
 	if err != nil {
 		return false, fmt.Errorf("failed to check booking conflict: %w", err)
 	}
+	return count > 0, nil
+}
+
+// ========================================================================
+// TRANSACTION SUPPORT
+// ========================================================================
+
+// BeginTx starts a new database transaction
+func (r *BookingRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	return tx, nil
+}
+
+// CheckConflictForUpdate checks for booking conflicts with row locking (FOR UPDATE)
+// This prevents race conditions by locking conflicting rows until transaction commits
+func (r *BookingRepository) CheckConflictForUpdate(ctx context.Context, tx *sqlx.Tx, barberID int, startTime, endTime time.Time, excludeBookingID int) (bool, error) {
+	query := `
+		SELECT COUNT(*) FROM bookings
+		WHERE barber_id = $1
+		AND status NOT IN ('cancelled_by_customer', 'cancelled_by_barber', 'no_show', 'completed')
+		AND id != $2
+		AND scheduled_start_time < $3
+		AND scheduled_end_time > $4
+		FOR UPDATE
+	`
+	var count int
+	err := tx.GetContext(ctx, &count, query, barberID, excludeBookingID, endTime, startTime)
+	if err != nil {
+		return false, fmt.Errorf("failed to check booking conflict: %w", err)
+	}
 
 	return count > 0, nil
+}
+
+// CreateTx inserts a new booking within a transaction
+func (r *BookingRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, booking *models.Booking) error {
+	query := `
+		INSERT INTO bookings (
+			uuid, booking_number, customer_id, barber_id, time_slot_id,
+			service_name, service_category, estimated_duration_minutes,
+			customer_name, customer_email, customer_phone,
+			status, service_price, total_price, discount_amount, tax_amount, tip_amount, currency,
+			payment_status, payment_method, payment_reference,
+			notes, special_requests, internal_notes,
+			scheduled_start_time, scheduled_end_time,
+			booking_source, referral_source, utm_campaign,
+			created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5,
+			$6, $7, $8,
+			$9, $10, $11,
+			$12, $13, $14, $15, $16, $17, $18,
+			$19, $20, $21,
+			$22, $23, $24,
+			$25, $26,
+			$27, $28, $29,
+			$30, $31
+		) RETURNING id
+	`
+
+	// Set timestamps using helper
+	SetCreateTimestamps(&booking.CreatedAt, &booking.UpdatedAt)
+
+	// Set defaults using helpers
+	SetDefaultString(&booking.Status, config.BookingStatusPending)
+	SetDefaultString(&booking.PaymentStatus, config.PaymentStatusPending)
+	SetDefaultString(&booking.Currency, config.DefaultCurrency)
+	SetDefaultString(&booking.BookingSource, "web_app")
+
+	err := tx.QueryRowContext(ctx, query,
+		booking.UUID, booking.BookingNumber, booking.CustomerID, booking.BarberID, booking.TimeSlotID,
+		booking.ServiceName, booking.ServiceCategory, booking.EstimatedDurationMinutes,
+		booking.CustomerName, booking.CustomerEmail, booking.CustomerPhone,
+		booking.Status, booking.ServicePrice, booking.TotalPrice, booking.DiscountAmount, booking.TaxAmount, booking.TipAmount, booking.Currency,
+		booking.PaymentStatus, booking.PaymentMethod, booking.PaymentReference,
+		booking.Notes, booking.SpecialRequests, booking.InternalNotes,
+		booking.ScheduledStartTime, booking.ScheduledEndTime,
+		booking.BookingSource, booking.ReferralSource, booking.UTMCampaign,
+		booking.CreatedAt, booking.UpdatedAt,
+	).Scan(&booking.ID)
+
+	if err != nil {
+		return fmt.Errorf("failed to create booking: %w", err)
+	}
+
+	return nil
+}
+
+// CreateHistoryTx creates a booking history record within a transaction
+func (r *BookingRepository) CreateHistoryTx(ctx context.Context, tx *sqlx.Tx, history *models.BookingHistory) error {
+	query := `
+		INSERT INTO booking_history (
+			booking_id, changed_by, change_type,
+			old_values, new_values, change_reason,
+			ip_address, user_agent, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id
+	`
+
+	if history.CreatedAt.IsZero() {
+		history.CreatedAt = time.Now()
+	}
+
+	err := tx.QueryRowContext(ctx, query,
+		history.BookingID, history.ChangedBy, history.ChangeType,
+		history.OldValues, history.NewValues, history.ChangeReason,
+		history.IPAddress, history.UserAgent, history.CreatedAt,
+	).Scan(&history.ID)
+
+	if err != nil {
+		return fmt.Errorf("failed to create booking history: %w", err)
+	}
+
+	return nil
 }
 
 // ========================================================================

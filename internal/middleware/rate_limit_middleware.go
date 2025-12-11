@@ -125,6 +125,19 @@ func StrictRateLimitConfig() RateLimitConfig {
 	}
 }
 
+// AuthRateLimitConfig returns strict rate limit for authentication endpoints
+// This prevents brute force attacks on login/register endpoints
+func AuthRateLimitConfig() RateLimitConfig {
+	return RateLimitConfig{
+		Limit:      10,              // Only 10 attempts per window
+		Window:     5 * time.Minute, // 5 minute window
+		KeyFunc:    IPKeyFunc,       // Rate limit by IP
+		SkipPaths:  []string{},      // No skip paths for auth
+		Message:    "Too many authentication attempts. Please try again in a few minutes.",
+		StatusCode: http.StatusTooManyRequests,
+	}
+}
+
 // inMemoryRateLimiter implements a simple in-memory rate limiter
 type inMemoryRateLimiter struct {
 	mu      sync.RWMutex

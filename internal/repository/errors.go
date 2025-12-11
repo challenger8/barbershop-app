@@ -51,7 +51,6 @@ var (
 
 	// Review duplicates
 	ErrDuplicateReview     = errors.New("review already exists for this booking")
-	ErrReviewAlreadyExists = errors.New("a review already exists for this booking")
 )
 
 // ========================================================================

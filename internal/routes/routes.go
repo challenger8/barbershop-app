@@ -49,27 +49,31 @@ func Setup(router *gin.Engine, db *sqlx.DB, jwtSecret string, jwtExpiration time
 	// API v1 ROUTES
 	// ========================================================================
 	v1 := router.Group("/api/v1")
-	{
-		// ────────────────────────────────────────────────────────────────
-		// AUTHENTICATION ROUTES
-		// ────────────────────────────────────────────────────────────────
-		auth := v1.Group("/auth")
-		{
-			// Public auth routes
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
-			auth.POST("/refresh", authHandler.RefreshToken)
+{
+    // ────────────────────────────────────────────────────────────────
+    // AUTHENTICATION ROUTES
+    // ────────────────────────────────────────────────────────────────
+    auth := v1.Group("/auth")
+    {
+        // Public auth routes with stricter rate limiting (brute force protection)
+        publicAuth := auth.Group("")
+        publicAuth.Use(middleware.RateLimitMiddleware(middleware.AuthRateLimitConfig()))
+        {
+            publicAuth.POST("/register", authHandler.Register)
+            publicAuth.POST("/login", authHandler.Login)
+            publicAuth.POST("/refresh", authHandler.RefreshToken)
+        }
 
-			// Protected auth routes
-			protected := auth.Group("")
-			protected.Use(middleware.RequireAuth(jwtSecret))
-			{
-				protected.GET("/me", authHandler.GetMe)
-				protected.PUT("/profile", authHandler.UpdateProfile)
-				protected.POST("/change-password", authHandler.ChangePassword)
-				protected.POST("/logout", authHandler.Logout)
-			}
-		}
+        // Protected auth routes (uses default rate limit from global middleware)
+        protected := auth.Group("")
+        protected.Use(middleware.RequireAuth(jwtSecret))
+        {
+            protected.GET("/me", authHandler.GetMe)
+            protected.PUT("/profile", authHandler.UpdateProfile)
+            protected.POST("/change-password", authHandler.ChangePassword)
+            protected.POST("/logout", authHandler.Logout)
+        }
+    }	
 
 		// ────────────────────────────────────────────────────────────────
 		// BARBER ROUTES

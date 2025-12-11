@@ -133,7 +133,6 @@ func getDefaultChannels(notifType string) []string {
 
 // CreateNotification creates a new notification
 func (s *NotificationService) CreateNotification(ctx context.Context, req CreateNotificationRequest) (*NotificationResponse, error) {
-	// Validate notification type
 	if !repository.IsValidNotificationType(req.Type) {
 		return nil, repository.ErrInvalidNotificationType
 	}
@@ -142,6 +141,11 @@ func (s *NotificationService) CreateNotification(ctx context.Context, req Create
 	channels := req.Channels
 	if len(channels) == 0 {
 		channels = getDefaultChannels(req.Type)
+	}
+
+	// Validate channels
+	if err := validateChannels(channels); err != nil {
+		return nil, err
 	}
 
 	// Set default priority
@@ -187,6 +191,134 @@ func (s *NotificationService) CreateNotification(ctx context.Context, req Create
 // ========================================================================
 // BOOKING NOTIFICATION HELPERS
 // ========================================================================
+// SendBookingReminder sends a booking reminder notification
+func (s *NotificationService) SendBookingReminder(ctx context.Context, bookingID int) error {
+	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	return s.sendBookingNotificationWithTemplate(
+		ctx, booking, "reminder",
+		[]interface{}{booking.ScheduledStartTime.Format("Monday, January 2 at 3:04 PM")},
+		nil,
+		nil,
+	)
+}
+
+// SendBookingCancellation sends a booking cancellation notification
+func (s *NotificationService) SendBookingCancellation(ctx context.Context, bookingID int, reason string) error {
+	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	message := booking.BookingNumber
+	extraData := map[string]interface{}{"cancellation_reason": reason}
+
+	// Append reason to message if provided
+	if reason != "" {
+		// Override with custom message including reason
+		return s.sendBookingNotificationWithTemplateCustomMessage(
+			ctx, booking, "cancellation",
+			fmt.Sprintf("Your booking %s has been cancelled. Reason: %s", booking.BookingNumber, reason),
+			extraData, nil,
+		)
+	}
+
+	return s.sendBookingNotificationWithTemplate(
+		ctx, booking, "cancellation",
+		[]interface{}{message},
+		extraData,
+		nil,
+	)
+}
+
+// SendBookingRescheduled sends a booking rescheduled notification
+func (s *NotificationService) SendBookingRescheduled(ctx context.Context, bookingID int, oldTime, newTime time.Time) error {
+	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	return s.sendBookingNotificationWithTemplate(
+		ctx, booking, "rescheduled",
+		[]interface{}{
+			booking.BookingNumber,
+			oldTime.Format("Monday, January 2 at 3:04 PM"),
+			newTime.Format("Monday, January 2 at 3:04 PM"),
+		},
+		map[string]interface{}{"old_time": oldTime, "new_time": newTime},
+		nil,
+	)
+}
+
+// SendReviewRequest sends a request to review a completed booking
+func (s *NotificationService) SendReviewRequest(ctx context.Context, bookingID int) error {
+	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.Status != config.BookingStatusCompleted {
+		return nil
+	}
+
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+
+	return s.sendBookingNotificationWithTemplate(
+		ctx, booking, "review_request",
+		[]interface{}{booking.ServiceName},
+		map[string]interface{}{
+			"booking_id":   bookingID,
+			"service_name": booking.ServiceName,
+		},
+		&expiresAt,
+	)
+}
+
+// sendBookingNotificationWithTemplateCustomMessage handles cases where message needs custom formatting
+func (s *NotificationService) sendBookingNotificationWithTemplateCustomMessage(
+	ctx context.Context,
+	booking *models.Booking,
+	templateKey string,
+	customMessage string,
+	extraData map[string]interface{},
+	expiresAt *time.Time,
+) error {
+	if booking.CustomerID == nil {
+		return nil
+	}
+
+	template, exists := bookingNotificationTemplates[templateKey]
+	if !exists {
+		return fmt.Errorf("unknown notification template: %s", templateKey)
+	}
+
+	entityType := config.EntityTypeBooking
+	data := map[string]interface{}{
+		"booking_number": booking.BookingNumber,
+		"barber_id":      booking.BarberID,
+	}
+	for k, v := range extraData {
+		data[k] = v
+	}
+
+	req := CreateNotificationRequest{
+		UserID:            *booking.CustomerID,
+		Title:             template.Title,
+		Message:           customMessage,
+		Type:              template.Type,
+		Priority:          template.Priority,
+		RelatedEntityType: &entityType,
+		RelatedEntityID:   &booking.ID,
+		Data:              data,
+		ExpiresAt:         expiresAt,
+	}
+
+	_, err := s.CreateNotification(ctx, req)
+	return err
+}
 
 // SendBookingConfirmation sends a booking confirmation notification
 func (s *NotificationService) SendBookingConfirmation(ctx context.Context, bookingID int) error {
@@ -224,148 +356,105 @@ func (s *NotificationService) SendBookingConfirmation(ctx context.Context, booki
 	return err
 }
 
-// SendBookingReminder sends a booking reminder notification
-func (s *NotificationService) SendBookingReminder(ctx context.Context, bookingID int) error {
-	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
-	if err != nil {
-		return err
-	}
+// ========================================================================
+// NOTIFICATION TEMPLATES (DRY - extracted from repeated patterns)
+// ========================================================================
 
-	if booking.CustomerID == nil {
-		return nil
-	}
-
-	title := "Upcoming Appointment Reminder"
-	message := fmt.Sprintf("Reminder: Your appointment is scheduled for %s",
-		booking.ScheduledStartTime.Format("Monday, January 2 at 3:04 PM"))
-
-	entityType := config.EntityTypeBooking
-	req := CreateNotificationRequest{
-		UserID:            *booking.CustomerID,
-		Title:             title,
-		Message:           message,
-		Type:              config.NotificationTypeBookingReminder,
-		Priority:          config.NotificationPriorityHigh,
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &bookingID,
-		Data: map[string]interface{}{
-			"booking_number": booking.BookingNumber,
-			"barber_id":      booking.BarberID,
-		},
-	}
-
-	_, err = s.CreateNotification(ctx, req)
-	return err
+// BookingNotificationTemplate defines a notification template for booking events
+type BookingNotificationTemplate struct {
+	Title           string
+	MessageTemplate string // Uses %s placeholders
+	Type            string
+	Priority        string
 }
 
-// SendBookingCancellation sends a booking cancellation notification
-func (s *NotificationService) SendBookingCancellation(ctx context.Context, bookingID int, reason string) error {
-	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
-	if err != nil {
-		return err
-	}
-
-	if booking.CustomerID == nil {
-		return nil
-	}
-
-	title := "Booking Cancelled"
-	message := fmt.Sprintf("Your booking %s has been cancelled", booking.BookingNumber)
-	if reason != "" {
-		message += fmt.Sprintf(". Reason: %s", reason)
-	}
-
-	entityType := config.EntityTypeBooking
-	req := CreateNotificationRequest{
-		UserID:            *booking.CustomerID,
-		Title:             title,
-		Message:           message,
-		Type:              config.NotificationTypeBookingCancelled,
-		Priority:          config.NotificationPriorityHigh,
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &bookingID,
-		Data: map[string]interface{}{
-			"booking_number":      booking.BookingNumber,
-			"cancellation_reason": reason,
-		},
-	}
-
-	_, err = s.CreateNotification(ctx, req)
-	return err
+// bookingNotificationTemplates maps notification types to their templates
+var bookingNotificationTemplates = map[string]BookingNotificationTemplate{
+	"confirmation": {
+		Title:           "Booking Confirmed",
+		MessageTemplate: "Your booking %s has been confirmed for %s",
+		Type:            config.NotificationTypeBookingConfirmation,
+		Priority:        config.NotificationPriorityNormal,
+	},
+	"reminder": {
+		Title:           "Upcoming Appointment Reminder",
+		MessageTemplate: "Reminder: Your appointment is scheduled for %s",
+		Type:            config.NotificationTypeBookingReminder,
+		Priority:        config.NotificationPriorityHigh,
+	},
+	"cancellation": {
+		Title:           "Booking Cancelled",
+		MessageTemplate: "Your booking %s has been cancelled",
+		Type:            config.NotificationTypeBookingCancelled,
+		Priority:        config.NotificationPriorityHigh,
+	},
+	"rescheduled": {
+		Title:           "Booking Rescheduled",
+		MessageTemplate: "Your booking %s has been rescheduled from %s to %s",
+		Type:            config.NotificationTypeBookingRescheduled,
+		Priority:        config.NotificationPriorityHigh,
+	},
+	"review_request": {
+		Title:           "How was your experience?",
+		MessageTemplate: "Please take a moment to review your recent appointment (%s). Your feedback helps us improve!",
+		Type:            config.NotificationTypeReviewRequest,
+		Priority:        config.NotificationPriorityNormal,
+	},
 }
 
-// SendBookingRescheduled sends a booking rescheduled notification
-func (s *NotificationService) SendBookingRescheduled(ctx context.Context, bookingID int, oldTime, newTime time.Time) error {
-	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
-	if err != nil {
-		return err
+// validateChannels validates that all provided channels are valid
+func validateChannels(channels []string) error {
+	for _, channel := range channels {
+		if !repository.IsValidNotificationChannel(channel) {
+			return fmt.Errorf("invalid notification channel: %s (valid: %v)", channel, repository.ValidNotificationChannels)
+		}
 	}
-
-	if booking.CustomerID == nil {
-		return nil
-	}
-
-	title := "Booking Rescheduled"
-	message := fmt.Sprintf("Your booking %s has been rescheduled from %s to %s",
-		booking.BookingNumber,
-		oldTime.Format("Monday, January 2 at 3:04 PM"),
-		newTime.Format("Monday, January 2 at 3:04 PM"))
-
-	entityType := config.EntityTypeBooking
-	req := CreateNotificationRequest{
-		UserID:            *booking.CustomerID,
-		Title:             title,
-		Message:           message,
-		Type:              config.NotificationTypeBookingRescheduled,
-		Priority:          config.NotificationPriorityHigh,
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &bookingID,
-		Data: map[string]interface{}{
-			"booking_number": booking.BookingNumber,
-			"old_time":       oldTime,
-			"new_time":       newTime,
-		},
-	}
-
-	_, err = s.CreateNotification(ctx, req)
-	return err
+	return nil
 }
 
-// SendReviewRequest sends a request to review a completed booking
-func (s *NotificationService) SendReviewRequest(ctx context.Context, bookingID int) error {
-	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
-	if err != nil {
-		return err
+// sendBookingNotificationWithTemplate is a helper that sends booking notifications using templates
+func (s *NotificationService) sendBookingNotificationWithTemplate(
+	ctx context.Context,
+	booking *models.Booking,
+	templateKey string,
+	messageArgs []interface{},
+	extraData map[string]interface{},
+	expiresAt *time.Time,
+) error {
+	if booking.CustomerID == nil {
+		return nil // No notification for guest bookings
 	}
 
-	if booking.CustomerID == nil || booking.Status != config.BookingStatusCompleted {
-		return nil
+	template, exists := bookingNotificationTemplates[templateKey]
+	if !exists {
+		return fmt.Errorf("unknown notification template: %s", templateKey)
 	}
 
-	title := "How was your experience?"
-	message := fmt.Sprintf("Please take a moment to review your recent appointment (%s). Your feedback helps us improve!", booking.ServiceName)
-
-	// Set expiration for review request (e.g., 7 days)
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	message := fmt.Sprintf(template.MessageTemplate, messageArgs...)
 
 	entityType := config.EntityTypeBooking
-	req := CreateNotificationRequest{
-		UserID:            *booking.CustomerID,
-		Title:             title,
-		Message:           message,
-		Type:              config.NotificationTypeReviewRequest,
-		Priority:          config.NotificationPriorityNormal,
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &bookingID,
-		ExpiresAt:         &expiresAt,
-		Data: map[string]interface{}{
-			"booking_id":     bookingID,
-			"booking_number": booking.BookingNumber,
-			"service_name":   booking.ServiceName,
-		},
+	data := map[string]interface{}{
+		"booking_number": booking.BookingNumber,
+		"barber_id":      booking.BarberID,
+	}
+	// Merge extra data
+	for k, v := range extraData {
+		data[k] = v
 	}
 
-	_, err = s.CreateNotification(ctx, req)
+	req := CreateNotificationRequest{
+		UserID:            *booking.CustomerID,
+		Title:             template.Title,
+		Message:           message,
+		Type:              template.Type,
+		Priority:          template.Priority,
+		RelatedEntityType: &entityType,
+		RelatedEntityID:   &booking.ID,
+		Data:              data,
+		ExpiresAt:         expiresAt,
+	}
+
+	_, err := s.CreateNotification(ctx, req)
 	return err
 }
 

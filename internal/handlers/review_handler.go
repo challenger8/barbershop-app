@@ -32,44 +32,6 @@ func NewReviewHandler(reviewService *services.ReviewService) *ReviewHandler {
 // HELPER FUNCTIONS
 // ========================================================================
 
-// buildReviewFilters builds ReviewFilters from query parameters
-func buildReviewFilters(c *gin.Context) repository.ReviewFilters {
-	filters := repository.ReviewFilters{
-		ModerationStatus: c.Query("moderation_status"),
-		Search:           c.Query("search"),
-		SortBy:           c.Query("sort_by"),
-		Order:            c.Query("order"),
-		Limit:            ParseIntQuery(c, "limit", 50),
-		Offset:           ParseIntQuery(c, "offset", 0),
-		MinRating:        ParseIntQuery(c, "min_rating", 0),
-		MaxRating:        ParseIntQuery(c, "max_rating", 0),
-		CreatedFrom:      ParseTimeQuery(c, "created_from"),
-		CreatedTo:        ParseTimeQuery(c, "created_to"),
-	}
-
-	// Boolean filters
-	if isPublished := ParseBoolQuery(c, "is_published"); isPublished != nil {
-		filters.IsPublished = isPublished
-	}
-	if isVerified := ParseBoolQuery(c, "is_verified"); isVerified != nil {
-		filters.IsVerified = isVerified
-	}
-	if hasComment := ParseBoolQuery(c, "has_comment"); hasComment != nil {
-		filters.HasComment = hasComment
-	}
-	if hasImages := ParseBoolQuery(c, "has_images"); hasImages != nil {
-		filters.HasImages = hasImages
-	}
-	if hasResponse := ParseBoolQuery(c, "has_response"); hasResponse != nil {
-		filters.HasResponse = hasResponse
-	}
-	if wouldRecommend := ParseBoolQuery(c, "would_recommend"); wouldRecommend != nil {
-		filters.WouldRecommend = wouldRecommend
-	}
-
-	return filters
-}
-
 // ========================================================================
 // CREATE REVIEW
 // ========================================================================
@@ -107,7 +69,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		switch err {
 		case repository.ErrBookingNotCompleted:
 			statusCode = http.StatusBadRequest
-		case repository.ErrReviewAlreadyExists, repository.ErrDuplicateReview:
+		case repository.ErrDuplicateReview, repository.ErrDuplicateReview:
 			statusCode = http.StatusConflict
 		default:
 			if utils.ContainsAny(err.Error(), []string{"not found", "required", "must be", "only review"}) {
@@ -231,9 +193,12 @@ func (h *ReviewHandler) GetBarberReviews(c *gin.Context) {
 		return
 	}
 
-	filters := buildReviewFilters(c)
+	filters, ok := BindQuery[repository.ReviewFilters](c)
+	if !ok {
+		return
+	}
 
-	reviews, err := h.reviewService.GetBarberReviews(c.Request.Context(), barberID, filters)
+	reviews, err := h.reviewService.GetBarberReviews(c.Request.Context(), barberID, *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch reviews", err)
 		return
@@ -301,9 +266,12 @@ func (h *ReviewHandler) GetMyReviews(c *gin.Context) {
 		return
 	}
 
-	filters := buildReviewFilters(c)
+	filters, ok := BindQuery[repository.ReviewFilters](c)
+	if !ok {
+		return
+	}
 
-	reviews, err := h.reviewService.GetCustomerReviews(c.Request.Context(), userID, filters)
+	reviews, err := h.reviewService.GetCustomerReviews(c.Request.Context(), userID, *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch reviews", err)
 		return
@@ -450,9 +418,12 @@ func (h *ReviewHandler) ModerateReview(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/reviews/pending [get]
 func (h *ReviewHandler) GetPendingReviews(c *gin.Context) {
-	filters := buildReviewFilters(c)
+	filters, ok := BindQuery[repository.ReviewFilters](c)
+	if !ok {
+		return
+	}
 
-	reviews, err := h.reviewService.GetPendingReviews(c.Request.Context(), filters)
+	reviews, err := h.reviewService.GetPendingReviews(c.Request.Context(), *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch pending reviews", err)
 		return

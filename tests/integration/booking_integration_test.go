@@ -341,6 +341,7 @@ func TestGetBarberBookings_WithDateFilter(t *testing.T) {
 	router, dbManager, _ := setupTestRouter(t)
 	defer dbManager.Close()
 
+	// Use date-only format to match struct's time_format:"2006-01-02"
 	today := time.Now().Format("2006-01-02")
 	tomorrow := time.Now().Add(24 * time.Hour).Format("2006-01-02")
 

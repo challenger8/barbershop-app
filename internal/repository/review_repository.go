@@ -31,43 +31,42 @@ func NewReviewRepository(db *sqlx.DB) *ReviewRepository {
 // FILTER STRUCTS
 // ========================================================================
 
-// ReviewFilters represents filter options for review queries
 type ReviewFilters struct {
 	// Identity filters
-	CustomerID int
-	BarberID   int
-	BookingID  int
+	CustomerID int `form:"customer_id"`
+	BarberID   int `form:"barber_id"`
+	BookingID  int `form:"booking_id"`
 
 	// Rating filters
-	MinRating int
-	MaxRating int
+	MinRating int `form:"min_rating"`
+	MaxRating int `form:"max_rating"`
 
 	// Status filters
-	ModerationStatus string   // pending, approved, rejected, flagged
-	Statuses         []string // Multiple statuses (OR)
-	IsPublished      *bool
-	IsVerified       *bool
+	ModerationStatus string   `form:"moderation_status"`
+	Statuses         []string `form:"statuses"`
+	IsPublished      *bool    `form:"is_published"`
+	IsVerified       *bool    `form:"is_verified"`
 
 	// Content filters
-	HasComment  *bool
-	HasImages   *bool
-	HasResponse *bool
+	HasComment  *bool `form:"has_comment"`
+	HasImages   *bool `form:"has_images"`
+	HasResponse *bool `form:"has_response"`
 
 	// Date range filters
-	CreatedFrom time.Time
-	CreatedTo   time.Time
+	CreatedFrom time.Time `form:"created_from" time_format:"2006-01-02T15:04:05Z07:00"`
+	CreatedTo   time.Time `form:"created_to" time_format:"2006-01-02T15:04:05Z07:00"`
 
 	// Search
-	Search string // Search in comment, title
+	Search string `form:"search"`
 
 	// Recommendation filters
-	WouldRecommend *bool
+	WouldRecommend *bool `form:"would_recommend"`
 
 	// Sorting and pagination
-	SortBy string // created_at, overall_rating, helpful_votes
-	Order  string // ASC or DESC
-	Limit  int
-	Offset int
+	SortBy string `form:"sort_by"`
+	Order  string `form:"order"`
+	Limit  int    `form:"limit,default=50"`
+	Offset int    `form:"offset,default=0"`
 }
 
 // ReviewStats represents review statistics
@@ -607,4 +606,76 @@ func (r *ReviewRepository) Count(ctx context.Context, filters ReviewFilters) (in
 	}
 
 	return count, nil
+}
+
+// ========================================================================
+// TRANSACTION SUPPORT
+// ========================================================================
+
+// CreateTx inserts a new review within a transaction
+func (r *ReviewRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, review *models.Review) error {
+	// Check for duplicate review within transaction
+	var exists bool
+	err := tx.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM reviews WHERE booking_id = $1)`, review.BookingID)
+	if err != nil {
+		return fmt.Errorf("failed to check existing review: %w", err)
+	}
+	if exists {
+		return ErrDuplicateReview
+	}
+
+	query := `
+		INSERT INTO reviews (
+			booking_id, customer_id, barber_id,
+			overall_rating, service_quality_rating, punctuality_rating,
+			cleanliness_rating, value_for_money_rating, professionalism_rating,
+			title, comment, pros, cons,
+			would_recommend, would_book_again, service_as_expected, duration_accurate,
+			images,
+			is_verified, is_published, moderation_status,
+			created_at, updated_at
+		) VALUES (
+			$1, $2, $3,
+			$4, $5, $6,
+			$7, $8, $9,
+			$10, $11, $12, $13,
+			$14, $15, $16, $17,
+			$18,
+			$19, $20, $21,
+			$22, $23
+		) RETURNING id
+	`
+
+	// Set timestamps and defaults
+	SetCreateTimestamps(&review.CreatedAt, &review.UpdatedAt)
+	SetDefaultString(&review.ModerationStatus, config.ReviewModerationPending)
+
+	err = tx.QueryRowContext(ctx, query,
+		review.BookingID, review.CustomerID, review.BarberID,
+		review.OverallRating, review.ServiceQualityRating, review.PunctualityRating,
+		review.CleanlinessRating, review.ValueForMoneyRating, review.ProfessionalismRating,
+		review.Title, review.Comment, review.Pros, review.Cons,
+		review.WouldRecommend, review.WouldBookAgain, review.ServiceAsExpected, review.DurationAccurate,
+		review.Images,
+		review.IsVerified, review.IsPublished, review.ModerationStatus,
+		review.CreatedAt, review.UpdatedAt,
+	).Scan(&review.ID)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+			return ErrDuplicateReview
+		}
+		return fmt.Errorf("failed to create review: %w", err)
+	}
+
+	return nil
+}
+
+// BeginTx starts a new database transaction
+func (r *ReviewRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	return tx, nil
 }

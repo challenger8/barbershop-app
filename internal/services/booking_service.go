@@ -393,13 +393,44 @@ func getBookingSource(source string) string {
 }
 
 // saveBookingWithHistory saves booking and creates audit trail
+// saveBookingWithHistory saves booking and creates audit trail within a transaction
+// This prevents race conditions by using SELECT ... FOR UPDATE to lock conflicting slots
 func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *models.Booking, createdByUserID *int) error {
-	// Create booking in database
-	if err := s.repo.Create(ctx, booking); err != nil {
+	// Start transaction
+	tx, err := s.repo.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	// Ensure rollback on error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Check for conflicts with row locking (FOR UPDATE)
+	// This prevents race conditions where two requests check availability simultaneously
+	hasConflict, err := s.repo.CheckConflictForUpdate(
+		ctx, tx,
+		booking.BarberID,
+		booking.ScheduledStartTime,
+		booking.ScheduledEndTime,
+		0, // No booking to exclude for new bookings
+	)
+	if err != nil {
+		return fmt.Errorf("failed to check availability: %w", err)
+	}
+	if hasConflict {
+		return fmt.Errorf("time slot is not available, please choose another time")
+	}
+
+	// Create booking within transaction
+	if err := s.repo.CreateTx(ctx, tx, booking); err != nil {
 		return fmt.Errorf("failed to create booking: %w", err)
 	}
 
-	// Create audit history
+	// Create audit history within transaction
 	history := &models.BookingHistory{
 		BookingID:  booking.ID,
 		ChangedBy:  createdByUserID,
@@ -411,7 +442,12 @@ func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *mo
 			"total_price": booking.TotalPrice,
 		},
 	}
-	_ = s.repo.CreateHistory(ctx, history) // Don't fail if history creation fails
+	_ = s.repo.CreateHistoryTx(ctx, tx, history) // Don't fail if history creation fails
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 
 	return nil
 }

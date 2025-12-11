@@ -175,6 +175,8 @@ func (s *ReviewService) toReviewResponse(review *models.Review, userID *int) *Re
 // ========================================================================
 
 // CreateReview creates a new review for a completed booking
+// CreateReview creates a new review for a completed booking
+// Uses a transaction to ensure review creation and barber stats update are atomic
 func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewRequest, customerID int) (*ReviewResponse, error) {
 	// Step 1: Validate rating
 	if err := validateRating(req.OverallRating); err != nil {
@@ -202,16 +204,7 @@ func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewReques
 		return nil, fmt.Errorf("you can only review your own bookings")
 	}
 
-	// Step 6: Check for existing review
-	exists, err := s.repo.ExistsByBookingID(ctx, req.BookingID)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, repository.ErrReviewAlreadyExists
-	}
-
-	// Step 7: Build review model
+	// Step 6: Build review model
 	review := &models.Review{
 		BookingID:  req.BookingID,
 		CustomerID: &customerID,
@@ -241,17 +234,52 @@ func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewReques
 		ModerationStatus: config.ReviewModerationPending,
 	}
 
-	// Step 8: Save review
-	if err := s.repo.Create(ctx, review); err != nil {
+	// Step 7: Save review and update barber stats in a transaction
+	if err := s.saveReviewWithStatsUpdate(ctx, review); err != nil {
 		return nil, err
 	}
 
-	// Step 9: Invalidate barber cache
+	// Step 8: Invalidate barber cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, booking.BarberID)
 	}
 
 	return s.toReviewResponse(review, &customerID), nil
+}
+
+// saveReviewWithStatsUpdate saves review and updates barber stats atomically
+func (s *ReviewService) saveReviewWithStatsUpdate(ctx context.Context, review *models.Review) error {
+	// Start transaction
+	tx, err := s.repo.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	// Ensure rollback on error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Create review within transaction
+	if err = s.repo.CreateTx(ctx, tx, review); err != nil {
+		return err
+	}
+
+	// Update barber rating stats within same transaction
+	// Note: Stats only count published/approved reviews, so this ensures
+	// the barber's denormalized stats stay in sync
+	if err = s.barberRepo.UpdateRatingStatsTx(ctx, tx, review.BarberID); err != nil {
+		return fmt.Errorf("failed to update barber stats: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ========================================================================

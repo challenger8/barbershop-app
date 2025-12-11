@@ -33,24 +33,6 @@ func NewBookingHandler(bookingService *services.BookingService) *BookingHandler 
 // HELPER FUNCTIONS
 // ========================================================================
 
-// buildBookingFilters builds BookingFilters from query parameters
-func buildBookingFilters(c *gin.Context) repository.BookingFilters {
-	return repository.BookingFilters{
-		Status:        c.Query("status"),
-		PaymentStatus: c.Query("payment_status"),
-		BookingSource: c.Query("booking_source"),
-		Search:        c.Query("search"),
-		StartDateFrom: ParseTimeQuery(c, "start_date_from"),
-		StartDateTo:   ParseTimeQuery(c, "start_date_to"),
-		CreatedFrom:   ParseTimeQuery(c, "created_from"),
-		CreatedTo:     ParseTimeQuery(c, "created_to"),
-		SortBy:        c.Query("sort_by"),
-		Order:         c.Query("order"),
-		Limit:         ParseIntQuery(c, "limit", 50),
-		Offset:        ParseIntQuery(c, "offset", 0),
-	}
-}
-
 // ========================================================================
 // CREATE BOOKING
 // ========================================================================
@@ -226,10 +208,13 @@ func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 	}
 
 	// Build filters from query params
-	filters := buildBookingFilters(c)
+	filters, ok := BindQuery[repository.BookingFilters](c)
+	if !ok {
+		return
+	}
 
 	// Get bookings
-	bookings, err := h.bookingService.GetCustomerBookings(c.Request.Context(), userID, filters)
+	bookings, err := h.bookingService.GetCustomerBookings(c.Request.Context(), userID, *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch bookings", err)
 		return
@@ -272,7 +257,10 @@ func (h *BookingHandler) GetBarberBookings(c *gin.Context) {
 	}
 
 	// Build filters from query params
-	filters := buildBookingFilters(c)
+	filters, ok := BindQuery[repository.BookingFilters](c)
+	if !ok {
+		return
+	}
 	// Default sort for barber view is by scheduled time
 	if c.Query("sort_by") == "" {
 		filters.SortBy = "scheduled_start_time"
@@ -280,7 +268,7 @@ func (h *BookingHandler) GetBarberBookings(c *gin.Context) {
 	}
 
 	// Get bookings
-	bookings, err := h.bookingService.GetBarberBookings(c.Request.Context(), barberID, filters)
+	bookings, err := h.bookingService.GetBarberBookings(c.Request.Context(), barberID, *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch bookings", err)
 		return

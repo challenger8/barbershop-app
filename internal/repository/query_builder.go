@@ -142,11 +142,67 @@ func (qb *QueryBuilder) WhereNotNull(column string) *QueryBuilder {
 // ========================================================================
 // SEARCH OPERATIONS
 // ========================================================================
+var AllowedSearchColumns = map[string]bool{
+	// User columns
+	"u.name":  true,
+	"u.email": true,
+
+	// Barber columns
+	"b.shop_name":     true,
+	"b.description":   true,
+	"b.address":       true,
+	"b.city":          true,
+	"b.state":         true,
+	"b.country":       true,
+	"b.specialties":   true,
+	"b.business_name": true,
+
+	// Service columns
+	"s.name":                 true,
+	"s.short_description":    true,
+	"s.detailed_description": true,
+	"s.tags":                 true,
+	"s.search_keywords":      true,
+
+	// Booking columns
+	"booking_number":   true,
+	"customer_name":    true,
+	"customer_email":   true,
+	"notes":            true,
+	"special_requests": true,
+
+	// Review columns
+	"r.title":   true,
+	"r.comment": true,
+
+	// Notification columns
+	"n.title":   true,
+	"n.message": true,
+}
+
+// isAllowedSearchColumn checks if a column is in the whitelist
+func isAllowedSearchColumn(column string) bool {
+	return AllowedSearchColumns[column]
+}
 
 // Search adds LIKE conditions across multiple columns
 // Automatically handles the repetitive search pattern
+// Only whitelisted columns are allowed for security
 func (qb *QueryBuilder) Search(columns []string, searchTerm string) *QueryBuilder {
 	if searchTerm == "" || len(columns) == 0 {
+		return qb
+	}
+
+	// Filter to only allowed columns (security)
+	validColumns := make([]string, 0, len(columns))
+	for _, col := range columns {
+		if isAllowedSearchColumn(col) {
+			validColumns = append(validColumns, col)
+		}
+		// Skip invalid columns silently (don't expose column names in errors)
+	}
+
+	if len(validColumns) == 0 {
 		return qb
 	}
 
@@ -154,8 +210,8 @@ func (qb *QueryBuilder) Search(columns []string, searchTerm string) *QueryBuilde
 	searchPattern := "%" + strings.ToLower(searchTerm) + "%"
 
 	// Build OR conditions for each column
-	searchConditions := make([]string, len(columns))
-	for i, col := range columns {
+	searchConditions := make([]string, len(validColumns))
+	for i, col := range validColumns {
 		searchConditions[i] = fmt.Sprintf("LOWER(%s) LIKE $%d", col, qb.argCount)
 		qb.args = append(qb.args, searchPattern)
 		qb.argCount++
@@ -168,15 +224,28 @@ func (qb *QueryBuilder) Search(columns []string, searchTerm string) *QueryBuilde
 }
 
 // SearchILike adds case-insensitive search for JSONB columns
+// Only whitelisted columns are allowed for security
 func (qb *QueryBuilder) SearchILike(columns []string, searchTerm string) *QueryBuilder {
 	if searchTerm == "" || len(columns) == 0 {
 		return qb
 	}
 
+	// Filter to only allowed columns (security)
+	validColumns := make([]string, 0, len(columns))
+	for _, col := range columns {
+		if isAllowedSearchColumn(col) {
+			validColumns = append(validColumns, col)
+		}
+	}
+
+	if len(validColumns) == 0 {
+		return qb
+	}
+
 	searchPattern := "%" + searchTerm + "%"
 
-	searchConditions := make([]string, len(columns))
-	for i, col := range columns {
+	searchConditions := make([]string, len(validColumns))
+	for i, col := range validColumns {
 		searchConditions[i] = fmt.Sprintf("%s::text ILIKE $%d", col, qb.argCount)
 		qb.args = append(qb.args, searchPattern)
 		qb.argCount++

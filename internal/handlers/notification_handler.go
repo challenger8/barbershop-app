@@ -34,36 +34,7 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 // ========================================================================
 
 // buildNotificationFilters builds NotificationFilters from query parameters
-func buildNotificationFilters(c *gin.Context) repository.NotificationFilters {
-	filters := repository.NotificationFilters{
-		Type:              c.Query("type"),
-		Status:            c.Query("status"),
-		Priority:          c.Query("priority"),
-		Channel:           c.Query("channel"),
-		RelatedEntityType: c.Query("related_entity_type"),
-		RelatedEntityID:   ParseIntQuery(c, "related_entity_id", 0),
-		Search:            c.Query("search"),
-		SortBy:            c.Query("sort_by"),
-		Order:             c.Query("order"),
-		Limit:             ParseIntQuery(c, "limit", 50),
-		Offset:            ParseIntQuery(c, "offset", 0),
-		CreatedFrom:       ParseTimeQuery(c, "created_from"),
-		CreatedTo:         ParseTimeQuery(c, "created_to"),
-	}
 
-	// Boolean filters
-	if isRead := ParseBoolQuery(c, "is_read"); isRead != nil {
-		filters.IsRead = isRead
-	}
-	if isUnread := ParseBoolQuery(c, "is_unread"); isUnread != nil {
-		filters.IsUnread = isUnread
-	}
-	if includeExpired := ParseBoolQuery(c, "include_expired"); includeExpired != nil {
-		filters.IncludeExpired = *includeExpired
-	}
-
-	return filters
-}
 
 // ========================================================================
 // GET MY NOTIFICATIONS
@@ -95,9 +66,12 @@ func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
 		return
 	}
 
-	filters := buildNotificationFilters(c)
+	filters, ok := BindQuery[repository.NotificationFilters](c)
+if !ok {
+	return
+}
 
-	notifications, err := h.notificationService.GetUserNotifications(c.Request.Context(), userID, filters)
+	notifications, err := h.notificationService.GetUserNotifications(c.Request.Context(), userID, *filters)
 	if err != nil {
 		RespondInternalError(c, "fetch notifications", err)
 		return

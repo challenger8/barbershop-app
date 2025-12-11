@@ -34,47 +34,47 @@ func NewNotificationRepository(db *sqlx.DB) *NotificationRepository {
 // NotificationFilters represents filter options for notification queries
 type NotificationFilters struct {
 	// Identity filters
-	UserID int
+	UserID int `form:"user_id"`
 
 	// Type filters
-	Type  string   // Single type
-	Types []string // Multiple types (OR)
+	Type  string   `form:"type"`
+	Types []string `form:"types"`
 
 	// Status filters
-	Status   string   // Single status
-	Statuses []string // Multiple statuses (OR)
+	Status   string   `form:"status"`
+	Statuses []string `form:"statuses"`
 
 	// Priority filters
-	Priority   string
-	Priorities []string
+	Priority   string   `form:"priority"`
+	Priorities []string `form:"priorities"`
 
 	// Channel filters
-	Channel string // app, email, sms, push
+	Channel string `form:"channel"`
 
 	// Read status
-	IsRead   *bool
-	IsUnread *bool
+	IsRead   *bool `form:"is_read"`
+	IsUnread *bool `form:"is_unread"`
 
 	// Related entity filters
-	RelatedEntityType string // booking, payment, review
-	RelatedEntityID   int
+	RelatedEntityType string `form:"related_entity_type"`
+	RelatedEntityID   int    `form:"related_entity_id"`
 
 	// Date range filters
-	CreatedFrom  time.Time
-	CreatedTo    time.Time
-	ScheduledFor time.Time
+	CreatedFrom  time.Time `form:"created_from" time_format:"2006-01-02T15:04:05Z07:00"`
+	CreatedTo    time.Time `form:"created_to" time_format:"2006-01-02T15:04:05Z07:00"`
+	ScheduledFor time.Time `form:"scheduled_for" time_format:"2006-01-02T15:04:05Z07:00"`
 
 	// Search
-	Search string // Search in title, message
+	Search string `form:"search"`
 
 	// Expired filter
-	IncludeExpired bool
+	IncludeExpired bool `form:"include_expired"`
 
 	// Sorting and pagination
-	SortBy string // created_at, priority, scheduled_for
-	Order  string // ASC or DESC
-	Limit  int
-	Offset int
+	SortBy string `form:"sort_by"`
+	Order  string `form:"order"`
+	Limit  int    `form:"limit,default=50"`
+	Offset int    `form:"offset,default=0"`
 }
 
 // NotificationStats represents notification statistics
@@ -147,7 +147,10 @@ func IsValidNotificationStatus(status string) bool {
 func IsValidNotificationType(notifType string) bool {
 	return IsValidValue(notifType, ValidNotificationTypes)
 }
-
+// IsValidNotificationChannel checks if a channel is valid
+func IsValidNotificationChannel(channel string) bool {
+	return IsValidValue(channel, ValidNotificationChannels)
+}
 // ========================================================================
 // CREATE OPERATIONS
 // ========================================================================

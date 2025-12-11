@@ -111,20 +111,20 @@ func TestQueryBuilder_WhereNull(t *testing.T) {
 }
 
 func TestQueryBuilder_Search(t *testing.T) {
-	qb := repository.NewQueryBuilder("SELECT * FROM services")
+	qb := repository.NewQueryBuilder("SELECT * FROM services s")
 	query, args := qb.
-		Search([]string{"name", "description", "keywords"}, "haircut").
+		Search([]string{"s.name", "s.short_description", "s.detailed_description"}, "haircut").
 		Build()
 
-	// Query should have LIKE conditions for all columns
-	if !strings.Contains(query, "LOWER(name) LIKE") {
-		t.Error("Expected query to contain LOWER(name) LIKE")
+	// Query should have LIKE conditions for all whitelisted columns
+	if !strings.Contains(query, "LOWER(s.name) LIKE") {
+		t.Error("Expected query to contain LOWER(s.name) LIKE")
 	}
-	if !strings.Contains(query, "LOWER(description) LIKE") {
-		t.Error("Expected query to contain LOWER(description) LIKE")
+	if !strings.Contains(query, "LOWER(s.short_description) LIKE") {
+		t.Error("Expected query to contain LOWER(s.short_description) LIKE")
 	}
-	if !strings.Contains(query, "LOWER(keywords) LIKE") {
-		t.Error("Expected query to contain LOWER(keywords) LIKE")
+	if !strings.Contains(query, "LOWER(s.detailed_description) LIKE") {
+		t.Error("Expected query to contain LOWER(s.detailed_description) LIKE")
 	}
 
 	// Should have 3 args with wildcards
