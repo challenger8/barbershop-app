@@ -67,6 +67,11 @@ type ReviewFilters struct {
 	Order  string `form:"order"`
 	Limit  int    `form:"limit,default=50"`
 	Offset int    `form:"offset,default=0"`
+
+	// Relation loading flags (prevents N+1 queries)
+	IncludeCustomer bool `form:"include_customer"`
+	IncludeBarber   bool `form:"include_barber"`
+	IncludeBooking  bool `form:"include_booking"`
 }
 
 // ReviewStats represents review statistics
@@ -377,7 +382,143 @@ func (r *ReviewRepository) FindAll(ctx context.Context, filters ReviewFilters) (
 
 	return reviews, nil
 }
+// ========================================================================
+// READ OPERATIONS - FindAll with Relations (prevents N+1 queries)
+// ========================================================================
 
+// ReviewWithRelations represents a review with optional loaded relations
+type ReviewWithRelations struct {
+	models.Review
+	CustomerName  *string `db:"customer_name"`
+	CustomerEmail *string `db:"customer_email"`
+	BarberName    *string `db:"barber_shop_name"`
+	BarberCity    *string `db:"barber_city"`
+	BookingNumber *string `db:"booking_number"`
+	ServiceName   *string `db:"service_name"`
+}
+
+// FindAllWithRelations retrieves reviews with optional relation loading
+// Use this instead of FindAll when you need customer/barber/booking info
+func (r *ReviewRepository) FindAllWithRelations(ctx context.Context, filters ReviewFilters) ([]ReviewWithRelations, error) {
+	// Build SELECT columns
+	selectCols := `r.*`
+	joins := ""
+
+	if filters.IncludeCustomer {
+		selectCols += `, u.name as customer_name, u.email as customer_email`
+		joins += ` LEFT JOIN users u ON r.customer_id = u.id`
+	}
+
+	if filters.IncludeBarber {
+		selectCols += `, b.shop_name as barber_shop_name, b.city as barber_city`
+		joins += ` LEFT JOIN barbers b ON r.barber_id = b.id`
+	}
+
+	if filters.IncludeBooking {
+		selectCols += `, bk.booking_number as booking_number, bk.service_name as service_name`
+		joins += ` LEFT JOIN bookings bk ON r.booking_id = bk.id`
+	}
+
+	// Base query
+	query := fmt.Sprintf(`SELECT %s FROM reviews r%s WHERE 1=1`, selectCols, joins)
+	args := []interface{}{}
+	argCount := 1
+
+	// Apply filters (same as FindAll)
+	if filters.CustomerID > 0 {
+		query += fmt.Sprintf(" AND r.customer_id = $%d", argCount)
+		args = append(args, filters.CustomerID)
+		argCount++
+	}
+
+	if filters.BarberID > 0 {
+		query += fmt.Sprintf(" AND r.barber_id = $%d", argCount)
+		args = append(args, filters.BarberID)
+		argCount++
+	}
+
+	if filters.BookingID > 0 {
+		query += fmt.Sprintf(" AND r.booking_id = $%d", argCount)
+		args = append(args, filters.BookingID)
+		argCount++
+	}
+
+	if filters.MinRating > 0 {
+		query += fmt.Sprintf(" AND r.overall_rating >= $%d", argCount)
+		args = append(args, filters.MinRating)
+		argCount++
+	}
+
+	if filters.MaxRating > 0 {
+		query += fmt.Sprintf(" AND r.overall_rating <= $%d", argCount)
+		args = append(args, filters.MaxRating)
+		argCount++
+	}
+
+	if filters.ModerationStatus != "" {
+		query += fmt.Sprintf(" AND r.moderation_status = $%d", argCount)
+		args = append(args, filters.ModerationStatus)
+		argCount++
+	}
+
+	if filters.IsPublished != nil {
+		query += fmt.Sprintf(" AND r.is_published = $%d", argCount)
+		args = append(args, *filters.IsPublished)
+		argCount++
+	}
+
+	if filters.IsVerified != nil {
+		query += fmt.Sprintf(" AND r.is_verified = $%d", argCount)
+		args = append(args, *filters.IsVerified)
+		argCount++
+	}
+
+	if filters.Search != "" {
+		query += fmt.Sprintf(" AND (r.title ILIKE $%d OR r.comment ILIKE $%d)", argCount, argCount+1)
+		searchPattern := "%" + filters.Search + "%"
+		args = append(args, searchPattern, searchPattern)
+		argCount += 2
+	}
+
+	// Sorting
+	orderBy := "r.created_at DESC"
+	if filters.SortBy != "" {
+		order := "DESC"
+		if filters.Order == "ASC" || filters.Order == "asc" {
+			order = "ASC"
+		}
+		switch filters.SortBy {
+		case "created_at":
+			orderBy = fmt.Sprintf("r.created_at %s", order)
+		case "overall_rating":
+			orderBy = fmt.Sprintf("r.overall_rating %s", order)
+		case "helpful_votes":
+			orderBy = fmt.Sprintf("r.helpful_votes %s", order)
+		}
+	}
+	query += " ORDER BY " + orderBy
+
+	// Pagination
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+	offset := 0
+	if filters.Offset > 0 {
+		offset = filters.Offset
+	}
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
+	args = append(args, limit, offset)
+
+	// Execute query
+	var reviews []ReviewWithRelations
+	err := r.db.SelectContext(ctx, &reviews, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find reviews with relations: %w", err)
+	}
+
+	return reviews, nil
+}
 // ========================================================================
 // READ OPERATIONS - Specific Queries
 // ========================================================================

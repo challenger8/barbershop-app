@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"barber-booking-system/internal/config"
 	"barber-booking-system/internal/models"
 )
 
@@ -18,11 +19,10 @@ func TestNotification_Creation(t *testing.T) {
 		UserID:   100,
 		Title:    "Test Notification",
 		Message:  "This is a test message",
-		Type:     "booking_confirmation",
-		Status:   "pending",
-		Priority: "normal",
+		Type:     config.NotificationTypeBookingConfirmation,
+		Status:   config.NotificationStatusPending,
+		Priority: config.NotificationPriorityNormal,
 	}
-
 	if notification.UserID != 100 {
 		t.Errorf("Expected UserID 100, got %d", notification.UserID)
 	}
@@ -170,7 +170,12 @@ func TestNotification_DataField(t *testing.T) {
 }
 
 func TestNotification_PriorityLevels(t *testing.T) {
-	priorities := []string{"low", "normal", "high", "urgent"}
+	priorities := []string{
+		config.NotificationPriorityLow,
+		config.NotificationPriorityNormal,
+		config.NotificationPriorityHigh,
+		config.NotificationPriorityUrgent,
+	}
 
 	for _, priority := range priorities {
 		notification := &models.Notification{
@@ -190,7 +195,13 @@ func TestNotification_PriorityLevels(t *testing.T) {
 }
 
 func TestNotification_StatusTransitions(t *testing.T) {
-	statuses := []string{"pending", "sent", "delivered", "read", "failed"}
+	statuses := []string{
+		config.NotificationStatusPending,
+		config.NotificationStatusSent,
+		config.NotificationStatusDelivered,
+		config.NotificationStatusRead,
+		config.NotificationStatusFailed,
+	}
 
 	for _, status := range statuses {
 		notification := &models.Notification{
@@ -210,20 +221,20 @@ func TestNotification_StatusTransitions(t *testing.T) {
 
 func TestNotification_Types(t *testing.T) {
 	notificationTypes := []string{
-		"booking_confirmation",
-		"booking_reminder",
-		"booking_cancelled",
-		"booking_rescheduled",
-		"booking_completed",
-		"review_request",
-		"review_response",
-		"payment_received",
-		"payment_failed",
-		"account_welcome",
-		"account_verification",
-		"password_reset",
-		"promotion",
-		"system_alert",
+		config.NotificationTypeBookingConfirmation,
+		config.NotificationTypeBookingReminder,
+		config.NotificationTypeBookingCancelled,
+		config.NotificationTypeBookingRescheduled,
+		config.NotificationTypeBookingCompleted,
+		config.NotificationTypeReviewRequest,
+		config.NotificationTypeReviewResponse,
+		config.NotificationTypePaymentReceived,
+		config.NotificationTypePaymentFailed,
+		config.NotificationTypeAccountWelcome,
+		config.NotificationTypeAccountVerification,
+		config.NotificationTypePasswordReset,
+		config.NotificationTypePromotion,
+		config.NotificationTypeSystemAlert,
 	}
 
 	for _, notifType := range notificationTypes {

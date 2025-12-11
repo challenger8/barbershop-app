@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"barber-booking-system/internal/config"
@@ -35,7 +36,6 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 
 // buildNotificationFilters builds NotificationFilters from query parameters
 
-
 // ========================================================================
 // GET MY NOTIFICATIONS
 // ========================================================================
@@ -67,9 +67,9 @@ func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
 	}
 
 	filters, ok := BindQuery[repository.NotificationFilters](c)
-if !ok {
-	return
-}
+	if !ok {
+		return
+	}
 
 	notifications, err := h.notificationService.GetUserNotifications(c.Request.Context(), userID, *filters)
 	if err != nil {
@@ -396,16 +396,21 @@ func (h *NotificationHandler) SendBookingNotification(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	switch req.NotificationType {
-	case "booking_confirmation":
+	case config.NotificationTypeBookingConfirmation:
 		err = h.notificationService.SendBookingConfirmation(ctx, req.BookingID)
-	case "booking_reminder":
+	case config.NotificationTypeBookingReminder:
 		err = h.notificationService.SendBookingReminder(ctx, req.BookingID)
-	case "booking_cancelled":
+	case config.NotificationTypeBookingCancelled:
 		err = h.notificationService.SendBookingCancellation(ctx, req.BookingID, req.CustomMessage)
-	case "review_request":
+	case config.NotificationTypeReviewRequest:
 		err = h.notificationService.SendReviewRequest(ctx, req.BookingID)
 	default:
-		RespondBadRequest(c, "Invalid notification type", "Supported types: booking_confirmation, booking_reminder, booking_cancelled, review_request")
+		RespondBadRequest(c, "Invalid notification type",
+			fmt.Sprintf("Supported types: %s, %s, %s, %s",
+				config.NotificationTypeBookingConfirmation,
+				config.NotificationTypeBookingReminder,
+				config.NotificationTypeBookingCancelled,
+				config.NotificationTypeReviewRequest))
 		return
 	}
 

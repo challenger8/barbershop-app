@@ -48,6 +48,9 @@ type BookingFilters struct {
 	Order         string    `form:"order"`
 	Limit         int       `form:"limit,default=50"`
 	Offset        int       `form:"offset,default=0"`
+
+	IncludeCustomer bool `form:"include_customer"`
+	IncludeBarber   bool `form:"include_barber"`
 }
 
 // BookingHistoryFilters for audit trail queries
@@ -363,6 +366,157 @@ func (r *BookingRepository) FindAll(ctx context.Context, filters BookingFilters)
 	err := r.db.SelectContext(ctx, &bookings, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find bookings: %w", err)
+	}
+
+	return bookings, nil
+}
+
+// ========================================================================
+// READ OPERATIONS - FindAll with Relations (prevents N+1 queries)
+// ========================================================================
+
+// BookingWithRelations represents a booking with optional loaded relations
+type BookingWithRelations struct {
+	models.Booking
+	CustomerName  *string `db:"customer_user_name"`
+	CustomerEmail *string `db:"customer_user_email"`
+	BarberName    *string `db:"barber_shop_name"`
+	BarberCity    *string `db:"barber_city"`
+	BarberPhone   *string `db:"barber_phone"`
+}
+
+// FindAllWithRelations retrieves bookings with optional relation loading
+// Use this instead of FindAll when you need customer/barber info
+func (r *BookingRepository) FindAllWithRelations(ctx context.Context, filters BookingFilters) ([]BookingWithRelations, error) {
+	// Build SELECT columns
+	selectCols := `bk.*`
+	joins := ""
+
+	if filters.IncludeCustomer {
+		selectCols += `, u.name as customer_user_name, u.email as customer_user_email`
+		joins += ` LEFT JOIN users u ON bk.customer_id = u.id`
+	}
+
+	if filters.IncludeBarber {
+		selectCols += `, b.shop_name as barber_shop_name, b.city as barber_city, b.phone as barber_phone`
+		joins += ` LEFT JOIN barbers b ON bk.barber_id = b.id`
+	}
+
+	// Base query
+	query := fmt.Sprintf(`SELECT %s FROM bookings bk%s WHERE 1=1`, selectCols, joins)
+	args := []interface{}{}
+	argCount := 1
+
+	// Apply filters (same as FindAll)
+	if filters.CustomerID > 0 {
+		query += fmt.Sprintf(" AND bk.customer_id = $%d", argCount)
+		args = append(args, filters.CustomerID)
+		argCount++
+	}
+
+	if filters.BarberID > 0 {
+		query += fmt.Sprintf(" AND bk.barber_id = $%d", argCount)
+		args = append(args, filters.BarberID)
+		argCount++
+	}
+
+	if filters.Status != "" {
+		query += fmt.Sprintf(" AND bk.status = $%d", argCount)
+		args = append(args, filters.Status)
+		argCount++
+	}
+
+	if len(filters.Statuses) > 0 {
+		placeholders := make([]string, len(filters.Statuses))
+		for i, status := range filters.Statuses {
+			placeholders[i] = fmt.Sprintf("$%d", argCount)
+			args = append(args, status)
+			argCount++
+		}
+		query += fmt.Sprintf(" AND bk.status IN (%s)", strings.Join(placeholders, ", "))
+	}
+
+	if filters.PaymentStatus != "" {
+		query += fmt.Sprintf(" AND bk.payment_status = $%d", argCount)
+		args = append(args, filters.PaymentStatus)
+		argCount++
+	}
+
+	if !filters.StartDateFrom.IsZero() {
+		query += fmt.Sprintf(" AND bk.scheduled_start_time >= $%d", argCount)
+		args = append(args, filters.StartDateFrom)
+		argCount++
+	}
+
+	if !filters.StartDateTo.IsZero() {
+		query += fmt.Sprintf(" AND bk.scheduled_start_time <= $%d", argCount)
+		args = append(args, filters.StartDateTo)
+		argCount++
+	}
+
+	if !filters.CreatedFrom.IsZero() {
+		query += fmt.Sprintf(" AND bk.created_at >= $%d", argCount)
+		args = append(args, filters.CreatedFrom)
+		argCount++
+	}
+
+	if !filters.CreatedTo.IsZero() {
+		query += fmt.Sprintf(" AND bk.created_at <= $%d", argCount)
+		args = append(args, filters.CreatedTo)
+		argCount++
+	}
+
+	if filters.Search != "" {
+		query += fmt.Sprintf(" AND (bk.booking_number ILIKE $%d OR bk.customer_name ILIKE $%d OR bk.customer_email ILIKE $%d)",
+			argCount, argCount+1, argCount+2)
+		searchPattern := "%" + filters.Search + "%"
+		args = append(args, searchPattern, searchPattern, searchPattern)
+		argCount += 3
+	}
+
+	if filters.BookingSource != "" {
+		query += fmt.Sprintf(" AND bk.booking_source = $%d", argCount)
+		args = append(args, filters.BookingSource)
+		argCount++
+	}
+
+	// Sorting
+	orderBy := "bk.created_at DESC"
+	if filters.SortBy != "" {
+		order := "DESC"
+		if filters.Order == "ASC" || filters.Order == "asc" {
+			order = "ASC"
+		}
+		switch filters.SortBy {
+		case "scheduled_start_time":
+			orderBy = fmt.Sprintf("bk.scheduled_start_time %s", order)
+		case "total_price":
+			orderBy = fmt.Sprintf("bk.total_price %s", order)
+		case "created_at":
+			orderBy = fmt.Sprintf("bk.created_at %s", order)
+		case "status":
+			orderBy = fmt.Sprintf("bk.status %s", order)
+		}
+	}
+	query += " ORDER BY " + orderBy
+
+	// Pagination
+	limit := 50
+	if filters.Limit > 0 {
+		limit = filters.Limit
+	}
+	offset := 0
+	if filters.Offset > 0 {
+		offset = filters.Offset
+	}
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
+	args = append(args, limit, offset)
+
+	// Execute query
+	var bookings []BookingWithRelations
+	err := r.db.SelectContext(ctx, &bookings, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find bookings with relations: %w", err)
 	}
 
 	return bookings, nil
