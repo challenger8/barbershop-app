@@ -7,6 +7,7 @@ import (
 
 	"barber-booking-system/internal/cache"
 	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/logger"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 )
@@ -177,34 +178,74 @@ func (s *ReviewService) toReviewResponse(review *models.Review, userID *int) *Re
 // CreateReview creates a new review for a completed booking
 // CreateReview creates a new review for a completed booking
 // Uses a transaction to ensure review creation and barber stats update are atomic
+// CreateReview creates a new review for a completed booking
 func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewRequest, customerID int) (*ReviewResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Creating review").
+		Int("booking_id", req.BookingID).
+		Int("customer_id", customerID).
+		Int("rating", req.OverallRating).
+		Send()
+
 	// Step 1: Validate rating
 	if err := validateRating(req.OverallRating); err != nil {
+		log.Warn("Rating validation failed").
+			Int("rating", req.OverallRating).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Step 2: Validate comment if provided
 	if err := validateComment(req.Comment); err != nil {
+		log.Warn("Comment validation failed").
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Step 3: Get and validate booking
 	booking, err := s.bookingRepo.FindByID(ctx, req.BookingID)
 	if err != nil {
+		log.Warn("Booking not found for review").
+			Int("booking_id", req.BookingID).
+			Err(err).
+			Send()
 		return nil, fmt.Errorf("booking not found: %w", err)
 	}
 
 	// Step 4: Verify booking is completed
 	if booking.Status != config.BookingStatusCompleted {
+		log.Warn("Cannot review non-completed booking").
+			Int("booking_id", req.BookingID).
+			Str("status", booking.Status).
+			Send()
 		return nil, repository.ErrBookingNotCompleted
 	}
 
 	// Step 5: Verify customer owns the booking
 	if booking.CustomerID == nil || *booking.CustomerID != customerID {
+		log.Warn("Customer does not own booking").
+			Int("booking_id", req.BookingID).
+			Int("customer_id", customerID).
+			Send()
 		return nil, fmt.Errorf("you can only review your own bookings")
 	}
 
-	// Step 6: Build review model
+	// Step 6: Check for existing review
+	exists, err := s.repo.ExistsByBookingID(ctx, req.BookingID)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		log.Warn("Review already exists for booking").
+			Int("booking_id", req.BookingID).
+			Send()
+		return nil, repository.ErrDuplicateReview
+	}
+
+	// Step 7: Build review model
 	review := &models.Review{
 		BookingID:  req.BookingID,
 		CustomerID: &customerID,
@@ -229,20 +270,30 @@ func (s *ReviewService) CreateReview(ctx context.Context, req CreateReviewReques
 
 		Images: req.Images,
 
-		IsVerified:       true, // Verified because it's linked to a completed booking
+		IsVerified:       true,
 		IsPublished:      false,
 		ModerationStatus: config.ReviewModerationPending,
 	}
 
-	// Step 7: Save review and update barber stats in a transaction
-	if err := s.saveReviewWithStatsUpdate(ctx, review); err != nil {
+	// Step 8: Save review
+	if err := s.repo.Create(ctx, review); err != nil {
+		log.Error(err).
+			Int("booking_id", req.BookingID).
+			Msg("Failed to create review")
 		return nil, err
 	}
 
-	// Step 8: Invalidate barber cache
+	// Step 9: Invalidate barber cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, booking.BarberID)
 	}
+
+	log.Info("Review created successfully").
+		Int("review_id", review.ID).
+		Int("booking_id", req.BookingID).
+		Int("barber_id", booking.BarberID).
+		Int("rating", req.OverallRating).
+		Send()
 
 	return s.toReviewResponse(review, &customerID), nil
 }
@@ -359,19 +410,38 @@ func (s *ReviewService) GetPendingReviews(ctx context.Context, filters repositor
 
 // UpdateReview updates a review (only by author and before moderation)
 func (s *ReviewService) UpdateReview(ctx context.Context, id int, req UpdateReviewRequest, customerID int) (*ReviewResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Updating review").
+		Int("review_id", id).
+		Int("customer_id", customerID).
+		Send()
+
 	// Get existing review
 	review, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Review not found").
+			Int("review_id", id).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Verify ownership
 	if review.CustomerID == nil || *review.CustomerID != customerID {
+		log.Warn("Unauthorized review update attempt").
+			Int("review_id", id).
+			Int("customer_id", customerID).
+			Send()
 		return nil, fmt.Errorf("you can only edit your own reviews")
 	}
 
 	// Check if review can be edited
 	if review.ModerationStatus != config.ReviewModerationPending {
+		log.Warn("Cannot edit moderated review").
+			Int("review_id", id).
+			Str("moderation_status", review.ModerationStatus).
+			Send()
 		return nil, repository.ErrCannotModifyReview
 	}
 
@@ -430,22 +500,47 @@ func (s *ReviewService) UpdateReview(ctx context.Context, id int, req UpdateRevi
 
 	// Save changes
 	if err := s.repo.Update(ctx, review); err != nil {
+		log.Error(err).
+			Int("review_id", id).
+			Msg("Failed to update review")
 		return nil, err
 	}
+
+	log.Info("Review updated successfully").
+		Int("review_id", id).
+		Int("barber_id", review.BarberID).
+		Send()
 
 	return s.toReviewResponse(review, &customerID), nil
 }
 
 // ModerateReview updates the moderation status (admin only)
 func (s *ReviewService) ModerateReview(ctx context.Context, id int, req ModerateReviewRequest, moderatorID int) (*ReviewResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Info("Moderating review").
+		Int("review_id", id).
+		Int("moderator_id", moderatorID).
+		Str("new_status", req.Status).
+		Send()
+
 	// Get existing review
 	review, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Review not found for moderation").
+			Int("review_id", id).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
+	oldStatus := review.ModerationStatus
+
 	// Update moderation status
 	if err := s.repo.UpdateModerationStatus(ctx, id, req.Status, moderatorID, req.Notes); err != nil {
+		log.Error(err).
+			Int("review_id", id).
+			Msg("Failed to moderate review")
 		return nil, err
 	}
 
@@ -453,6 +548,13 @@ func (s *ReviewService) ModerateReview(ctx context.Context, id int, req Moderate
 	if req.Status == config.ReviewModerationApproved && s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, review.BarberID)
 	}
+
+	log.Info("Review moderated successfully").
+		Int("review_id", id).
+		Str("old_status", oldStatus).
+		Str("new_status", req.Status).
+		Int("barber_id", review.BarberID).
+		Send()
 
 	// Fetch updated review
 	return s.GetReviewByID(ctx, id, nil)
@@ -502,21 +604,40 @@ func (s *ReviewService) VoteReview(ctx context.Context, id int, req VoteReviewRe
 
 // DeleteReview soft deletes a review
 func (s *ReviewService) DeleteReview(ctx context.Context, id int, userID int, isAdmin bool) error {
+	log := logger.FromContext(ctx)
+
+	log.Info("Deleting review").
+		Int("review_id", id).
+		Int("user_id", userID).
+		Bool("is_admin", isAdmin).
+		Send()
+
 	// Get review
 	review, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Review not found for deletion").
+			Int("review_id", id).
+			Err(err).
+			Send()
 		return err
 	}
 
 	// Check authorization
 	if !isAdmin {
 		if review.CustomerID == nil || *review.CustomerID != userID {
+			log.Warn("Unauthorized review deletion attempt").
+				Int("review_id", id).
+				Int("user_id", userID).
+				Send()
 			return fmt.Errorf("you can only delete your own reviews")
 		}
 	}
 
 	// Soft delete
 	if err := s.repo.Delete(ctx, id); err != nil {
+		log.Error(err).
+			Int("review_id", id).
+			Msg("Failed to delete review")
 		return err
 	}
 
@@ -524,6 +645,11 @@ func (s *ReviewService) DeleteReview(ctx context.Context, id int, userID int, is
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, review.BarberID)
 	}
+
+	log.Info("Review deleted successfully").
+		Int("review_id", id).
+		Int("barber_id", review.BarberID).
+		Send()
 
 	return nil
 }

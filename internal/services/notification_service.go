@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/logger"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 )
@@ -133,57 +134,62 @@ func getDefaultChannels(notifType string) []string {
 
 // CreateNotification creates a new notification
 func (s *NotificationService) CreateNotification(ctx context.Context, req CreateNotificationRequest) (*NotificationResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Creating notification").
+		Int("user_id", req.UserID).
+		Str("type", req.Type).
+		Str("priority", req.Priority).
+		Send()
+
+	// Validate notification type
 	if !repository.IsValidNotificationType(req.Type) {
+		log.Warn("Invalid notification type").
+			Str("type", req.Type).
+			Send()
 		return nil, repository.ErrInvalidNotificationType
 	}
 
-	// Set default channels if not provided
-	channels := req.Channels
-	if len(channels) == 0 {
-		channels = getDefaultChannels(req.Type)
-	}
-
-	// Validate channels
-	if err := validateChannels(channels); err != nil {
-		return nil, err
-	}
-
 	// Set default priority
-	priority := req.Priority
-	if priority == "" {
-		priority = config.NotificationPriorityNormal
+	if req.Priority == "" {
+		req.Priority = config.NotificationPriorityNormal
+	}
+
+	// Set default channels
+	if len(req.Channels) == 0 {
+		req.Channels = []string{config.NotificationChannelApp}
 	}
 
 	// Build notification model
 	notification := &models.Notification{
-		UserID:   req.UserID,
-		Title:    req.Title,
-		Message:  req.Message,
-		Type:     req.Type,
-		Channels: channels,
-		Status:   config.NotificationStatusPending,
-		Priority: priority,
-		Data:     req.Data,
+		UserID:            req.UserID,
+		Title:             req.Title,
+		Message:           req.Message,
+		Type:              req.Type,
+		Priority:          req.Priority,
+		Channels:          req.Channels,
+		RelatedEntityType: req.RelatedEntityType,
+		RelatedEntityID:   req.RelatedEntityID,
+		Data:              req.Data,
+		ScheduledFor:      req.ScheduledFor,
+		ExpiresAt:         req.ExpiresAt,
+		Status:            config.NotificationStatusPending,
 	}
 
-	// Set optional fields
-	if req.RelatedEntityType != nil {
-		notification.RelatedEntityType = req.RelatedEntityType
-	}
-	if req.RelatedEntityID != nil {
-		notification.RelatedEntityID = req.RelatedEntityID
-	}
-	if req.ScheduledFor != nil {
-		notification.ScheduledFor = req.ScheduledFor
-	}
-	if req.ExpiresAt != nil {
-		notification.ExpiresAt = req.ExpiresAt
-	}
-
-	// Save notification
+	// Create in database
 	if err := s.repo.Create(ctx, notification); err != nil {
+		log.Error(err).
+			Int("user_id", req.UserID).
+			Str("type", req.Type).
+			Msg("Failed to create notification")
 		return nil, fmt.Errorf("failed to create notification: %w", err)
 	}
+
+	log.Info("Notification created successfully").
+		Int("notification_id", notification.ID).
+		Int("user_id", req.UserID).
+		Str("type", req.Type).
+		Send()
 
 	return s.toNotificationResponse(notification), nil
 }
@@ -208,30 +214,64 @@ func (s *NotificationService) SendBookingReminder(ctx context.Context, bookingID
 
 // SendBookingCancellation sends a booking cancellation notification
 func (s *NotificationService) SendBookingCancellation(ctx context.Context, bookingID int, reason string) error {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Sending booking cancellation notification").
+		Int("booking_id", bookingID).
+		Send()
+
 	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
 	if err != nil {
+		log.Warn("Booking not found for cancellation notification").
+			Int("booking_id", bookingID).
+			Err(err).
+			Send()
 		return err
 	}
 
-	message := booking.BookingNumber
-	extraData := map[string]interface{}{"cancellation_reason": reason}
-
-	// Append reason to message if provided
-	if reason != "" {
-		// Override with custom message including reason
-		return s.sendBookingNotificationWithTemplateCustomMessage(
-			ctx, booking, "cancellation",
-			fmt.Sprintf("Your booking %s has been cancelled. Reason: %s", booking.BookingNumber, reason),
-			extraData, nil,
-		)
+	if booking.CustomerID == nil {
+		log.Debug("Skipping cancellation notification - no customer ID").
+			Int("booking_id", bookingID).
+			Send()
+		return nil
 	}
 
-	return s.sendBookingNotificationWithTemplate(
-		ctx, booking, "cancellation",
-		[]interface{}{message},
-		extraData,
-		nil,
-	)
+	title := "Booking Cancelled"
+	message := fmt.Sprintf("Your booking %s has been cancelled", booking.BookingNumber)
+	if reason != "" {
+		message += fmt.Sprintf(". Reason: %s", reason)
+	}
+
+	entityType := config.EntityTypeBooking
+	req := CreateNotificationRequest{
+		UserID:            *booking.CustomerID,
+		Title:             title,
+		Message:           message,
+		Type:              config.NotificationTypeBookingCancelled,
+		Priority:          config.NotificationPriorityHigh,
+		RelatedEntityType: &entityType,
+		RelatedEntityID:   &bookingID,
+		Data: map[string]interface{}{
+			"booking_number":      booking.BookingNumber,
+			"cancellation_reason": reason,
+		},
+	}
+
+	_, err = s.CreateNotification(ctx, req)
+	if err != nil {
+		log.Error(err).
+			Int("booking_id", bookingID).
+			Msg("Failed to send booking cancellation notification")
+		return err
+	}
+
+	log.Info("Booking cancellation notification sent").
+		Int("booking_id", bookingID).
+		Str("booking_number", booking.BookingNumber).
+		Int("customer_id", *booking.CustomerID).
+		Send()
+
+	return nil
 }
 
 // SendBookingRescheduled sends a booking rescheduled notification
@@ -322,13 +362,26 @@ func (s *NotificationService) sendBookingNotificationWithTemplateCustomMessage(
 
 // SendBookingConfirmation sends a booking confirmation notification
 func (s *NotificationService) SendBookingConfirmation(ctx context.Context, bookingID int) error {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Sending booking confirmation").
+		Int("booking_id", bookingID).
+		Send()
+
 	booking, err := s.bookingRepo.FindByID(ctx, bookingID)
 	if err != nil {
+		log.Warn("Booking not found for confirmation").
+			Int("booking_id", bookingID).
+			Err(err).
+			Send()
 		return err
 	}
 
 	if booking.CustomerID == nil {
-		return nil // No notification for guest bookings without user
+		log.Debug("Skipping confirmation - no customer ID").
+			Int("booking_id", bookingID).
+			Send()
+		return nil
 	}
 
 	title := "Booking Confirmed"
@@ -353,7 +406,20 @@ func (s *NotificationService) SendBookingConfirmation(ctx context.Context, booki
 	}
 
 	_, err = s.CreateNotification(ctx, req)
-	return err
+	if err != nil {
+		log.Error(err).
+			Int("booking_id", bookingID).
+			Msg("Failed to send booking confirmation")
+		return err
+	}
+
+	log.Info("Booking confirmation sent").
+		Int("booking_id", bookingID).
+		Str("booking_number", booking.BookingNumber).
+		Int("customer_id", *booking.CustomerID).
+		Send()
+
+	return nil
 }
 
 // ========================================================================

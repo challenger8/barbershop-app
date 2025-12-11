@@ -8,6 +8,7 @@ import (
 
 	"barber-booking-system/internal/cache"
 	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/logger"
 	"barber-booking-system/internal/models"
 	"barber-booking-system/internal/repository"
 
@@ -71,11 +72,44 @@ func (s *BarberService) Update(ctx context.Context, barber *models.Barber) error
 	return nil
 }
 
+type UpdateBarberRequest struct {
+	ShopName        *string            `json:"shop_name,omitempty"`
+	BusinessName    *string            `json:"business_name,omitempty"`
+	Address         *string            `json:"address,omitempty"`
+	AddressLine2    *string            `json:"address_line_2,omitempty"`
+	City            *string            `json:"city,omitempty"`
+	State           *string            `json:"state,omitempty"`
+	Country         *string            `json:"country,omitempty"`
+	PostalCode      *string            `json:"postal_code,omitempty"`
+	Phone           *string            `json:"phone,omitempty"`
+	BusinessEmail   *string            `json:"business_email,omitempty"`
+	WebsiteURL      *string            `json:"website_url,omitempty"`
+	Description     *string            `json:"description,omitempty"`
+	YearsExperience *int               `json:"years_experience,omitempty"`
+	Specialties     models.StringArray `json:"specialties,omitempty"`
+	Certifications  models.StringArray `json:"certifications,omitempty"`
+	LanguagesSpoken models.StringArray `json:"languages_spoken,omitempty"`
+	ProfileImageURL *string            `json:"profile_image_url,omitempty"`
+	CoverImageURL   *string            `json:"cover_image_url,omitempty"`
+	GalleryImages   models.StringArray `json:"gallery_images,omitempty"`
+	WorkingHours    models.JSONMap     `json:"working_hours,omitempty"`
+}
+
 // UpdateBarber is a wrapper that fetches, updates, and saves
 func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarberRequest) (*models.Barber, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Updating barber").
+		Int("barber_id", id).
+		Send()
+
 	// Fetch existing barber
 	barber, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Barber not found for update").
+			Int("barber_id", id).
+			Err(err).
+			Send()
 		return nil, fmt.Errorf("failed to fetch barber: %w", err)
 	}
 
@@ -83,14 +117,14 @@ func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarb
 	if req.ShopName != nil {
 		barber.ShopName = *req.ShopName
 	}
-	if req.BusinessName != nil {
-		barber.BusinessName = req.BusinessName
+	if req.Description != nil {
+		barber.Description = req.Description
+	}
+	if req.Specialties != nil {
+		barber.Specialties = req.Specialties
 	}
 	if req.Address != nil {
 		barber.Address = *req.Address
-	}
-	if req.AddressLine2 != nil {
-		barber.AddressLine2 = req.AddressLine2
 	}
 	if req.City != nil {
 		barber.City = *req.City
@@ -104,47 +138,24 @@ func (s *BarberService) UpdateBarber(ctx context.Context, id int, req UpdateBarb
 	if req.PostalCode != nil {
 		barber.PostalCode = *req.PostalCode
 	}
-	if req.Phone != nil {
-		barber.Phone = req.Phone
-	}
-	if req.BusinessEmail != nil {
-		barber.BusinessEmail = req.BusinessEmail
-	}
-	if req.WebsiteURL != nil {
-		barber.WebsiteURL = req.WebsiteURL
-	}
-	if req.Description != nil {
-		barber.Description = req.Description
-	}
-	if req.YearsExperience != nil {
-		barber.YearsExperience = req.YearsExperience
-	}
-	if req.Specialties != nil {
-		barber.Specialties = req.Specialties
-	}
-	if req.Certifications != nil {
-		barber.Certifications = req.Certifications
-	}
-	if req.LanguagesSpoken != nil {
-		barber.LanguagesSpoken = req.LanguagesSpoken
-	}
-	if req.ProfileImageURL != nil {
-		barber.ProfileImageURL = req.ProfileImageURL
-	}
-	if req.CoverImageURL != nil {
-		barber.CoverImageURL = req.CoverImageURL
-	}
-	if req.GalleryImages != nil {
-		barber.GalleryImages = req.GalleryImages
-	}
-	if req.WorkingHours != nil {
-		barber.WorkingHours = req.WorkingHours
-	}
 
-	// Update barber using the Update method
-	if err := s.Update(ctx, barber); err != nil {
+	// Save updates
+	if err := s.repo.Update(ctx, barber); err != nil {
+		log.Error(err).
+			Int("barber_id", id).
+			Msg("Failed to update barber")
 		return nil, fmt.Errorf("failed to update barber: %w", err)
 	}
+
+	// Invalidate cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateBarber(ctx, id)
+	}
+
+	log.Info("Barber updated successfully").
+		Int("barber_id", id).
+		Str("shop_name", barber.ShopName).
+		Send()
 
 	return barber, nil
 }
@@ -164,10 +175,33 @@ func (s *BarberService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// UpdateStatus updates barber status with cache invalidation
+// UpdateStatus updates barber status
 func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string) error {
-	err := s.repo.UpdateStatus(ctx, id, status)
+	log := logger.FromContext(ctx)
+
+	log.Info("Updating barber status").
+		Int("barber_id", id).
+		Str("new_status", status).
+		Send()
+
+	// Get current barber for logging
+	barber, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Barber not found for status update").
+			Int("barber_id", id).
+			Err(err).
+			Send()
+		return err
+	}
+
+	oldStatus := barber.Status
+
+	// Update status
+	if err := s.repo.UpdateStatus(ctx, id, status); err != nil {
+		log.Error(err).
+			Int("barber_id", id).
+			Str("new_status", status).
+			Msg("Failed to update barber status")
 		return err
 	}
 
@@ -175,6 +209,12 @@ func (s *BarberService) UpdateStatus(ctx context.Context, id int, status string)
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, id)
 	}
+
+	log.Info("Barber status updated successfully").
+		Int("barber_id", id).
+		Str("old_status", oldStatus).
+		Str("new_status", status).
+		Send()
 
 	return nil
 }
@@ -244,57 +284,43 @@ func (s *BarberService) GetAllBarbers(ctx context.Context, filters repository.Ba
 
 // CreateBarber creates a new barber (UPDATED to use DTO pattern)
 func (s *BarberService) CreateBarber(ctx context.Context, req CreateBarberRequest) (*models.Barber, error) {
-	// Validate request
-	if err := s.validateCreateRequest(req); err != nil {
-		return nil, err
-	}
+	log := logger.FromContext(ctx)
+
+	log.Debug("Creating barber").
+		Int("user_id", req.UserID).
+		Str("shop_name", req.ShopName).
+		Send()
 
 	// Build barber model from request
 	barber := &models.Barber{
-		UserID:                     req.UserID,
-		UUID:                       uuid.New().String(),
-		ShopName:                   req.ShopName,
-		BusinessName:               req.BusinessName,
-		BusinessRegistrationNumber: req.BusinessRegistrationNumber,
-		TaxID:                      req.TaxID,
-		Address:                    req.Address,
-		AddressLine2:               req.AddressLine2,
-		City:                       req.City,
-		State:                      req.State,
-		Country:                    req.Country,
-		PostalCode:                 req.PostalCode,
-		Latitude:                   req.Latitude,
-		Longitude:                  req.Longitude,
-		Phone:                      req.Phone,
-		BusinessEmail:              req.BusinessEmail,
-		WebsiteURL:                 req.WebsiteURL,
-		Description:                req.Description,
-		YearsExperience:            req.YearsExperience,
-		Specialties:                req.Specialties,
-		Certifications:             req.Certifications,
-		LanguagesSpoken:            req.LanguagesSpoken,
-		WorkingHours:               req.WorkingHours,
-		// Set defaults
-		AdvanceBookingDays:    30,
-		MinBookingNoticeHours: 2,
-		CommissionRate:        15.0,
-		PayoutMethod:          "bank_transfer",
-		Status:                "pending",
-		Rating:                0.0,
-		TotalReviews:          0,
-		TotalBookings:         0,
+		UUID:        uuid.New().String(),
+		UserID:      req.UserID,
+		ShopName:    req.ShopName,
+		Description: req.Description,
+		Specialties: req.Specialties,
+		Address:     req.Address,
+		City:        req.City,
+		State:       req.State,
+		Country:     req.Country,
+		PostalCode:  req.PostalCode,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
+		Status:      config.BarberStatusPending,
 	}
 
 	// Create in database
-	err := s.repo.Create(ctx, barber)
-	if err != nil {
+	if err := s.repo.Create(ctx, barber); err != nil {
+		log.Error(err).
+			Int("user_id", req.UserID).
+			Msg("Failed to create barber")
 		return nil, fmt.Errorf("failed to create barber: %w", err)
 	}
 
-	// Cache the new barber if cache is available
-	if s.cache != nil {
-		_ = s.cache.CacheBarber(ctx, barber.ID, barber)
-	}
+	log.Info("Barber created successfully").
+		Int("barber_id", barber.ID).
+		Str("uuid", barber.UUID).
+		Str("shop_name", barber.ShopName).
+		Send()
 
 	return barber, nil
 }
@@ -366,25 +392,3 @@ type CreateBarberRequest struct {
 }
 
 // UpdateBarberRequest represents the update barber request
-type UpdateBarberRequest struct {
-	ShopName        *string            `json:"shop_name,omitempty"`
-	BusinessName    *string            `json:"business_name,omitempty"`
-	Address         *string            `json:"address,omitempty"`
-	AddressLine2    *string            `json:"address_line_2,omitempty"`
-	City            *string            `json:"city,omitempty"`
-	State           *string            `json:"state,omitempty"`
-	Country         *string            `json:"country,omitempty"`
-	PostalCode      *string            `json:"postal_code,omitempty"`
-	Phone           *string            `json:"phone,omitempty"`
-	BusinessEmail   *string            `json:"business_email,omitempty"`
-	WebsiteURL      *string            `json:"website_url,omitempty"`
-	Description     *string            `json:"description,omitempty"`
-	YearsExperience *int               `json:"years_experience,omitempty"`
-	Specialties     models.StringArray `json:"specialties,omitempty"`
-	Certifications  models.StringArray `json:"certifications,omitempty"`
-	LanguagesSpoken models.StringArray `json:"languages_spoken,omitempty"`
-	ProfileImageURL *string            `json:"profile_image_url,omitempty"`
-	CoverImageURL   *string            `json:"cover_image_url,omitempty"`
-	GalleryImages   models.StringArray `json:"gallery_images,omitempty"`
-	WorkingHours    models.JSONMap     `json:"working_hours,omitempty"`
-}
