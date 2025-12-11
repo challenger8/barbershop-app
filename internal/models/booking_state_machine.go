@@ -60,9 +60,11 @@ type PendingState struct{}
 
 func (s *PendingState) CanTransitionTo(newStatus string) bool {
 	allowedTransitions := map[string]bool{
-		config.BookingStatusConfirmed: true,
-		config.BookingStatusCancelled: true,
-		config.BookingStatusNoShow:    true,
+		config.BookingStatusConfirmed:           true,
+		config.BookingStatusCancelled:           true,
+		config.BookingStatusCancelledByCustomer: true,
+		config.BookingStatusCancelledByBarber:   true,
+		config.BookingStatusNoShow:              true,
 	}
 	return allowedTransitions[newStatus]
 }
@@ -88,9 +90,11 @@ type ConfirmedState struct{}
 
 func (s *ConfirmedState) CanTransitionTo(newStatus string) bool {
 	allowedTransitions := map[string]bool{
-		config.BookingStatusInProgress: true,
-		config.BookingStatusCancelled:  true,
-		config.BookingStatusNoShow:     true,
+		config.BookingStatusInProgress:          true,
+		config.BookingStatusCancelled:           true,
+		config.BookingStatusCancelledByCustomer: true,
+		config.BookingStatusCancelledByBarber:   true,
+		config.BookingStatusNoShow:              true,
 	}
 	return allowedTransitions[newStatus]
 }
@@ -116,8 +120,10 @@ type InProgressState struct{}
 
 func (s *InProgressState) CanTransitionTo(newStatus string) bool {
 	allowedTransitions := map[string]bool{
-		config.BookingStatusCompleted: true,
-		config.BookingStatusCancelled: true, // Can still cancel if something goes wrong
+		config.BookingStatusCompleted:           true,
+		config.BookingStatusCancelled:           true,
+		config.BookingStatusCancelledByCustomer: true,
+		config.BookingStatusCancelledByBarber:   true,
 	}
 	return allowedTransitions[newStatus]
 }
@@ -210,12 +216,14 @@ type BookingStateMachine struct {
 func NewBookingStateMachine() *BookingStateMachine {
 	return &BookingStateMachine{
 		states: map[string]BookingState{
-			config.BookingStatusPending:    &PendingState{},
-			config.BookingStatusConfirmed:  &ConfirmedState{},
-			config.BookingStatusInProgress: &InProgressState{},
-			config.BookingStatusCompleted:  &CompletedState{},
-			config.BookingStatusCancelled:  &CancelledState{},
-			config.BookingStatusNoShow:     &NoShowState{},
+			config.BookingStatusPending:             &PendingState{},
+			config.BookingStatusConfirmed:           &ConfirmedState{},
+			config.BookingStatusInProgress:          &InProgressState{},
+			config.BookingStatusCompleted:           &CompletedState{},
+			config.BookingStatusCancelled:           &CancelledState{},
+			config.BookingStatusCancelledByCustomer: &CancelledState{},
+			config.BookingStatusCancelledByBarber:   &CancelledState{},
+			config.BookingStatusNoShow:              &NoShowState{},
 		},
 	}
 }

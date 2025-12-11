@@ -3507,7 +3507,8 @@ paths:
       - services
 securityDefinitions:
   BearerAuth:
-    description: Type "Bearer" followed by a space and JWT token
+    description: 'Enter your JWT token (with or without ''Bearer '' prefix). Example:
+      eyJhbGciOiJIUzI1NiIs...'
     in: header
     name: Authorization
     type: apiKey

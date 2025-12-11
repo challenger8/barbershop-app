@@ -141,9 +141,12 @@ type Service struct {
 
 // BarberService represents the junction table - how a barber offers a specific service
 type BarberService struct {
-	ID        int `json:"id" db:"id"`
-	BarberID  int `json:"barber_id" db:"barber_id"`   // FK to barbers table
-	ServiceID int `json:"service_id" db:"service_id"` // FK to services table
+	ID          int     `json:"id" db:"id"`
+	BarberID    int     `json:"barber_id" db:"barber_id"`   // FK to barbers table
+	ServiceID   int     `json:"service_id" db:"service_id"` // FK to services table
+	ServiceName *string `json:"service_name,omitempty" db:"service_name"`
+	ServiceType *string `json:"service_type,omitempty" db:"service_type"`
+	CategoryID  *int    `json:"category_id,omitempty" db:"category_id"`
 
 	// Barber's customization of the service
 	CustomName        *string `json:"custom_name" db:"custom_name"`               // Override service name

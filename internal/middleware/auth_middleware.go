@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -103,8 +104,47 @@ func AuthMiddleware(cfg AuthConfig) gin.HandlerFunc {
 }
 
 // RequireAuth is a simple auth middleware that requires authentication
-func RequireAuth(secretKey string) gin.HandlerFunc {
-	return AuthMiddleware(DefaultAuthConfig(secretKey))
+func RequireAuth(jwtSecret string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, ErrorResponse{
+				Error:   "Unauthorized",
+				Message: "Authorization header is required",
+				Code:    "UNAUTHORIZED",
+			})
+			c.Abort()
+			return
+		}
+
+		// Extract token - accept with or without "Bearer " prefix (Swagger compatibility)
+		tokenString := authHeader
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else if strings.HasPrefix(authHeader, "bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "bearer ")
+		}
+
+		// Parse and validate token
+		claims, err := parseToken(tokenString, jwtSecret)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, ErrorResponse{
+				Error:   "Unauthorized",
+				Message: "Invalid or expired token",
+				Code:    "UNAUTHORIZED",
+			})
+			c.Abort()
+			return
+		}
+
+		// Store claims in context
+		c.Set("user_id", claims.UserID)
+		c.Set("email", claims.Email)
+		c.Set("user_type", claims.UserType)
+		c.Set("claims", claims)
+
+		c.Next()
+	}
 }
 
 // RequireRole creates middleware that requires a specific role

@@ -736,28 +736,30 @@ func (r *BookingRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 // This prevents race conditions by locking conflicting rows until transaction commits
 func (r *BookingRepository) CheckConflictForUpdate(ctx context.Context, tx *sqlx.Tx, barberID int, startTime, endTime time.Time, excludeBookingID int) (bool, error) {
 	query := `
-		SELECT COUNT(*) FROM bookings
-		WHERE barber_id = $1
-		AND status NOT IN ('cancelled_by_customer', 'cancelled_by_barber', 'no_show', 'completed')
-		AND id != $2
-		AND scheduled_start_time < $3
-		AND scheduled_end_time > $4
-		FOR UPDATE
+		SELECT EXISTS (
+			SELECT 1 FROM bookings
+			WHERE barber_id = $1
+			AND status NOT IN ('cancelled_by_customer', 'cancelled_by_barber', 'no_show', 'completed')
+			AND id != $2
+			AND scheduled_start_time < $3
+			AND scheduled_end_time > $4
+			FOR UPDATE SKIP LOCKED
+		)
 	`
-	var count int
-	err := tx.GetContext(ctx, &count, query, barberID, excludeBookingID, endTime, startTime)
+	var hasConflict bool
+	err := tx.GetContext(ctx, &hasConflict, query, barberID, excludeBookingID, endTime, startTime)
 	if err != nil {
 		return false, fmt.Errorf("failed to check booking conflict: %w", err)
 	}
 
-	return count > 0, nil
+	return hasConflict, nil
 }
 
 // CreateTx inserts a new booking within a transaction
 func (r *BookingRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, booking *models.Booking) error {
 	query := `
 		INSERT INTO bookings (
-			uuid, booking_number, customer_id, barber_id, time_slot_id,
+			uuid, booking_number, customer_id, barber_id,
 			service_name, service_category, estimated_duration_minutes,
 			customer_name, customer_email, customer_phone,
 			status, service_price, total_price, discount_amount, tax_amount, tip_amount, currency,
@@ -767,15 +769,15 @@ func (r *BookingRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, booking *
 			booking_source, referral_source, utm_campaign,
 			created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5,
-			$6, $7, $8,
-			$9, $10, $11,
-			$12, $13, $14, $15, $16, $17, $18,
-			$19, $20, $21,
-			$22, $23, $24,
-			$25, $26,
-			$27, $28, $29,
-			$30, $31
+			$1, $2, $3, $4,
+			$5, $6, $7,
+			$8, $9, $10,
+			$11, $12, $13, $14, $15, $16, $17,
+			$18, $19, $20,
+			$21, $22, $23,
+			$24, $25,
+			$26, $27, $28,
+			$29, $30
 		) RETURNING id
 	`
 
@@ -789,7 +791,7 @@ func (r *BookingRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, booking *
 	SetDefaultString(&booking.BookingSource, "web_app")
 
 	err := tx.QueryRowContext(ctx, query,
-		booking.UUID, booking.BookingNumber, booking.CustomerID, booking.BarberID, booking.TimeSlotID,
+		booking.UUID, booking.BookingNumber, booking.CustomerID, booking.BarberID,
 		booking.ServiceName, booking.ServiceCategory, booking.EstimatedDurationMinutes,
 		booking.CustomerName, booking.CustomerEmail, booking.CustomerPhone,
 		booking.Status, booking.ServicePrice, booking.TotalPrice, booking.DiscountAmount, booking.TaxAmount, booking.TipAmount, booking.Currency,

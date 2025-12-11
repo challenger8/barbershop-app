@@ -378,8 +378,8 @@ func getServiceName(barberService *models.BarberService) string {
 	if barberService.CustomName != nil && *barberService.CustomName != "" {
 		return *barberService.CustomName
 	}
-	if barberService.Service.Name != "" {
-		return barberService.Service.Name
+	if barberService.ServiceName != nil && *barberService.ServiceName != "" {
+		return *barberService.ServiceName
 	}
 	return "Unknown Service"
 }
@@ -402,15 +402,15 @@ func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *mo
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 
-	// Ensure rollback on error
+	// Ensure rollback on panic or error
+	committed := false
 	defer func() {
-		if err != nil {
+		if !committed {
 			tx.Rollback()
 		}
 	}()
 
 	// Check for conflicts with row locking (FOR UPDATE)
-	// This prevents race conditions where two requests check availability simultaneously
 	hasConflict, err := s.repo.CheckConflictForUpdate(
 		ctx, tx,
 		booking.BarberID,
@@ -430,7 +430,13 @@ func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *mo
 		return fmt.Errorf("failed to create booking: %w", err)
 	}
 
-	// Create audit history within transaction
+	// Commit transaction BEFORE creating history (history is non-critical)
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	committed = true
+
+	// Create audit history AFTER commit (non-transactional, best effort)
 	history := &models.BookingHistory{
 		BookingID:  booking.ID,
 		ChangedBy:  createdByUserID,
@@ -442,12 +448,7 @@ func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *mo
 			"total_price": booking.TotalPrice,
 		},
 	}
-	_ = s.repo.CreateHistoryTx(ctx, tx, history) // Don't fail if history creation fails
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
+	_ = s.repo.CreateHistory(ctx, history) // Best effort, don't fail booking
 
 	return nil
 }
@@ -817,6 +818,12 @@ func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBo
 		return nil, err
 	}
 
+	// Determine cancellation status based on who is cancelling
+	cancelStatus := config.BookingStatusCancelledByBarber
+	if req.IsByCustomer {
+		cancelStatus = config.BookingStatusCancelledByCustomer
+	}
+
 	// Check if cancellation is allowed using state machine
 	if !booking.CanTransitionTo(config.BookingStatusCancelled) {
 		log.Warn("Booking cannot be cancelled").
@@ -840,7 +847,7 @@ func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBo
 	}
 
 	// Update status to cancelled
-	result, err := s.UpdateStatus(ctx, id, config.BookingStatusCancelled, cancelledByUserID)
+	result, err := s.UpdateStatus(ctx, id, cancelStatus, cancelledByUserID)
 	if err != nil {
 		log.Error(err).
 			Int("booking_id", id).

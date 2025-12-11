@@ -15,7 +15,7 @@ type Booking struct {
 	// Relationships
 	CustomerID *int `json:"customer_id" db:"customer_id"` // Nullable for guest bookings
 	BarberID   int  `json:"barber_id" db:"barber_id"`
-	TimeSlotID int  `json:"time_slot_id" db:"time_slot_id"`
+	TimeSlotID *int `json:"time_slot_id" db:"time_slot_id"`
 
 	// Service information
 	ServiceName              string  `json:"service_name" db:"service_name"`
@@ -159,7 +159,7 @@ func (b *Booking) Validate() error {
 	if b.BarberID <= 0 {
 		return errors.New("valid barber ID is required")
 	}
-	if b.TimeSlotID <= 0 {
+	if *b.TimeSlotID <= 0 {
 		return errors.New("valid time slot ID is required")
 	}
 	if b.ServiceName == "" {
