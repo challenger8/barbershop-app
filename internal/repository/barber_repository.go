@@ -14,12 +14,16 @@ import (
 
 // BarberRepository handles barber data operations
 type BarberRepository struct {
+	*BaseRepository[models.Barber]
 	db *sqlx.DB
 }
 
 // NewBarberRepository creates a new barber repository
 func NewBarberRepository(db *sqlx.DB) *BarberRepository {
-	return &BarberRepository{db: db}
+	return &BarberRepository{
+		BaseRepository: NewBaseRepository[models.Barber](db, ErrBarberNotFound),
+		db:             db,
+	}
 }
 
 // FindAll retrieves all barbers with optional filters

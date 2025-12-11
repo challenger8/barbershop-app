@@ -19,12 +19,16 @@ import (
 
 // NotificationRepository handles notification data operations
 type NotificationRepository struct {
+	*BaseRepository[models.Notification]
 	db *sqlx.DB
 }
 
 // NewNotificationRepository creates a new notification repository
 func NewNotificationRepository(db *sqlx.DB) *NotificationRepository {
-	return &NotificationRepository{db: db}
+	return &NotificationRepository{
+		BaseRepository: NewBaseRepository[models.Notification](db, ErrNotificationNotFound),
+		db:             db,
+	}
 }
 
 // ========================================================================

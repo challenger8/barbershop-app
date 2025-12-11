@@ -19,12 +19,16 @@ import (
 
 // ReviewRepository handles review data operations
 type ReviewRepository struct {
+	*BaseRepository[models.Review]
 	db *sqlx.DB
 }
 
 // NewReviewRepository creates a new review repository
 func NewReviewRepository(db *sqlx.DB) *ReviewRepository {
-	return &ReviewRepository{db: db}
+	return &ReviewRepository{
+		BaseRepository: NewBaseRepository[models.Review](db, ErrReviewNotFound),
+		db:             db,
+	}
 }
 
 // ========================================================================

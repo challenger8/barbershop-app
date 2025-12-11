@@ -14,29 +14,19 @@ import (
 
 // UserRepository handles user data operations
 type UserRepository struct {
+	*BaseRepository[models.User]
 	db *sqlx.DB
 }
 
 // NewUserRepository creates a new user repository
 func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{db: db}
-}
-
-// FindByID retrieves a user by ID
-func (r *UserRepository) FindByID(ctx context.Context, id int) (*models.User, error) {
-	var user models.User
-	query := `SELECT ` + USER_COLUMNS + ` FROM users ` + WHERE_ACTIVE + ` AND id = $1`
-
-	err := r.db.GetContext(ctx, &user, query, id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
-		}
-		return nil, fmt.Errorf("failed to find user by id %d: %w", id, err)
+	return &UserRepository{
+		BaseRepository: NewBaseRepository[models.User](db, ErrUserNotFound),
+		db:             db,
 	}
-
-	return &user, nil
 }
+
+
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
@@ -52,31 +42,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models
 	return &user, nil
 }
 
-// FindByUUID retrieves a user by UUID
-func (r *UserRepository) FindByUUID(ctx context.Context, uuid string) (*models.User, error) {
-	var user models.User
-	query := `
-		SELECT id, uuid, email, password_hash, name, phone, user_type, status,
-		       email_verified, phone_verified, two_factor_enabled, 
-		       failed_login_attempts, locked_until,
-		       date_of_birth, gender, profile_picture_url,
-		       address, city, state, country, postal_code, latitude, longitude,
-		       preferences, notification_settings,
-		       created_at, updated_at, last_login_at, created_by, deleted_at
-		FROM users
-		WHERE uuid = $1 AND deleted_at IS NULL
-	`
 
-	err := r.db.GetContext(ctx, &user, query, uuid)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
-		}
-		return nil, fmt.Errorf("failed to find user by uuid: %w", err)
-	}
-
-	return &user, nil
-}
 
 // Create creates a new user
 func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
@@ -286,21 +252,4 @@ func (r *UserRepository) EmailExists(ctx context.Context, email string) (bool, e
 	return exists, nil
 }
 
-// Delete soft deletes a user
-func (r *UserRepository) Delete(ctx context.Context, userID int) error {
-	query := `
-		UPDATE users
-		SET deleted_at = $1,
-		    status = 'deleted',
-		    updated_at = $1
-		WHERE id = $2 AND deleted_at IS NULL
-	`
 
-	now := time.Now()
-	result, err := r.db.ExecContext(ctx, query, now, userID)
-	if err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
-	}
-
-	return CheckRowsAffected(result, ErrUserNotFound) // ✅ Use helper
-}

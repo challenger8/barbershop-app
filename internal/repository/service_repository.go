@@ -14,12 +14,16 @@ import (
 
 // ServiceRepository handles service data operations
 type ServiceRepository struct {
+	*BaseRepository[models.Service]
 	db *sqlx.DB
 }
 
 // NewServiceRepository creates a new service repository
 func NewServiceRepository(db *sqlx.DB) *ServiceRepository {
-	return &ServiceRepository{db: db}
+	return &ServiceRepository{
+		BaseRepository: NewBaseRepository[models.Service](db, ErrServiceNotFound),
+		db:             db,
+	}
 }
 
 // ServiceFilters represents filter options for services

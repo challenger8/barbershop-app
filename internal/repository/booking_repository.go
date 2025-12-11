@@ -19,12 +19,16 @@ import (
 
 // BookingRepository handles booking data operations
 type BookingRepository struct {
+	*BaseRepository[models.Booking]
 	db *sqlx.DB
 }
 
 // NewBookingRepository creates a new booking repository
 func NewBookingRepository(db *sqlx.DB) *BookingRepository {
-	return &BookingRepository{db: db}
+	return &BookingRepository{
+		BaseRepository: NewBaseRepository[models.Booking](db, ErrBookingNotFound),
+		db:             db,
+	}
 }
 
 // ========================================================================
