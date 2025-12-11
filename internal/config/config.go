@@ -22,8 +22,8 @@ type Config struct {
 	Upload   UploadConfig   `json:"upload"`
 	SMTP     SMTPConfig     `json:"smtp"`
 	API      APIConfig      `json:"api"`
-	Logging  LoggingConfig  `json:"logging"`
 	CORS     CORSConfig     `json:"cors"`
+	Logging LoggingConfig `yaml:"logging"`
 }
 
 // AppConfig represents application-level configuration
@@ -86,8 +86,8 @@ type APIConfig struct {
 
 // LoggingConfig represents logging configuration
 type LoggingConfig struct {
-	Level  string `json:"level"`
-	Format string `json:"format"`
+	Level  string `yaml:"level" env:"LOG_LEVEL" default:"info"`
+	Format string `yaml:"format" env:"LOG_FORMAT" default:"json"`
 }
 
 // CORSConfig represents CORS configuration

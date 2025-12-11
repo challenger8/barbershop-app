@@ -6,6 +6,7 @@ import (
 	_ "barber-booking-system/docs"
 	"barber-booking-system/internal/cache"
 	appConfig "barber-booking-system/internal/config"
+	"barber-booking-system/internal/logger"
 	"barber-booking-system/internal/middleware"
 	"context"
 	"fmt"
@@ -76,6 +77,7 @@ func main() {
 
 	// Log configuration summary (with sensitive data masked)
 	logConfigSummary(cfg)
+	initLogger(cfg)
 
 	// Initialize database connection
 	dbManager, err := config.NewDatabaseManager(cfg.Database)
@@ -225,4 +227,33 @@ func logConfigSummary(cfg *appConfig.Config) {
 	} else if cfg.IsProduction() {
 		log.Println("🔒 Running in PRODUCTION mode - security enhanced")
 	}
+}
+func initLogger(cfg *appConfig.Config) {
+	logFormat := "json"
+	logLevel := "info"
+
+	if cfg.IsDevelopment() {
+		logFormat = "console"
+		logLevel = "debug"
+	}
+
+	// Override from config if set
+	if cfg.Logging.Format != "" {
+		logFormat = cfg.Logging.Format
+	}
+	if cfg.Logging.Level != "" {
+		logLevel = cfg.Logging.Level
+	}
+
+	logger.Init(logger.Config{
+		Level:       logLevel,
+		Format:      logFormat,
+		ServiceName: cfg.App.Name,
+		Environment: cfg.App.Environment,
+	})
+
+	logger.Info().
+		Str("log_level", logLevel).
+		Str("log_format", logFormat).
+		Msg("Logger initialized")
 }

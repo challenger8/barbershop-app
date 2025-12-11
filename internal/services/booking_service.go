@@ -2,15 +2,15 @@
 package services
 
 import (
+	"barber-booking-system/internal/cache"
+	"barber-booking-system/internal/config"
+	"barber-booking-system/internal/logger"
+	"barber-booking-system/internal/models"
+	"barber-booking-system/internal/repository"
 	"context"
 	"fmt"
 	"math/rand"
 	"time"
-
-	"barber-booking-system/internal/cache"
-	"barber-booking-system/internal/config"
-	"barber-booking-system/internal/models"
-	"barber-booking-system/internal/repository"
 
 	"github.com/google/uuid"
 )
@@ -462,32 +462,63 @@ func (s *BookingService) saveBookingWithHistory(ctx context.Context, booking *mo
 // ========================================================================
 
 // CreateBooking creates a new booking with full validation
+// CreateBooking creates a new booking with full validation
 func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingRequest, createdByUserID *int) (*BookingResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Creating booking").
+		Int("barber_id", req.BarberID).
+		Int("service_id", req.ServiceID).
+		Time("start_time", req.StartTime).
+		Int("duration_minutes", req.DurationMinutes).
+		Send()
+
 	// Step 1: Validate booking time
 	if err := s.validateBookingTime(req.StartTime, req.DurationMinutes); err != nil {
+		log.Warn("Booking time validation failed").
+			Err(err).
+			Time("start_time", req.StartTime).
+			Send()
 		return nil, err
 	}
 
 	// Step 2: Validate barber exists and is active
 	barber, err := s.validateAndFetchBarber(ctx, req.BarberID)
 	if err != nil {
+		log.Warn("Barber validation failed").
+			Int("barber_id", req.BarberID).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Step 3: Validate service exists and get pricing
 	barberService, err := s.validateAndFetchBarberService(ctx, req.ServiceID)
 	if err != nil {
+		log.Warn("Service validation failed").
+			Int("service_id", req.ServiceID).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Step 4: Check for time slot conflicts
 	endTime := s.calculateEndTime(req.StartTime, req.DurationMinutes)
 	if err := s.checkTimeSlotAvailability(ctx, req.BarberID, req.StartTime, endTime, 0); err != nil {
+		log.Warn("Time slot conflict").
+			Int("barber_id", req.BarberID).
+			Time("start_time", req.StartTime).
+			Time("end_time", endTime).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Step 5: Validate customer info
 	if err := s.validateCustomerInfo(req); err != nil {
+		log.Warn("Customer info validation failed").
+			Err(err).
+			Send()
 		return nil, err
 	}
 
@@ -499,6 +530,9 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 
 	// Step 8: Save booking with audit trail
 	if err := s.saveBookingWithHistory(ctx, booking, createdByUserID); err != nil {
+		log.Error(err).
+			Int("barber_id", req.BarberID).
+			Msg("Failed to save booking")
 		return nil, err
 	}
 
@@ -507,8 +541,15 @@ func (s *BookingService) CreateBooking(ctx context.Context, req CreateBookingReq
 		_ = s.cache.InvalidateBarber(ctx, req.BarberID)
 	}
 
-	// Suppress unused variable warning (can be removed if barber is used elsewhere)
+	// Suppress unused variable warning
 	_ = barber
+
+	log.Info("Booking created successfully").
+		Str("booking_number", booking.BookingNumber).
+		Int("booking_id", booking.ID).
+		Int("barber_id", booking.BarberID).
+		Float64("total_price", booking.TotalPrice).
+		Send()
 
 	return s.toBookingResponse(booking), nil
 }
@@ -670,6 +711,13 @@ func (s *BookingService) UpdateBooking(ctx context.Context, id int, req UpdateBo
 
 // UpdateStatus updates the booking status with state machine validation
 func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus string, updatedByUserID *int) (*BookingResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Debug("Updating booking status").
+		Int("booking_id", id).
+		Str("new_status", newStatus).
+		Send()
+
 	// Get current booking
 	booking, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -678,13 +726,23 @@ func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus str
 
 	oldStatus := booking.Status
 
-	// ⭐ VALIDATE STATE TRANSITION USING STATE MACHINE ⭐
+	// Validate state transition using state machine
 	if err := booking.ValidateStatusTransition(newStatus); err != nil {
+		log.Warn("Invalid status transition").
+			Int("booking_id", id).
+			Str("old_status", oldStatus).
+			Str("new_status", newStatus).
+			Err(err).
+			Send()
 		return nil, fmt.Errorf("invalid status transition: %w", err)
 	}
 
 	// Update status in database
 	if err := s.repo.UpdateStatus(ctx, id, newStatus); err != nil {
+		log.Error(err).
+			Int("booking_id", id).
+			Str("new_status", newStatus).
+			Msg("Failed to update booking status")
 		return nil, fmt.Errorf("failed to update status: %w", err)
 	}
 
@@ -699,14 +757,22 @@ func (s *BookingService) UpdateStatus(ctx context.Context, id int, newStatus str
 
 	// Log history (don't fail if history creation fails)
 	if err := s.repo.CreateHistory(ctx, history); err != nil {
-		// Log error but don't fail the status update
-		fmt.Printf("Warning: failed to create booking history: %v\n", err)
+		log.Warn("Failed to create booking history").
+			Int("booking_id", id).
+			Err(err).
+			Send()
 	}
 
 	// Invalidate cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, booking.BarberID)
 	}
+
+	log.Info("Booking status updated").
+		Int("booking_id", id).
+		Str("old_status", oldStatus).
+		Str("new_status", newStatus).
+		Send()
 
 	// Return updated booking
 	return s.GetBookingByID(ctx, id)
@@ -733,14 +799,30 @@ func (s *BookingService) GetAllowedStatusTransitions(ctx context.Context, id int
 
 // CancelBooking cancels a booking with state machine validation
 func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBookingRequest, cancelledByUserID *int) (*BookingResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Info("Cancelling booking").
+		Int("booking_id", id).
+		Bool("is_by_customer", req.IsByCustomer).
+		Str("reason", req.Reason).
+		Send()
+
 	// Get existing booking
 	booking, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Booking not found for cancellation").
+			Int("booking_id", id).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
-	// ⭐ CHECK IF CANCELLATION IS ALLOWED USING STATE MACHINE ⭐
+	// Check if cancellation is allowed using state machine
 	if !booking.CanTransitionTo(config.BookingStatusCancelled) {
+		log.Warn("Booking cannot be cancelled").
+			Int("booking_id", id).
+			Str("current_status", booking.Status).
+			Send()
 		return nil, fmt.Errorf(
 			"booking cannot be cancelled from status '%s'. Current status must be one of: %v",
 			booking.Status,
@@ -750,11 +832,29 @@ func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBo
 
 	// Check if already in a terminal state
 	if booking.IsInTerminalState() {
+		log.Warn("Booking already in terminal state").
+			Int("booking_id", id).
+			Str("status", booking.Status).
+			Send()
 		return nil, fmt.Errorf("booking is already in a terminal state: %s", booking.Status)
 	}
 
 	// Update status to cancelled
-	return s.UpdateStatus(ctx, id, config.BookingStatusCancelled, cancelledByUserID)
+	result, err := s.UpdateStatus(ctx, id, config.BookingStatusCancelled, cancelledByUserID)
+	if err != nil {
+		log.Error(err).
+			Int("booking_id", id).
+			Msg("Failed to cancel booking")
+		return nil, err
+	}
+
+	log.Info("Booking cancelled successfully").
+		Int("booking_id", id).
+		Str("booking_number", booking.BookingNumber).
+		Str("reason", req.Reason).
+		Send()
+
+	return result, nil
 }
 
 // ========================================================================
@@ -762,15 +862,31 @@ func (s *BookingService) CancelBooking(ctx context.Context, id int, req CancelBo
 // ========================================================================
 
 // RescheduleBooking reschedules a booking to a new time
+// RescheduleBooking reschedules a booking to a new time
 func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req RescheduleBookingRequest, rescheduledByUserID *int) (*BookingResponse, error) {
+	log := logger.FromContext(ctx)
+
+	log.Info("Rescheduling booking").
+		Int("booking_id", id).
+		Time("new_start_time", req.NewStartTime).
+		Send()
+
 	// Get existing booking
 	booking, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		log.Warn("Booking not found for rescheduling").
+			Int("booking_id", id).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
 	// Check if booking can be rescheduled
 	if !booking.CanBeCancelled() {
+		log.Warn("Booking cannot be rescheduled").
+			Int("booking_id", id).
+			Str("status", booking.Status).
+			Send()
 		return nil, fmt.Errorf("booking cannot be rescheduled in current status: %s", booking.Status)
 	}
 
@@ -782,6 +898,10 @@ func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req Resc
 
 	// Validate new time
 	if err := s.validateBookingTime(req.NewStartTime, durationMinutes); err != nil {
+		log.Warn("New booking time validation failed").
+			Time("new_start_time", req.NewStartTime).
+			Err(err).
+			Send()
 		return nil, err
 	}
 
@@ -789,29 +909,41 @@ func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req Resc
 	newEndTime := s.calculateEndTime(req.NewStartTime, durationMinutes)
 	hasConflict, err := s.repo.CheckConflict(ctx, booking.BarberID, req.NewStartTime, newEndTime, id)
 	if err != nil {
+		log.Error(err).
+			Int("booking_id", id).
+			Msg("Failed to check availability for reschedule")
 		return nil, fmt.Errorf("failed to check availability: %w", err)
 	}
 	if hasConflict {
-		return nil, fmt.Errorf("new time slot is not available")
+		log.Warn("Time slot conflict for reschedule").
+			Int("booking_id", id).
+			Time("new_start_time", req.NewStartTime).
+			Time("new_end_time", newEndTime).
+			Send()
+		return nil, fmt.Errorf("new time slot is not available, please choose another time")
 	}
 
-	// Store old values
+	// Store old values for history
 	oldValues := models.JSONMap{
 		"scheduled_start_time": booking.ScheduledStartTime,
 		"scheduled_end_time":   booking.ScheduledEndTime,
 	}
+	oldStartTime := booking.ScheduledStartTime
 
-	// Update booking
+	// Update booking fields
 	booking.ScheduledStartTime = req.NewStartTime
 	booking.ScheduledEndTime = newEndTime
 	booking.EstimatedDurationMinutes = durationMinutes
 
+	// Save using Update method
 	if err := s.repo.Update(ctx, booking); err != nil {
-		return nil, err
+		log.Error(err).
+			Int("booking_id", id).
+			Msg("Failed to reschedule booking")
+		return nil, fmt.Errorf("failed to reschedule: %w", err)
 	}
 
 	// Create history
-	changeReason := req.Reason
 	history := &models.BookingHistory{
 		BookingID:  booking.ID,
 		ChangedBy:  rescheduledByUserID,
@@ -821,7 +953,7 @@ func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req Resc
 			"scheduled_start_time": booking.ScheduledStartTime,
 			"scheduled_end_time":   booking.ScheduledEndTime,
 		},
-		ChangeReason: changeReason,
+		ChangeReason: req.Reason,
 	}
 	_ = s.repo.CreateHistory(ctx, history)
 
@@ -829,6 +961,13 @@ func (s *BookingService) RescheduleBooking(ctx context.Context, id int, req Resc
 	if s.cache != nil {
 		_ = s.cache.InvalidateBarber(ctx, booking.BarberID)
 	}
+
+	log.Info("Booking rescheduled successfully").
+		Int("booking_id", id).
+		Str("booking_number", booking.BookingNumber).
+		Time("old_start_time", oldStartTime).
+		Time("new_start_time", req.NewStartTime).
+		Send()
 
 	return s.toBookingResponse(booking), nil
 }
