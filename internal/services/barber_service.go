@@ -4,7 +4,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"barber-booking-system/internal/cache"
 	"barber-booking-system/internal/config"
@@ -323,39 +322,6 @@ func (s *BarberService) CreateBarber(ctx context.Context, req CreateBarberReques
 		Send()
 
 	return barber, nil
-}
-
-// validateCreateRequest validates the create barber request
-func (s *BarberService) validateCreateRequest(req CreateBarberRequest) error {
-	var errors []string
-
-	if req.UserID <= 0 {
-		errors = append(errors, "user_id is required and must be positive")
-	}
-	if strings.TrimSpace(req.ShopName) == "" {
-		errors = append(errors, "shop_name is required")
-	}
-	if strings.TrimSpace(req.Address) == "" {
-		errors = append(errors, "address is required")
-	}
-	if strings.TrimSpace(req.City) == "" {
-		errors = append(errors, "city is required")
-	}
-	if strings.TrimSpace(req.State) == "" {
-		errors = append(errors, "state is required")
-	}
-	if strings.TrimSpace(req.Country) == "" {
-		errors = append(errors, "country is required")
-	}
-	if strings.TrimSpace(req.PostalCode) == "" {
-		errors = append(errors, "postal_code is required")
-	}
-
-	if len(errors) > 0 {
-		return fmt.Errorf("validation errors: %s", strings.Join(errors, ", "))
-	}
-
-	return nil
 }
 
 // GetBarberByUUID retrieves a barber by UUID

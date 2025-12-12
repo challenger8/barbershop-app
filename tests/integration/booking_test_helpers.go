@@ -69,3 +69,4 @@ func getTestBookingRequestInPast() map[string]interface{} {
 	req["start_time"] = time.Now().Add(-1 * time.Hour).Format(time.RFC3339) // Past time
 	return req
 }
+

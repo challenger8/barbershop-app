@@ -72,16 +72,6 @@ func setupTestRouter(t *testing.T) (*gin.Engine, *config.DatabaseManager, string
 // Pointer helper functions for tests
 // These make it easy to create pointer values for optional fields
 
-// String pointer helper
-func stringPtr(s string) *string {
-	return &s
-}
-
-// Float64 pointer helper
-func float64Ptr(f float64) *float64 {
-	return &f
-}
-
 // generateTestToken creates a JWT token for testing
 func generateTestToken(userID int, email string, userType string, jwtSecret string) (string, error) {
 	return middleware.GenerateToken(userID, email, userType, jwtSecret, 24*time.Hour)

@@ -336,8 +336,8 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 	// Update booking
 	booking, err := h.bookingService.UpdateBooking(c.Request.Context(), id, *req, updatedByUserID)
 	if HandleServiceError(c, err, "booking", "update booking") {
-	return
-}
+		return
+	}
 
 	RespondSuccessWithData(c, booking, "Booking updated successfully")
 }
@@ -609,9 +609,21 @@ func (h *BookingHandler) GetBookingHistory(c *gin.Context) {
 		return
 	}
 
+	// First verify the booking exists
+	_, err := h.bookingService.GetBookingByID(c.Request.Context(), id)
+	if err != nil {
+		if err == repository.ErrBookingNotFound {
+			RespondNotFound(c, "Booking")
+			return
+		}
+		RespondInternalError(c, "verify booking", err)
+		return
+	}
+
 	// Get history
 	history, err := h.bookingService.GetBookingHistory(c.Request.Context(), id)
-	if HandleServiceError(c, err, "Booking", "operation name") {
+	if err != nil {
+		RespondInternalError(c, "fetch booking history", err)
 		return
 	}
 

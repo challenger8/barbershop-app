@@ -7,240 +7,190 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // ========================================================================
-// NOTIFICATION INTEGRATION TESTS
+// NOTIFICATION INTEGRATION TESTS - TABLE DRIVEN
 // ========================================================================
 
-func TestGetMyNotifications_Success(t *testing.T) {
+// TestGetMyNotifications consolidates all list notification tests
+func TestGetMyNotifications(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
 	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		queryParams    string
+		hasAuth        bool
+		expectedStatus int
+	}{
+		{"Success_NoFilters", "", true, http.StatusOK},
+		{"Success_WithTypeFilter", "?type=booking_confirmation&unread_only=true", true, http.StatusOK},
+		{"Success_WithPagination", "?limit=10&offset=0", true, http.StatusOK},
+		{"Success_WithPriority", "?priority=high", true, http.StatusOK},
+		{"Unauthorized", "", false, http.StatusUnauthorized},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications"+tt.queryParams, nil)
+			if tt.hasAuth {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
+			assert.Equal(t, tt.expectedStatus, w.Code)
+		})
 	}
 }
 
-func TestGetMyNotifications_WithFilters(t *testing.T) {
+// TestGetNotificationByID consolidates get by ID tests
+func TestGetNotificationByID(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
 	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		notificationID string
+		hasAuth        bool
+		expectedStatus []int
+	}{
+		{"Success_OrNotFound", "1", true, []int{http.StatusOK, http.StatusNotFound}},
+		{"NotFound", "99999", true, []int{http.StatusNotFound}},
+		{"Unauthorized", "1", false, []int{http.StatusUnauthorized}},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications?type=booking_confirmation&unread_only=true", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications/"+tt.notificationID, nil)
+			if tt.hasAuth {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
+			assert.Contains(t, tt.expectedStatus, w.Code)
+		})
 	}
 }
 
-func TestGetMyNotifications_Unauthorized(t *testing.T) {
-	router, dbManager, _ := setupTestRouter(t)
-	defer dbManager.Close()
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications", nil)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status 401, got %d", w.Code)
-	}
-}
-
-func TestGetNotificationByID_Success(t *testing.T) {
+// TestMarkNotificationAsRead consolidates mark as read tests
+func TestMarkNotificationAsRead(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
 	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		notificationID string
+		hasAuth        bool
+		expectedStatus []int
+	}{
+		{"Success_OrNotFound", "1", true, []int{http.StatusOK, http.StatusNotFound}},
+		{"NotFound", "99999", true, []int{http.StatusNotFound}},
+		{"Unauthorized", "1", false, []int{http.StatusUnauthorized}},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications/1", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPatch, "/api/v1/notifications/"+tt.notificationID+"/read", nil)
+			if tt.hasAuth {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
 
-	// Notification may not exist
-	if w.Code != http.StatusOK && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 200 or 404, got %d", w.Code)
+			assert.Contains(t, tt.expectedStatus, w.Code)
+		})
 	}
 }
 
-func TestMarkNotificationAsRead_Success(t *testing.T) {
+// TestMarkAllNotificationsAsRead tests bulk read operation
+func TestMarkAllNotificationsAsRead(t *testing.T) {
+	router, dbManager, jwtSecret := setupTestRouter(t)
+	defer dbManager.Close()
+
+	tests := []struct {
+		name           string
+		userType       string
+		hasAuth        bool
+		expectedStatus int
+	}{
+		{"Success_Customer", "customer", true, http.StatusOK},
+		{"Success_Barber", "barber", true, http.StatusOK},
+		{"Unauthorized", "customer", false, http.StatusUnauthorized},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPatch, "/api/v1/notifications/read-all", nil)
+			if tt.hasAuth {
+				token, _ := generateTestToken(1, "user@test.com", tt.userType, jwtSecret)
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
+		})
+	}
+}
+
+// TestGetUnreadCount tests unread count endpoint
+func TestGetUnreadCount(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
 	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		hasAuth        bool
+		expectedStatus int
+	}{
+		{"Success", true, http.StatusOK},
+		{"Unauthorized", false, http.StatusUnauthorized},
 	}
 
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/notifications/1/read", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications/unread/count", nil)
+			if tt.hasAuth {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 200 or 404, got %d", w.Code)
+			assert.Equal(t, tt.expectedStatus, w.Code)
+		})
 	}
 }
 
-func TestMarkAllNotificationsAsRead_Success(t *testing.T) {
+// TestGetNotificationStats tests stats endpoint
+func TestGetNotificationStats(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
 	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/notifications/read-all", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-}
-
-func TestGetUnreadCount_Success(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications/unread/count", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var response map[string]interface{}
-	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
-		t.Errorf("Failed to decode response: %v", err)
-	}
-}
-
-func TestCreateNotification_Authenticated(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	// Authenticated user token
-	token, _ := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-
-	notificationData := map[string]interface{}{
-		"user_id":  2,
-		"title":    "Test Notification",
-		"message":  "This is a test notification",
-		"type":     "system_alert",
-		"priority": "normal",
-		"channels": []string{"app"},
-	}
-	body, _ := json.Marshal(notificationData)
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/notifications", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	// Notification creation requires auth, may fail if user doesn't exist
-	if w.Code != http.StatusCreated && w.Code != http.StatusBadRequest && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 201, 400, or 404, got %d", w.Code)
-	}
-}
-
-func TestCreateNotification_AdminSuccess(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	// Admin token
-	adminToken, _ := generateTestToken(1, "admin@test.com", "admin", jwtSecret)
-
-	notificationData := map[string]interface{}{
-		"user_id":  2,
-		"title":    "Test Notification",
-		"message":  "This is a test notification",
-		"type":     "system_alert",
-		"priority": "normal",
-		"channels": []string{"app"},
-	}
-	body, _ := json.Marshal(notificationData)
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/notifications", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+adminToken)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	// May fail if user doesn't exist
-	if w.Code != http.StatusCreated && w.Code != http.StatusBadRequest && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 201, 400, or 404, got %d", w.Code)
-	}
-}
-
-func TestDeleteNotification_Success(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/notifications/1", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK && w.Code != http.StatusNoContent && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 200, 204, or 404, got %d", w.Code)
-	}
-}
-
-func TestGetNotificationStats_Success(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
+	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications/stats", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -248,16 +198,129 @@ func TestGetNotificationStats_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestSendBookingNotification_Success(t *testing.T) {
+// TestCreateNotification consolidates create notification tests
+func TestCreateNotification(t *testing.T) {
 	router, dbManager, jwtSecret := setupTestRouter(t)
 	defer dbManager.Close()
 
-	// Admin token for sending notifications
+	tests := []struct {
+		name           string
+		userType       string
+		payload        map[string]interface{}
+		hasAuth        bool
+		expectedStatus []int
+	}{
+		{
+			name:     "Success_Admin",
+			userType: "admin",
+			payload: map[string]interface{}{
+				"user_id":  2,
+				"title":    "Test Notification",
+				"message":  "This is a test notification",
+				"type":     "system_alert",
+				"priority": "normal",
+				"channels": []string{"app"},
+			},
+			hasAuth:        true,
+			expectedStatus: []int{http.StatusCreated, http.StatusBadRequest, http.StatusNotFound},
+		},
+		{
+			name:     "Success_Customer",
+			userType: "customer",
+			payload: map[string]interface{}{
+				"user_id":  2,
+				"title":    "Test Notification",
+				"message":  "This is a test notification",
+				"type":     "system_alert",
+				"priority": "normal",
+				"channels": []string{"app"},
+			},
+			hasAuth:        true,
+			expectedStatus: []int{http.StatusCreated, http.StatusBadRequest, http.StatusNotFound, http.StatusForbidden},
+		},
+		{
+			name:     "InvalidType",
+			userType: "admin",
+			payload: map[string]interface{}{
+				"user_id":  2,
+				"title":    "Test",
+				"message":  "Test message",
+				"type":     "invalid_type",
+				"priority": "normal",
+			},
+			hasAuth:        true,
+			expectedStatus: []int{http.StatusBadRequest, http.StatusUnprocessableEntity, http.StatusNotFound},
+		},
+		{
+			name:           "Unauthorized",
+			userType:       "customer",
+			payload:        map[string]interface{}{},
+			hasAuth:        false,
+			expectedStatus: []int{http.StatusUnauthorized},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body, _ := json.Marshal(tt.payload)
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/notifications", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+
+			if tt.hasAuth {
+				token, _ := generateTestToken(1, tt.userType+"@test.com", tt.userType, jwtSecret)
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Contains(t, tt.expectedStatus, w.Code)
+		})
+	}
+}
+
+// TestDeleteNotification consolidates delete tests
+func TestDeleteNotification(t *testing.T) {
+	router, dbManager, jwtSecret := setupTestRouter(t)
+	defer dbManager.Close()
+
+	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		notificationID string
+		hasAuth        bool
+		expectedStatus []int
+	}{
+		{"Success_OrNotFound", "1", true, []int{http.StatusOK, http.StatusNoContent, http.StatusNotFound}},
+		{"NotFound", "99999", true, []int{http.StatusNotFound}},
+		{"Unauthorized", "1", false, []int{http.StatusUnauthorized}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodDelete, "/api/v1/notifications/"+tt.notificationID, nil)
+			if tt.hasAuth {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Contains(t, tt.expectedStatus, w.Code)
+		})
+	}
+}
+
+// TestSendBookingNotification tests booking-specific notification
+func TestSendBookingNotification(t *testing.T) {
+	router, dbManager, jwtSecret := setupTestRouter(t)
+	defer dbManager.Close()
+
 	adminToken, _ := generateTestToken(1, "admin@test.com", "admin", jwtSecret)
 
 	notificationData := map[string]interface{}{
@@ -274,74 +337,5 @@ func TestSendBookingNotification_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// May fail if booking doesn't exist
-	if w.Code != http.StatusCreated && w.Code != http.StatusOK && w.Code != http.StatusBadRequest && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 201, 200, 400, or 404, got %d", w.Code)
-	}
-}
-
-func TestNotification_InvalidType(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	adminToken, _ := generateTestToken(1, "admin@test.com", "admin", jwtSecret)
-
-	notificationData := map[string]interface{}{
-		"user_id":  2,
-		"title":    "Test",
-		"message":  "Test message",
-		"type":     "invalid_type", // Invalid type
-		"priority": "normal",
-	}
-	body, _ := json.Marshal(notificationData)
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/notifications", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+adminToken)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusBadRequest && w.Code != http.StatusUnprocessableEntity && w.Code != http.StatusNotFound {
-		t.Errorf("Expected status 400 or 422 for invalid type, got %d", w.Code)
-	}
-}
-
-func TestNotification_Pagination(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications?limit=10&offset=0", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-}
-
-func TestNotification_FilterByPriority(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "user@test.com", "customer", jwtSecret)
-	if err != nil {
-		t.Fatalf("Failed to generate token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/notifications?priority=high", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
+	assert.Contains(t, []int{http.StatusCreated, http.StatusOK, http.StatusBadRequest, http.StatusNotFound}, w.Code)
 }

@@ -317,49 +317,6 @@ func (s *NotificationService) SendReviewRequest(ctx context.Context, bookingID i
 	)
 }
 
-// sendBookingNotificationWithTemplateCustomMessage handles cases where message needs custom formatting
-func (s *NotificationService) sendBookingNotificationWithTemplateCustomMessage(
-	ctx context.Context,
-	booking *models.Booking,
-	templateKey string,
-	customMessage string,
-	extraData map[string]interface{},
-	expiresAt *time.Time,
-) error {
-	if booking.CustomerID == nil {
-		return nil
-	}
-
-	template, exists := bookingNotificationTemplates[templateKey]
-	if !exists {
-		return fmt.Errorf("unknown notification template: %s", templateKey)
-	}
-
-	entityType := config.EntityTypeBooking
-	data := map[string]interface{}{
-		"booking_number": booking.BookingNumber,
-		"barber_id":      booking.BarberID,
-	}
-	for k, v := range extraData {
-		data[k] = v
-	}
-
-	req := CreateNotificationRequest{
-		UserID:            *booking.CustomerID,
-		Title:             template.Title,
-		Message:           customMessage,
-		Type:              template.Type,
-		Priority:          template.Priority,
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &booking.ID,
-		Data:              data,
-		ExpiresAt:         expiresAt,
-	}
-
-	_, err := s.CreateNotification(ctx, req)
-	return err
-}
-
 // SendBookingConfirmation sends a booking confirmation notification
 func (s *NotificationService) SendBookingConfirmation(ctx context.Context, bookingID int) error {
 	log := logger.FromContext(ctx)
@@ -466,16 +423,6 @@ var bookingNotificationTemplates = map[string]BookingNotificationTemplate{
 		Type:            config.NotificationTypeReviewRequest,
 		Priority:        config.NotificationPriorityNormal,
 	},
-}
-
-// validateChannels validates that all provided channels are valid
-func validateChannels(channels []string) error {
-	for _, channel := range channels {
-		if !repository.IsValidNotificationChannel(channel) {
-			return fmt.Errorf("invalid notification channel: %s (valid: %v)", channel, repository.ValidNotificationChannels)
-		}
-	}
-	return nil
 }
 
 // sendBookingNotificationWithTemplate is a helper that sends booking notifications using templates
