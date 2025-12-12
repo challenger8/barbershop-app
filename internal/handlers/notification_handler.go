@@ -3,10 +3,8 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
 
 	"barber-booking-system/internal/config"
-	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
 	"barber-booking-system/internal/utils"
@@ -61,7 +59,7 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 // @Security BearerAuth
 // @Router /api/v1/notifications [get]
 func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
-	userID, ok := RequireAuth(c, "view notifications")
+	userID, ok := GetAuthUserID(c, "view notifications")
 	if !ok {
 		return
 	}
@@ -93,7 +91,7 @@ func (h *NotificationHandler) GetMyNotifications(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/unread [get]
 func (h *NotificationHandler) GetUnreadNotifications(c *gin.Context) {
-	userID, ok := RequireAuth(c, "view notifications")
+	userID, ok := GetAuthUserID(c, "view notifications")
 	if !ok {
 		return
 	}
@@ -135,18 +133,13 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "view notifications")
+	userID, ok := GetAuthUserID(c, "view notifications")
 	if !ok {
 		return
 	}
 
 	notification, err := h.notificationService.GetNotificationByID(c.Request.Context(), id, userID)
-	if err != nil {
-		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
-			RespondNotFound(c, "Notification")
-			return
-		}
-		RespondInternalError(c, "fetch notification", err)
+	if HandleServiceError(c, err, "Notification", "fetch notification") {
 		return
 	}
 
@@ -169,7 +162,7 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/stats [get]
 func (h *NotificationHandler) GetNotificationStats(c *gin.Context) {
-	userID, ok := RequireAuth(c, "view notification stats")
+	userID, ok := GetAuthUserID(c, "view notification stats")
 	if !ok {
 		return
 	}
@@ -195,7 +188,7 @@ func (h *NotificationHandler) GetNotificationStats(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/unread/count [get]
 func (h *NotificationHandler) GetUnreadCount(c *gin.Context) {
-	userID, ok := RequireAuth(c, "view notification count")
+	userID, ok := GetAuthUserID(c, "view notification count")
 	if !ok {
 		return
 	}
@@ -235,18 +228,13 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "mark notifications as read")
+	userID, ok := GetAuthUserID(c, "mark notifications as read")
 	if !ok {
 		return
 	}
 
 	err := h.notificationService.MarkAsRead(c.Request.Context(), id, userID)
-	if err != nil {
-		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
-			RespondNotFound(c, "Notification")
-			return
-		}
-		RespondInternalError(c, "mark notification as read", err)
+	if HandleServiceError(c, err, "Notification", "mark notification as read") {
 		return
 	}
 
@@ -265,7 +253,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/notifications/read-all [patch]
 func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
-	userID, ok := RequireAuth(c, "mark notifications as read")
+	userID, ok := GetAuthUserID(c, "mark notifications as read")
 	if !ok {
 		return
 	}
@@ -305,21 +293,15 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "delete notifications")
+	userID, ok := GetAuthUserID(c, "delete notifications")
 	if !ok {
 		return
 	}
 
 	err := h.notificationService.DeleteNotification(c.Request.Context(), id, userID)
-	if err != nil {
-		if err == repository.ErrNotificationNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
-			RespondNotFound(c, "Notification")
-			return
-		}
-		RespondInternalError(c, "delete notification", err)
+	if HandleServiceError(c, err, "Notification", "delete notification") {
 		return
 	}
-
 	RespondSuccessWithMessage(c, "Notification deleted successfully")
 }
 
@@ -352,16 +334,7 @@ func (h *NotificationHandler) CreateNotification(c *gin.Context) {
 	// if userType != "admin" { ... }
 
 	notification, err := h.notificationService.CreateNotification(c.Request.Context(), *req)
-	if err != nil {
-		statusCode := http.StatusInternalServerError
-		if err == repository.ErrInvalidNotificationType || err == repository.ErrInvalidNotificationStatus {
-			statusCode = http.StatusBadRequest
-		}
-
-		c.JSON(statusCode, middleware.ErrorResponse{
-			Error:   "Failed to create notification",
-			Message: err.Error(),
-		})
+	if HandleServiceError(c, err, "Notification", "create notification") {
 		return
 	}
 
@@ -469,12 +442,7 @@ func (h *NotificationHandler) DeliveryWebhook(c *gin.Context) {
 		return
 	}
 
-	if err != nil {
-		if err == repository.ErrNotificationNotFound {
-			RespondNotFound(c, "Notification")
-			return
-		}
-		RespondInternalError(c, "process webhook", err)
+	if HandleServiceError(c, err, "Notification", "delivery webhook") {
 		return
 	}
 

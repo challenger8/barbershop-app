@@ -58,31 +58,6 @@ func NewForbiddenError(message string) *AppError {
 	}
 }
 
-func NewNotFoundError(message string) *AppError {
-	return &AppError{
-		StatusCode: http.StatusNotFound,
-		Code:       "NOT_FOUND",
-		Message:    message,
-	}
-}
-
-func NewConflictError(message string, details map[string]interface{}) *AppError {
-	return &AppError{
-		StatusCode: http.StatusConflict,
-		Code:       "CONFLICT",
-		Message:    message,
-		Details:    details,
-	}
-}
-
-func NewInternalServerError(message string, err error) *AppError {
-	return &AppError{
-		StatusCode: http.StatusInternalServerError,
-		Code:       "INTERNAL_SERVER_ERROR",
-		Message:    message,
-		Err:        err,
-	}
-}
 
 func NewValidationError(message string, details map[string]interface{}) *AppError {
 	return &AppError{

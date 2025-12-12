@@ -100,7 +100,7 @@ func RequireIntParam(c *gin.Context, paramName string, entityName string) (int, 
 //	if !ok {
 //	    return
 //	}
-func RequireAuth(c *gin.Context, action string) (int, bool) {
+func GetAuthUserID(c *gin.Context, action string) (int, bool) {
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
 		RespondUnauthorized(c, fmt.Sprintf("You must be logged in to %s", action))
@@ -169,6 +169,39 @@ func HandleServiceError(c *gin.Context, err error, entityName, operation string)
 		return true
 	}
 
+	// Check for business logic errors (400 Bad Request)
+	switch err {
+	case repository.ErrBookingNotCompleted:
+		RespondBadRequest(c, "Booking not completed",
+			"You can only review completed bookings")
+		return true
+	case repository.ErrInvalidModeration,
+		repository.ErrInvalidNotificationType,
+		repository.ErrInvalidNotificationStatus:
+		RespondBadRequest(c, "Invalid value", err.Error())
+		return true
+	}
+
+	// Check for forbidden errors (403 Forbidden)
+	switch err {
+	case repository.ErrCannotModifyReview:
+		c.JSON(http.StatusForbidden, middleware.ErrorResponse{
+			Error:   "Cannot modify review",
+			Message: err.Error(),
+		})
+		return true
+	}
+
+	// Check for unprocessable errors (422 Unprocessable Entity)
+	switch err {
+	case repository.ErrCancellationNotAllowed:
+		c.JSON(http.StatusUnprocessableEntity, middleware.ErrorResponse{
+			Error:   "Cannot cancel",
+			Message: err.Error(),
+		})
+		return true
+	}
+
 	// Fallback: Check by string matching for wrapped errors
 	errMsg := err.Error()
 
@@ -178,8 +211,8 @@ func HandleServiceError(c *gin.Context, err error, entityName, operation string)
 		return true
 	}
 
-	// Duplicate entry errors (for wrapped errors)
-	if strings.Contains(errMsg, "duplicate") || strings.Contains(errMsg, "already exists") {
+	// Duplicate entry errors - use shared helper
+	if repository.IsDuplicateError(err) {
 		RespondBadRequest(c, "Duplicate entry",
 			fmt.Sprintf("This %s already exists", strings.ToLower(entityName)))
 		return true

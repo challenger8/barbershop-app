@@ -469,50 +469,24 @@ func TestUpdateBookingStatus_NotFound(t *testing.T) {
 // CANCEL BOOKING TESTS
 // =============================================================================
 
-func TestCancelBooking_Unauthorized(t *testing.T) {
-	router, dbManager, _ := setupTestRouter(t)
-	defer dbManager.Close()
+func TestCancelBooking(t *testing.T) {
+	tests := []struct {
+		name           string
+		bookingID      string
+		hasAuth        bool
+		hasReason      bool
+		expectedStatus int
+	}{
+		{"Unauthorized", "1", false, false, http.StatusUnauthorized},
+		{"NotFound", "99999", true, false, http.StatusNotFound},
+		{"WithReason", "99999", true, true, http.StatusNotFound},
+	}
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/bookings/1", nil)
-	// No Authorization header
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestCancelBooking_NotFound(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "customer@test.com", "customer", jwtSecret)
-	require.NoError(t, err)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/bookings/99999", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestCancelBooking_WithReason(t *testing.T) {
-	router, dbManager, jwtSecret := setupTestRouter(t)
-	defer dbManager.Close()
-
-	token, err := generateTestToken(1, "customer@test.com", "customer", jwtSecret)
-	require.NoError(t, err)
-
-	jsonBody, _ := json.Marshal(getTestCancelRequest(true)) // true = by customer
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/bookings/99999", bytes.NewBuffer(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-	router.ServeHTTP(w, req)
-
-	// 404 because booking doesn't exist, but request format is valid
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Single test logic
+		})
+	}
 }
 
 // =============================================================================

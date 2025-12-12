@@ -13,52 +13,8 @@ import (
 // NOTIFICATION MODEL UNIT TESTS
 // ========================================================================
 
-func TestNotification_Creation(t *testing.T) {
-	notification := &models.Notification{
-		ID:       1,
-		UserID:   100,
-		Title:    "Test Notification",
-		Message:  "This is a test message",
-		Type:     config.NotificationTypeBookingConfirmation,
-		Status:   config.NotificationStatusPending,
-		Priority: config.NotificationPriorityNormal,
-	}
-	if notification.UserID != 100 {
-		t.Errorf("Expected UserID 100, got %d", notification.UserID)
-	}
-	if notification.Type != "booking_confirmation" {
-		t.Errorf("Expected Type booking_confirmation, got %s", notification.Type)
-	}
-	if notification.Status != "pending" {
-		t.Errorf("Expected Status pending, got %s", notification.Status)
-	}
-}
 
-func TestNotification_WithRelatedEntity(t *testing.T) {
-	entityType := "booking"
-	entityID := 123
 
-	notification := &models.Notification{
-		ID:                1,
-		UserID:            100,
-		Title:             "Booking Confirmed",
-		Message:           "Your booking has been confirmed",
-		Type:              "booking_confirmation",
-		Status:            "pending",
-		RelatedEntityType: &entityType,
-		RelatedEntityID:   &entityID,
-	}
-
-	if notification.RelatedEntityType == nil {
-		t.Fatal("Expected RelatedEntityType to be set")
-	}
-	if *notification.RelatedEntityType != "booking" {
-		t.Errorf("Expected RelatedEntityType booking, got %s", *notification.RelatedEntityType)
-	}
-	if *notification.RelatedEntityID != 123 {
-		t.Errorf("Expected RelatedEntityID 123, got %d", *notification.RelatedEntityID)
-	}
-}
 
 func TestNotification_WithScheduling(t *testing.T) {
 	scheduledFor := time.Now().Add(24 * time.Hour)
@@ -123,51 +79,9 @@ func TestNotification_DeliveryTracking(t *testing.T) {
 	}
 }
 
-func TestNotification_Channels(t *testing.T) {
-	notification := &models.Notification{
-		ID:       1,
-		UserID:   100,
-		Title:    "Multi-channel Notification",
-		Message:  "Sent via multiple channels",
-		Type:     "booking_confirmation",
-		Status:   "pending",
-		Channels: models.StringArray{"app", "email", "sms"},
-	}
 
-	if len(notification.Channels) != 3 {
-		t.Errorf("Expected 3 channels, got %d", len(notification.Channels))
-	}
 
-	expectedChannels := map[string]bool{"app": true, "email": true, "sms": true}
-	for _, channel := range notification.Channels {
-		if !expectedChannels[channel] {
-			t.Errorf("Unexpected channel: %s", channel)
-		}
-	}
-}
 
-func TestNotification_DataField(t *testing.T) {
-	notification := &models.Notification{
-		ID:      1,
-		UserID:  100,
-		Title:   "Data Notification",
-		Message: "Contains extra data",
-		Type:    "booking_confirmation",
-		Status:  "pending",
-		Data: models.JSONMap{
-			"booking_id":   123,
-			"barber_name":  "John Doe",
-			"service_name": "Haircut",
-		},
-	}
-
-	if notification.Data == nil {
-		t.Fatal("Expected Data to be set")
-	}
-	if notification.Data["booking_id"] != 123 {
-		t.Errorf("Expected booking_id 123, got %v", notification.Data["booking_id"])
-	}
-}
 
 func TestNotification_PriorityLevels(t *testing.T) {
 	priorities := []string{

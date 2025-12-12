@@ -45,24 +45,6 @@ func TestErrorHandler_AppError(t *testing.T) {
 			expectedCode:   "FORBIDDEN",
 		},
 		{
-			name:           "Not Found Error",
-			appError:       middleware.NewNotFoundError("Resource not found"),
-			expectedStatus: http.StatusNotFound,
-			expectedCode:   "NOT_FOUND",
-		},
-		{
-			name:           "Conflict Error",
-			appError:       middleware.NewConflictError("Resource already exists", nil),
-			expectedStatus: http.StatusConflict,
-			expectedCode:   "CONFLICT",
-		},
-		{
-			name:           "Internal Server Error",
-			appError:       middleware.NewInternalServerError("Database error", errors.New("connection failed")),
-			expectedStatus: http.StatusInternalServerError,
-			expectedCode:   "INTERNAL_SERVER_ERROR",
-		},
-		{
 			name:           "Validation Error",
 			appError:       middleware.NewValidationError("Invalid fields", map[string]interface{}{"email": "invalid format"}),
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -199,25 +181,6 @@ func TestAbortWithError(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestRespondWithError(t *testing.T) {
-	w := httptest.NewRecorder()
-	router := gin.New()
-	router.GET("/test", func(c *gin.Context) {
-		middleware.RespondWithError(c, middleware.NewNotFoundError("User not found"))
-	})
-
-	req := httptest.NewRequest("GET", "/test", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-
-	var response middleware.ErrorResponse
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
-
-	assert.Equal(t, "NOT_FOUND", response.Code)
-	assert.Equal(t, "User not found", response.Message)
-}
 
 func TestAppError_Error(t *testing.T) {
 	tests := []struct {
@@ -225,11 +188,7 @@ func TestAppError_Error(t *testing.T) {
 		appError *middleware.AppError
 		expected string
 	}{
-		{
-			name:     "Error with wrapped error",
-			appError: middleware.NewInternalServerError("Database error", errors.New("connection failed")),
-			expected: "connection failed",
-		},
+
 		{
 			name:     "Error without wrapped error",
 			appError: middleware.NewBadRequestError("Invalid input", nil),

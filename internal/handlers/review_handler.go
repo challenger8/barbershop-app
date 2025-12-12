@@ -2,12 +2,9 @@
 package handlers
 
 import (
-	"net/http"
-
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
-	"barber-booking-system/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,30 +54,14 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 	}
 
 	// Get authenticated user
-	userID, ok := RequireAuth(c, "create a review")
+	userID, ok := GetAuthUserID(c, "create a review")
 	if !ok {
 		return
 	}
 
 	// Create review
 	review, err := h.reviewService.CreateReview(c.Request.Context(), *req, userID)
-	if err != nil {
-		statusCode := http.StatusInternalServerError
-		switch err {
-		case repository.ErrBookingNotCompleted:
-			statusCode = http.StatusBadRequest
-		case repository.ErrDuplicateReview, repository.ErrDuplicateReview:
-			statusCode = http.StatusConflict
-		default:
-			if utils.ContainsAny(err.Error(), []string{"not found", "required", "must be", "only review"}) {
-				statusCode = http.StatusBadRequest
-			}
-		}
-
-		c.JSON(statusCode, middleware.ErrorResponse{
-			Error:   "Failed to create review",
-			Message: err.Error(),
-		})
+	if HandleServiceError(c, err, "Review", "create review") {
 		return
 	}
 
@@ -116,12 +97,7 @@ func (h *ReviewHandler) GetReview(c *gin.Context) {
 	}
 
 	review, err := h.reviewService.GetReviewByID(c.Request.Context(), id, userID)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		RespondInternalError(c, "fetch review", err)
+	if HandleServiceError(c, err, "Review", "get review") {
 		return
 	}
 
@@ -152,12 +128,7 @@ func (h *ReviewHandler) GetReviewByBooking(c *gin.Context) {
 	}
 
 	review, err := h.reviewService.GetReviewByBookingID(c.Request.Context(), bookingID, userID)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		RespondInternalError(c, "fetch review", err)
+	if HandleServiceError(c, err, "Review", "review by booking") {
 		return
 	}
 
@@ -261,7 +232,7 @@ func (h *ReviewHandler) GetBarberReviewStats(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/v1/reviews/me [get]
 func (h *ReviewHandler) GetMyReviews(c *gin.Context) {
-	userID, ok := RequireAuth(c, "view your reviews")
+	userID, ok := GetAuthUserID(c, "view your reviews")
 	if !ok {
 		return
 	}
@@ -311,32 +282,13 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "update a review")
+	userID, ok := GetAuthUserID(c, "update a review")
 	if !ok {
 		return
 	}
 
 	review, err := h.reviewService.UpdateReview(c.Request.Context(), id, *req, userID)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		if err == repository.ErrCannotModifyReview {
-			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
-				Error:   "Cannot modify review",
-				Message: "This review has already been moderated and cannot be edited",
-			})
-			return
-		}
-		if utils.ContainsAny(err.Error(), []string{"only edit your own"}) {
-			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
-				Error:   "Forbidden",
-				Message: err.Error(),
-			})
-			return
-		}
-		RespondInternalError(c, "update review", err)
+	if HandleServiceError(c, err, "Review", "update review") {
 		return
 	}
 
@@ -374,7 +326,7 @@ func (h *ReviewHandler) ModerateReview(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "moderate reviews")
+	userID, ok := GetAuthUserID(c, "moderate reviews")
 	if !ok {
 		return
 	}
@@ -384,19 +336,7 @@ func (h *ReviewHandler) ModerateReview(c *gin.Context) {
 	// if userType != "admin" { ... }
 
 	review, err := h.reviewService.ModerateReview(c.Request.Context(), id, *req, userID)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		if err == repository.ErrInvalidModeration {
-			c.JSON(http.StatusBadRequest, middleware.ErrorResponse{
-				Error:   "Invalid moderation status",
-				Message: err.Error(),
-			})
-			return
-		}
-		RespondInternalError(c, "moderate review", err)
+	if HandleServiceError(c, err, "Review", "moderate review") {
 		return
 	}
 
@@ -463,25 +403,13 @@ func (h *ReviewHandler) AddBarberResponse(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "respond to reviews")
+	userID, ok := GetAuthUserID(c, "respond to reviews")
 	if !ok {
 		return
 	}
 
 	review, err := h.reviewService.AddBarberResponse(c.Request.Context(), id, *req, userID)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		if utils.ContainsAny(err.Error(), []string{"only respond to your own", "already responded"}) {
-			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
-				Error:   "Cannot respond",
-				Message: err.Error(),
-			})
-			return
-		}
-		RespondInternalError(c, "add barber response", err)
+	if HandleServiceError(c, err, "Review", "add barber response review") {
 		return
 	}
 
@@ -517,12 +445,7 @@ func (h *ReviewHandler) VoteReview(c *gin.Context) {
 	}
 
 	err := h.reviewService.VoteReview(c.Request.Context(), id, *req)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		RespondInternalError(c, "vote on review", err)
+	if HandleServiceError(c, err, "Review", "vote review") {
 		return
 	}
 
@@ -553,7 +476,7 @@ func (h *ReviewHandler) DeleteReview(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "delete a review")
+	userID, ok := GetAuthUserID(c, "delete a review")
 	if !ok {
 		return
 	}
@@ -562,22 +485,9 @@ func (h *ReviewHandler) DeleteReview(c *gin.Context) {
 	isAdmin := false // middleware.IsAdmin(c)
 
 	err := h.reviewService.DeleteReview(c.Request.Context(), id, userID, isAdmin)
-	if err != nil {
-		if err == repository.ErrReviewNotFound {
-			RespondNotFound(c, "Review")
-			return
-		}
-		if utils.ContainsAny(err.Error(), []string{"only delete your own"}) {
-			c.JSON(http.StatusForbidden, middleware.ErrorResponse{
-				Error:   "Forbidden",
-				Message: err.Error(),
-			})
-			return
-		}
-		RespondInternalError(c, "delete review", err)
+	if HandleServiceError(c, err, "Review", "Delete Review") {
 		return
 	}
-
 	RespondSuccessWithMessage(c, "Review deleted successfully")
 }
 
@@ -604,19 +514,13 @@ func (h *ReviewHandler) CanReviewBooking(c *gin.Context) {
 		return
 	}
 
-	userID, ok := RequireAuth(c, "check review eligibility")
+	userID, ok := GetAuthUserID(c, "check review eligibility")
 	if !ok {
 		return
 	}
 
 	canReview, reason, err := h.reviewService.CanReviewBooking(c.Request.Context(), bookingID, userID)
-	if err != nil {
-		// Check if it's a "not found" error
-		if err == repository.ErrBookingNotFound || utils.ContainsAny(err.Error(), []string{"not found"}) {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		RespondInternalError(c, "check review eligibility", err)
+	if HandleServiceError(c, err, "Review", "can  review by booking") {
 		return
 	}
 

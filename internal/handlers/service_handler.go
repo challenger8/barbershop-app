@@ -2,8 +2,6 @@
 package handlers
 
 import (
-	"strings"
-
 	"barber-booking-system/internal/middleware"
 	"barber-booking-system/internal/repository"
 	"barber-booking-system/internal/services"
@@ -332,17 +330,9 @@ func (h *ServiceHandler) CreateCategory(c *gin.Context) {
 
 	category, err := h.serviceService.CreateCategory(c.Request.Context(), *req)
 	if err != nil {
-		// ⭐ CHECK FOR DATABASE CONSTRAINT VIOLATIONS ⭐
-		// PostgreSQL unique constraint errors contain these terms
-		errMsg := strings.ToLower(err.Error())
-		if strings.Contains(errMsg, "duplicate") ||
-			strings.Contains(errMsg, "already exists") ||
-			strings.Contains(errMsg, "unique constraint") ||
-			strings.Contains(errMsg, "violates") {
-			c.JSON(400, middleware.ErrorResponse{
-				Error:   "Duplicate category",
-				Message: "A category with this name or slug already exists",
-			})
+		// Use shared helper for duplicate detection
+		if repository.IsDuplicateError(err) {
+			RespondBadRequest(c, "Duplicate category", "A category with this name or slug already exists")
 			return
 		}
 

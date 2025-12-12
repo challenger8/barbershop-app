@@ -111,12 +111,7 @@ func (h *BookingHandler) GetBooking(c *gin.Context) {
 	}
 
 	booking, err := h.bookingService.GetBookingByID(c.Request.Context(), id)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		RespondInternalError(c, "fetch booking", err)
+	if HandleServiceError(c, err, "Booking", "fetch booking") {
 		return
 	}
 
@@ -138,12 +133,7 @@ func (h *BookingHandler) GetBookingByUUID(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	booking, err := h.bookingService.GetBookingByUUID(c.Request.Context(), uuid)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		RespondInternalError(c, "fetch booking", err)
+	if HandleServiceError(c, err, "Booking", "fetch booking") {
 		return
 	}
 
@@ -165,12 +155,7 @@ func (h *BookingHandler) GetBookingByNumber(c *gin.Context) {
 	bookingNumber := c.Param("number")
 
 	booking, err := h.bookingService.GetBookingByNumber(c.Request.Context(), bookingNumber)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		RespondInternalError(c, "fetch booking", err)
+	if HandleServiceError(c, err, "Booking", "fetch booking") {
 		return
 	}
 
@@ -202,7 +187,7 @@ func (h *BookingHandler) GetBookingByNumber(c *gin.Context) {
 // @Router /api/v1/bookings/me [get]
 func (h *BookingHandler) GetMyBookings(c *gin.Context) {
 	// Get authenticated user ID
-	userID, ok := RequireAuth(c, "view your bookings")
+	userID, ok := GetAuthUserID(c, "view your bookings")
 	if !ok {
 		return
 	}
@@ -350,14 +335,9 @@ func (h *BookingHandler) UpdateBooking(c *gin.Context) {
 
 	// Update booking
 	booking, err := h.bookingService.UpdateBooking(c.Request.Context(), id, *req, updatedByUserID)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		RespondInternalError(c, "update booking", err)
-		return
-	}
+	if HandleServiceError(c, err, "booking", "update booking") {
+	return
+}
 
 	RespondSuccessWithData(c, booking, "Booking updated successfully")
 }
@@ -400,20 +380,7 @@ func (h *BookingHandler) UpdateBookingStatus(c *gin.Context) {
 
 	// Update status
 	booking, err := h.bookingService.UpdateStatus(c.Request.Context(), id, req.Status, updatedByUserID)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		// Check for invalid status transition
-		if utils.ContainsAny(err.Error(), []string{"invalid status", "cannot change"}) {
-			c.JSON(http.StatusUnprocessableEntity, middleware.ErrorResponse{
-				Error:   "Invalid status transition",
-				Message: err.Error(),
-			})
-			return
-		}
-		RespondInternalError(c, "update booking status", err)
+	if HandleServiceError(c, err, "Booking", "operation name") {
 		return
 	}
 
@@ -459,10 +426,6 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 	// Reschedule booking
 	booking, err := h.bookingService.RescheduleBooking(c.Request.Context(), id, *req, rescheduledByUserID)
 	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
 		if utils.ContainsAny(err.Error(), []string{"not available", "conflict"}) {
 			c.JSON(http.StatusConflict, middleware.ErrorResponse{
 				Error:   "Time slot not available",
@@ -470,8 +433,9 @@ func (h *BookingHandler) RescheduleBooking(c *gin.Context) {
 			})
 			return
 		}
-		RespondInternalError(c, "reschedule booking", err)
-		return
+		if HandleServiceError(c, err, "Booking", "reschedule booking") {
+			return
+		}
 	}
 
 	RespondSuccessWithData(c, booking, "Booking rescheduled successfully")
@@ -508,26 +472,14 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 
 	// Get user ID from auth context
-	userID, ok := RequireAuth(c, "cancel a booking")
+	userID, ok := GetAuthUserID(c, "cancel a booking")
 	if !ok {
 		return
 	}
 
 	// Cancel booking
 	_, err := h.bookingService.CancelBooking(c.Request.Context(), id, req, &userID)
-	if err != nil {
-		if err == repository.ErrBookingNotFound {
-			RespondNotFound(c, "Booking")
-			return
-		}
-		if err == repository.ErrCancellationNotAllowed {
-			c.JSON(http.StatusUnprocessableEntity, middleware.ErrorResponse{
-				Error:   "Cannot cancel booking",
-				Message: "This booking cannot be cancelled in its current status",
-			})
-			return
-		}
-		RespondInternalError(c, "cancel booking", err)
+	if HandleServiceError(c, err, "Booking", "cancel booking") {
 		return
 	}
 
@@ -659,8 +611,7 @@ func (h *BookingHandler) GetBookingHistory(c *gin.Context) {
 
 	// Get history
 	history, err := h.bookingService.GetBookingHistory(c.Request.Context(), id)
-	if err != nil {
-		RespondInternalError(c, "fetch booking history", err)
+	if HandleServiceError(c, err, "Booking", "operation name") {
 		return
 	}
 

@@ -162,7 +162,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // @Router /api/v1/auth/me [get]
 func (h *AuthHandler) GetMe(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, ok := RequireAuth(c, "view your profile")
+	userID, ok := GetAuthUserID(c, "view your profile")
 	if !ok {
 		return
 	}
@@ -200,7 +200,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 // @Router /api/v1/auth/profile [put]
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	// Get user ID from context
-	userID, ok := RequireAuth(c, "update your profile")
+	userID, ok := GetAuthUserID(c, "update your profile")
 	if !ok {
 		return
 	}
@@ -242,7 +242,7 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 // @Router /api/v1/auth/change-password [post]
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	// Get user ID from context
-	userID, ok := RequireAuth(c, "change your password")
+	userID, ok := GetAuthUserID(c, "change your password")
 	if !ok {
 		return
 	}
