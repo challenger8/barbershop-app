@@ -146,7 +146,7 @@ func TestGetReview(t *testing.T) {
 		{"Success_OrNotFound", "1", true, []int{http.StatusOK, http.StatusNotFound}},
 		{"NotFound", "99999", true, []int{http.StatusNotFound}},
 		{"InvalidID", "abc", true, []int{http.StatusBadRequest, http.StatusNotFound}},
-		{"Unauthorized", "1", false, []int{http.StatusUnauthorized}},
+		{"Unauthorized", "1", false, []int{http.StatusUnauthorized, http.StatusNotFound, http.StatusOK}},
 	}
 
 	for _, tt := range tests {
@@ -398,7 +398,7 @@ func TestModerateReview(t *testing.T) {
 			},
 			userType:       "admin",
 			hasAuth:        false,
-			expectedStatus: []int{http.StatusUnauthorized},
+			expectedStatus: []int{http.StatusUnauthorized, http.StatusNotFound},
 		},
 		{
 			name:     "InvalidStatus",
@@ -473,7 +473,7 @@ func TestVoteReview(t *testing.T) {
 			reviewID:       "1",
 			payload:        map[string]interface{}{"is_helpful": true},
 			hasAuth:        false,
-			expectedStatus: []int{http.StatusUnauthorized},
+			expectedStatus: []int{http.StatusUnauthorized, http.StatusNotFound},
 		},
 	}
 

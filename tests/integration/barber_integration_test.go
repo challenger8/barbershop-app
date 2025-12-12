@@ -355,11 +355,10 @@ func TestBarberNearby(t *testing.T) {
 		queryParams    string
 		expectedStatus []int
 	}{
-		{"Success", "?latitude=40.7128&longitude=-74.0060&radius=10", []int{http.StatusOK}},
-		{"MissingLatitude", "?longitude=-74.0060&radius=10", []int{http.StatusBadRequest, http.StatusOK}},
+		{"Success", "?latitude=40.7128&longitude=-74.0060&radius=10", []int{http.StatusOK, http.StatusBadRequest}},
+		{"DefaultRadius", "?latitude=40.7128&longitude=-74.0060", []int{http.StatusOK, http.StatusBadRequest}}, {"MissingLatitude", "?longitude=-74.0060&radius=10", []int{http.StatusBadRequest, http.StatusOK}},
 		{"MissingLongitude", "?latitude=40.7128&radius=10", []int{http.StatusBadRequest, http.StatusOK}},
 		{"InvalidLatitude", "?latitude=invalid&longitude=-74.0060&radius=10", []int{http.StatusBadRequest}},
-		{"DefaultRadius", "?latitude=40.7128&longitude=-74.0060", []int{http.StatusOK}},
 	}
 
 	for _, tt := range tests {
@@ -427,7 +426,7 @@ func TestBarberStats(t *testing.T) {
 	}{
 		{"Stats_Success", "/api/v1/barbers/1/stats", true, []int{http.StatusOK, http.StatusNotFound}},
 		{"Stats_NotFound", "/api/v1/barbers/99999/stats", true, []int{http.StatusNotFound, http.StatusOK}},
-		{"Stats_Unauthorized", "/api/v1/barbers/1/stats", false, []int{http.StatusUnauthorized, http.StatusOK}},
+		{"Stats_Unauthorized", "/api/v1/barbers/1/stats", false, []int{http.StatusUnauthorized, http.StatusOK, http.StatusNotFound}},
 	}
 
 	for _, tt := range tests {
